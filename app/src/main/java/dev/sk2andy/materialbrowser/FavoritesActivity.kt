@@ -28,12 +28,10 @@ import dev.sk2andy.materialbrowser.data.FavoriteLibrary
 import dev.sk2andy.materialbrowser.data.FavoriteMutation
 import dev.sk2andy.materialbrowser.data.FavoriteUndoRules
 import dev.sk2andy.materialbrowser.ui.FavoritesLibraryV5
-import dev.sk2andy.materialbrowser.ui.FavoritesScreen
 import dev.sk2andy.materialbrowser.ui.FavoritesSort
 import dev.sk2andy.materialbrowser.ui.LibrarySwitch
 import dev.sk2andy.materialbrowser.ui.theme.CandyTheme
 import dev.sk2andy.materialbrowser.ui.theme.setCandyContent
-import dev.sk2andy.materialbrowser.ui.theme.v5.UiV5Flag
 import dev.sk2andy.materialbrowser.ui.v5.V5LibrarySegment
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
@@ -136,9 +134,6 @@ class FavoritesActivity : ComponentActivity() {
             ?: FavoritesSort.Manual
         val appearanceSettings = store.loadAppearanceSettings()
         val workspaceAccent = store.loadActiveWorkspaceAccent()
-        // v5 draws the library on a phone (V28, B2c); a tablet keeps the current screen.
-        val drawsV5 = UiV5Flag.isEnabled(this) &&
-            resources.configuration.smallestScreenWidthDp < BrowserWindowStateRules.LARGE_SCREEN_MIN_WIDTH_DP
         setCandyContent(animationsEnabled = appearanceSettings.animationsEnabled) {
             val appearanceDark = appearanceSettings.usesDarkColors(isSystemInDarkTheme())
             SideEffect { applyAppearanceSystemBars(appearanceDark) }
@@ -146,47 +141,16 @@ class FavoritesActivity : ComponentActivity() {
                 settings = appearanceSettings,
                 workspaceAccent = workspaceAccent,
             ) {
-                if (drawsV5) {
-                    FavoritesLibraryV5(
-                        library = favoriteLibrary,
-                        favicons = favoriteFavicons,
-                        onOpen = ::openFavorite,
-                        onDelete = ::deleteFavorite,
-                        onUndoDelete = ::undoDelete,
-                        onCreateFolder = ::createFolder,
-                        onImport = ::importBookmarks,
-                        onSwitch = ::switchLibrary,
-                        onClose = ::finishWhenIdle,
-                    )
-                    return@CandyTheme
-                }
-                FavoritesScreen(
-                    favorites = favoriteLibrary.favorites,
+                FavoritesLibraryV5(
                     library = favoriteLibrary,
                     favicons = favoriteFavicons,
-                    folderIcons = folderIcons,
-                    onDeleteFavorite = ::deleteFavorite,
+                    onOpen = ::openFavorite,
+                    onDelete = ::deleteFavorite,
                     onUndoDelete = ::undoDelete,
-                    canUndo = undoLibrary != null,
-                    onOpenFavorite = ::openFavorite,
-                    onBack = ::finishWhenIdle,
-                    onRenameEntry = { entry, title -> mutateLibrary { BrowsingFavoritesRules.rename(it, entry.id, title) } },
                     onCreateFolder = ::createFolder,
-                    onMoveEntry = { entry, parentId -> mutateLibrary { BrowsingFavoritesRules.move(it, entry.id, parentId) } },
-                    onReorderEntry = { entry, index -> mutateLibrary { BrowsingFavoritesRules.reorder(it, entry.id, index) } },
-                    onFolderIconChange = { folder, icon -> mutateLibrary { withFolderIcon(it, folder.id, icon) } },
-                    onUploadFolderIcon = { folder ->
-                        whenIdle {
-                            pendingIconFolderId = folder.id
-                            chooseFolderIcon.launch("image/*")
-                        }
-                    },
-                    sort = favoritesSort,
-                    onSortChange = { sort ->
-                        favoritesSort = sort
-                        getPreferences(MODE_PRIVATE).edit().putString(KEY_SORT, sort.name).apply()
-                    },
-                    onImportBookmarks = ::importBookmarks,
+                    onImport = ::importBookmarks,
+                    onSwitch = ::switchLibrary,
+                    onClose = ::finishWhenIdle,
                 )
             }
         }

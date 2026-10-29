@@ -14,15 +14,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -354,78 +349,41 @@ private fun LegalDialog(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     // Under v5 on a phone the text reads in the v5 sheet; «Close» and a swipe down are «Done».
-    if (rememberDrawsV5()) {
-        V5PromptTheme {
-            V5PromptSheet(
-                visible = true,
-                title = title,
-                message = null,
-                actions = emptyList(),
-                onDismiss = onDismiss,
-                testTag = tag,
-            ) {
-                Column(
-                    Modifier.padding(horizontal = V5Spacing.space4),
-                    verticalArrangement = Arrangement.spacedBy(V5Spacing.space2),
-                    content = content,
-                )
-            }
-        }
-        return
-    }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        modifier = Modifier.testTag(tag),
-        title = { Text(title, fontWeight = FontWeight.SemiBold) },
-        text = {
+    V5PromptTheme {
+        V5PromptSheet(
+            visible = true,
+            title = title,
+            message = null,
+            actions = emptyList(),
+            onDismiss = onDismiss,
+            testTag = tag,
+        ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 520.dp)
-                    .verticalScroll(rememberScrollState()),
+                Modifier.padding(horizontal = V5Spacing.space4),
+                verticalArrangement = Arrangement.spacedBy(V5Spacing.space2),
                 content = content,
             )
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_done))
-            }
-        },
-    )
+        }
+    }
 }
 
 @Composable
 private fun LegalLinkButton(text: String, tag: String, onClick: () -> Unit) {
-    if (rememberDrawsV5()) {
-        val accent = V5Theme.colors.accent
-        Row(
-            Modifier
-                .heightIn(min = V5Sizes.touchTarget)
-                .clickable(role = Role.Button, onClick = onClick)
-                .testTag(tag),
-            horizontalArrangement = Arrangement.spacedBy(V5Spacing.space1),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(text, style = V5Theme.type.body, color = accent)
-            Icon(
-                VolaIcons.ArrowForward,
-                contentDescription = null,
-                tint = accent,
-                modifier = Modifier.size(V5Sizes.iconSmall),
-            )
-        }
-        return
-    }
-    TextButton(
-        onClick = onClick,
-        modifier = Modifier.testTag(tag),
+    val accent = V5Theme.colors.accent
+    Row(
+        Modifier
+            .heightIn(min = V5Sizes.touchTarget)
+            .clickable(role = Role.Button, onClick = onClick)
+            .testTag(tag),
+        horizontalArrangement = Arrangement.spacedBy(V5Spacing.space1),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text)
-        Spacer(Modifier.width(6.dp))
+        Text(text, style = V5Theme.type.body, color = accent)
         Icon(
             VolaIcons.ArrowForward,
             contentDescription = null,
-            modifier = Modifier.size(18.dp),
+            tint = accent,
+            modifier = Modifier.size(V5Sizes.iconSmall),
         )
     }
 }

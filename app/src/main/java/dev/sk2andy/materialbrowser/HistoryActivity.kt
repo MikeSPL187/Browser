@@ -29,12 +29,10 @@ import dev.sk2andy.materialbrowser.data.SnoozedTabStore
 import dev.sk2andy.materialbrowser.reader.ReaderLibraryRepository
 import dev.sk2andy.materialbrowser.reader.ReaderSnapshot
 import dev.sk2andy.materialbrowser.ui.HistoryLibraryV5
-import dev.sk2andy.materialbrowser.ui.HistoryScreen
 import dev.sk2andy.materialbrowser.ui.LibrarySwitch
 import dev.sk2andy.materialbrowser.ui.ReadLaterLibraryV5
 import dev.sk2andy.materialbrowser.ui.theme.CandyTheme
 import dev.sk2andy.materialbrowser.ui.theme.setCandyContent
-import dev.sk2andy.materialbrowser.ui.theme.v5.UiV5Flag
 import dev.sk2andy.materialbrowser.ui.v5.V5LibrarySegment
 import dev.sk2andy.materialbrowser.recall.RecallMatch
 import dev.sk2andy.materialbrowser.recall.RecallRules
@@ -98,9 +96,6 @@ class HistoryActivity : ComponentActivity() {
         val appearanceSettings = store.loadAppearanceSettings()
         val workspaceAccent = store.loadActiveWorkspaceAccent()
         recallEnabled = store.loadRecallEnabled()
-        // v5 draws the library on a phone (V28, B2b); a tablet keeps the current screen.
-        val drawsV5 = UiV5Flag.isEnabled(this) &&
-            resources.configuration.smallestScreenWidthDp < BrowserWindowStateRules.LARGE_SCREEN_MIN_WIDTH_DP
 
         setCandyContent(animationsEnabled = appearanceSettings.animationsEnabled) {
             val appearanceDark = appearanceSettings.usesDarkColors(isSystemInDarkTheme())
@@ -109,60 +104,44 @@ class HistoryActivity : ComponentActivity() {
                 settings = appearanceSettings,
                 workspaceAccent = workspaceAccent,
             ) {
-                if (drawsV5) {
-                    // «History» and «Read later» are one screen: the segment switches here, without a transition.
-                    var segment by rememberSaveable {
-                        mutableStateOf(
-                            if (HistoryActivityContract.opensReadLater(intent)) V5LibrarySegment.ReadLater else V5LibrarySegment.History,
-                        )
-                    }
-                    if (segment == V5LibrarySegment.ReadLater) {
-                        LaunchedEffect(Unit) { if (readLater == null) loadReadLater() }
-                        ReadLaterLibraryV5(
-                            snapshots = readLater,
-                            onOpen = { snapshot ->
-                                openEntry(HistoryEntry(snapshot.document.sourceUrl, snapshot.document.title, 0L, activeProfileId))
-                            },
-                            onDelete = ::deleteReadLater,
-                            onSwitch = { next ->
-                                if (next == V5LibrarySegment.History) segment = next else switchLibrary(next)
-                            },
-                            onClose = { whenMutationsSaved(::finishWithResult) },
-                            isChangingConfigurations = { isChangingConfigurations },
-                        )
-                        return@CandyTheme
-                    }
-                    HistoryLibraryV5(
-                        profileId = activeProfileId,
-                        history = history,
-                        recallMatches = recallMatches,
-                        onRecallQuery = ::searchRecall,
-                        onDelete = { entry -> mutations.enqueue { deleteEntries(listOf(entry)) } },
-                        onClear = { request -> mutations.enqueue { clearHistory(request) } },
-                        onOpen = ::openEntry,
+                // «History» and «Read later» are one screen: the segment switches here, without a transition.
+                var segment by rememberSaveable {
+                    mutableStateOf(
+                        if (HistoryActivityContract.opensReadLater(intent)) V5LibrarySegment.ReadLater else V5LibrarySegment.History,
+                    )
+                }
+                if (segment == V5LibrarySegment.ReadLater) {
+                    LaunchedEffect(Unit) { if (readLater == null) loadReadLater() }
+                    ReadLaterLibraryV5(
+                        snapshots = readLater,
+                        onOpen = { snapshot ->
+                            openEntry(HistoryEntry(snapshot.document.sourceUrl, snapshot.document.title, 0L, activeProfileId))
+                        },
+                        onDelete = ::deleteReadLater,
                         onSwitch = { next ->
-                            if (next == V5LibrarySegment.ReadLater) segment = next else switchLibrary(next)
+                            if (next == V5LibrarySegment.History) segment = next else switchLibrary(next)
                         },
                         onClose = { whenMutationsSaved(::finishWithResult) },
-                        onNewTab = ::openNewTab,
-                        profileName = profiles.takeIf { it.size > 1 }
-                            ?.firstOrNull { profile -> profile.id == activeProfileId }
-                            ?.name?.takeIf(String::isNotBlank),
                         isChangingConfigurations = { isChangingConfigurations },
                     )
                     return@CandyTheme
                 }
-                HistoryScreen(
-                    profiles = profiles,
-                    activeProfileId = activeProfileId,
+                HistoryLibraryV5(
+                    profileId = activeProfileId,
                     history = history,
                     recallMatches = recallMatches,
-                    onRecallCriteriaChanged = ::searchRecall,
-                    onDeleteEntries = { entries -> mutations.enqueue { deleteEntries(entries) } },
-                    onClearHistory = { request -> mutations.enqueue { clearHistory(request) } },
-                    onOpenEntry = ::openEntry,
-                    onBack = { whenMutationsSaved(::finishWithResult) },
-                    onOpenNewTab = ::openNewTab,
+                    onRecallQuery = ::searchRecall,
+                    onDelete = { entry -> mutations.enqueue { deleteEntries(listOf(entry)) } },
+                    onClear = { request -> mutations.enqueue { clearHistory(request) } },
+                    onOpen = ::openEntry,
+                    onSwitch = { next ->
+                        if (next == V5LibrarySegment.ReadLater) segment = next else switchLibrary(next)
+                    },
+                    onClose = { whenMutationsSaved(::finishWithResult) },
+                    onNewTab = ::openNewTab,
+                    profileName = profiles.takeIf { it.size > 1 }
+                        ?.firstOrNull { profile -> profile.id == activeProfileId }
+                        ?.name?.takeIf(String::isNotBlank),
                     isChangingConfigurations = { isChangingConfigurations },
                 )
             }

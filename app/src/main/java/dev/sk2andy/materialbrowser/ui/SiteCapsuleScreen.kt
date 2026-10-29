@@ -32,10 +32,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -114,7 +112,6 @@ fun SiteCapsuleBrowserScreen(
     videoOnlyPresentation: Boolean = webViewVideoOnlyPresentation,
 ) {
     val tab = controller.selectedTab
-    val v5 = rememberDrawsV5()
     val entrance = remember(capsule.id) { Animatable(0f) }
     LaunchedEffect(capsule.id) {
         entrance.animateTo(1f, spring(dampingRatio = 0.84f, stiffness = 520f))
@@ -143,58 +140,23 @@ fun SiteCapsuleBrowserScreen(
             showStatusBarOverlay = !videoOnlyPresentation,
         )
         val controls = !videoOnlyPresentation && capsule.chromeMode.showsControls
-        if (v5) {
-            V5PromptTheme {
-                tab.error?.takeIf { controls }?.let { error -> CapsuleErrorV5(error, controller::reload) }
-                if (controls && tab.isLoading) {
-                    CapsuleLoadingLineV5(tab.progress / 100f, Modifier.statusBarsPadding().align(Alignment.TopCenter))
-                }
-                if (controls) {
-                    CapsuleChromeV5(
-                        name = capsule.name,
-                        address = AddressResolver.displayText(tab.url).takeIf { capsule.chromeMode == CapsuleChromeMode.Compact },
-                        canGoBack = tab.canGoBack,
-                        isLoading = tab.isLoading,
-                        onBack = controller::goBack,
-                        onReloadOrStop = { if (tab.isLoading) controller.stopLoading() else controller.reload() },
-                        onOpenFull = controller::openSiteCapsuleInFullCandy,
-                        modifier = Modifier.align(Alignment.BottomCenter),
-                    )
-                }
+        V5PromptTheme {
+            tab.error?.takeIf { controls }?.let { error -> CapsuleErrorV5(error, controller::reload) }
+            if (controls && tab.isLoading) {
+                CapsuleLoadingLineV5(tab.progress / 100f, Modifier.statusBarsPadding().align(Alignment.TopCenter))
             }
-            return@Box
-        }
-        tab.error?.takeIf {
-            !videoOnlyPresentation && capsule.chromeMode.showsControls
-        }?.let { error ->
-            CapsuleErrorCard(
-                message = error,
-                onRetry = controller::reload,
-                modifier = Modifier.align(Alignment.Center),
-            )
-        }
-        if (!videoOnlyPresentation && capsule.chromeMode.showsControls && tab.isLoading) {
-            LinearProgressIndicator(
-                progress = { (tab.progress / 100f).coerceIn(0f, 1f) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .align(Alignment.TopCenter),
-            )
-        }
-        if (!videoOnlyPresentation && capsule.chromeMode.showsControls) {
-            CapsuleChrome(
-                capsule = capsule,
-                currentUrl = tab.url,
-                canGoBack = tab.canGoBack,
-                isLoading = tab.isLoading,
-                onBack = controller::goBack,
-                onReloadOrStop = {
-                    if (tab.isLoading) controller.stopLoading() else controller.reload()
-                },
-                onOpenFullCandy = controller::openSiteCapsuleInFullCandy,
-                modifier = Modifier.align(Alignment.BottomCenter),
-            )
+            if (controls) {
+                CapsuleChromeV5(
+                    name = capsule.name,
+                    address = AddressResolver.displayText(tab.url).takeIf { capsule.chromeMode == CapsuleChromeMode.Compact },
+                    canGoBack = tab.canGoBack,
+                    isLoading = tab.isLoading,
+                    onBack = controller::goBack,
+                    onReloadOrStop = { if (tab.isLoading) controller.stopLoading() else controller.reload() },
+                    onOpenFull = controller::openSiteCapsuleInFullCandy,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                )
+            }
         }
     }
 }

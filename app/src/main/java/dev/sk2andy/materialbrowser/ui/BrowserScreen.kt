@@ -24,19 +24,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -1345,8 +1341,7 @@ internal fun BrowserScreen(
         !addressEditorVisible &&
         !linkPeekAddressBarExpanded &&
         commandFeedback == null &&
-        !tabOverviewVisible &&
-        !rememberWideBrowserWindow(windowWidthDp = browserWidthPx / density.density)
+        !tabOverviewVisible
     val pageFrames = rememberBrowserPageFrames(
         controller = controller,
         selectedTab = selectedTab,
@@ -1423,8 +1418,6 @@ internal fun BrowserScreen(
                             addressEditorVisible = false
                             controller.submitAddress(url)
                         },
-                        blankTabModeProgress = blankTabModeProgress,
-                        blankTabModeRevealOrigin = blankTabModeRevealOrigin,
                         onRetry = controller::retryFailedPage,
                         onBlurTargetAttached = { target -> browserContentBlurTarget = target },
                         onBlurTargetReleased = { target ->
@@ -1485,24 +1478,15 @@ internal fun BrowserScreen(
             selectedTab = selectedTab,
             addressEditorVisible = addressEditorVisible,
             showInteractiveBlankStart = showInteractiveBlankStart,
-            blankTabModeProgress = blankTabModeProgress,
-            blankTabModeRevealOrigin = blankTabModeRevealOrigin,
-            profileWallpaperRuntime = profileWallpaperRuntime,
             commandFeedback = commandFeedback,
             suggestionItems = suggestionItems,
             highlightedSuggestionIndex = highlightedSuggestionIndex,
-            browserHeightPx = browserHeightPx,
             bottomBarTopPx = bottomBarTopPx,
-            browserContentBlurTarget = browserContentBlurTarget,
-            pageBehindAddressBar = !contentFramed || addressBarDocked,
             linkPeekAddressBarExpanded = linkPeekAddressBarExpanded,
             castUiState = castUiState,
             settingsVisible = settingsVisible,
             addressValue = addressValue,
-            domainCompletion = domainCompletion,
             addressFocusNonce = addressFocusNonce,
-            showAiModeToggle = showAiModeToggle,
-            aiModeSelectedState = aiModeSelectedState,
             browserDragOffset = browserDragOffset,
             browserWidthPx = browserWidthPx,
             tabSwitchTravelPx = tabSwitchTravelPx,
@@ -1510,9 +1494,6 @@ internal fun BrowserScreen(
             tabOverviewOpening = tabOverviewOpening,
             tabOverviewVisible = tabOverviewVisible,
             overviewGestureProgress = overviewGestureProgress,
-            addressBarMorphInFront = addressBarMorphInFront,
-            browserRootBottomInWindowPx = browserRootBottomInWindowPx,
-            visibleSnoozedTabCount = visibleSnoozedTabs.size,
             onToggleCastPlayback = onToggleCastPlayback,
             onSeekCast = onSeekCast,
             onCastVolumeChange = onCastVolumeChange,
@@ -1523,7 +1504,6 @@ internal fun BrowserScreen(
             onHighlightedSuggestionChanged = { highlightedSuggestionIndex = it },
             selectSuggestion = ::selectSuggestion,
             fillAddressFromSuggestion = ::fillAddressFromSuggestion,
-            moveSuggestionHighlight = ::moveSuggestionHighlight,
             submitAddressOrCommand = ::submitAddressOrCommand,
             onLiveFrameCleared = { liveFrameTabId = null },
             onTabHandoffChanged = { tabHandoff = it },
@@ -1544,8 +1524,6 @@ internal fun BrowserScreen(
             openNewTabAndEdit = { openNewTabAndEdit() },
             openNewPrivateTabAndEdit = { openNewTabAndEdit(isIncognito = true) },
             toggleFavoriteWithFeedback = toggleFavoriteWithFeedback,
-            onBlankTabModeRevealOriginChanged = { blankTabModeRevealOrigin = it },
-            onSnoozedTabs = { snoozedTabsVisible = true },
             onOpenFavorites = onOpenFavorites,
             onOpenDownloads = onOpenDownloads,
             onOpenHistory = onOpenHistory,
@@ -1554,16 +1532,7 @@ internal fun BrowserScreen(
                 privacyXRayTabId = selectedTab.id
                 permissionRadarOrigin = null
             },
-            onNewTabButtonBoundsChanged = { addressNewTabButtonBounds = it },
             onReaderStudio = { performAddressBarLongPress(AddressBarLongPressAction.OpenReader) },
-            onOpenCandyTrail = {
-                performAddressBarLongPress(AddressBarLongPressAction.OpenCandyTrail)
-            },
-            onSnooze = { snoozeTabId = selectedTab.id },
-            onAddSiteCapsule = {
-                performAddressBarLongPress(AddressBarLongPressAction.CreateSiteCapsule)
-            },
-            onAddressBarLongPressAction = ::performAddressBarLongPress,
             ) }
         }
 
@@ -1808,7 +1777,6 @@ internal fun BrowserScreen(
             permissionRadarOrigin = permissionRadarOrigin,
             filterStudioVisible = filterStudioVisible,
             filterStudioSelectedRuleId = filterStudioSelectedRuleId,
-            browserContentBlurTarget = browserContentBlurTarget,
             visibleProfiles = visibleProfiles,
             favoriteFeedbackEvent = favoriteFeedbackEvent,
             feedbackSnackbarHostState = feedbackSnackbarHostState,
@@ -1853,15 +1821,8 @@ internal fun BrowserScreen(
             pendingCommand = null
             runCommand(command)
         },
-        addressNewTabButtonBounds = addressNewTabButtonBounds,
         pendingCapsuleDelete = pendingCapsuleDelete,
         onPendingCapsuleDeleteDismiss = { pendingCapsuleDelete = null },
-        onFavoriteLink = { url, title ->
-            controller.toggleContextLinkFavorite(url, title)?.let(showFavoriteMutation)
-        },
-        onSnoozeLink = { url, title, sourceTabId ->
-            pendingLinkSnooze = PendingLinkSnooze(url, title, sourceTabId)
-        },
     ) }
     StartupComposition("FirefoxExtensionChrome") { FirefoxExtensionChrome(controller) }
 }

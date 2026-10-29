@@ -1,17 +1,7 @@
 package dev.sk2andy.materialbrowser.ui
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.data.AppDataArchiveCompatibility
 import dev.sk2andy.materialbrowser.data.StagedAppDataArchive
@@ -34,40 +24,12 @@ internal fun AppDataExportWarningDialog(
             R.string.data_archive_export_warning_message
         },
     )
-    if (rememberDrawsV5()) {
-        SettingsPromptV5(
-            title = stringResource(R.string.data_archive_export_warning_title),
-            message = message,
-            confirm = stringResource(R.string.data_archive_export_action),
-            onConfirm = onConfirm,
-            onDismiss = onDismiss,
-        )
-        return
-    }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.data_archive_export_warning_title)) },
-        text = {
-            Text(
-                stringResource(
-                    if (hasProtectedProfiles) {
-                        R.string.data_archive_export_protected_warning_message
-                    } else {
-                        R.string.data_archive_export_warning_message
-                    },
-                ),
-            )
-        },
-        confirmButton = {
-            Button(onClick = onConfirm) {
-                Text(stringResource(R.string.data_archive_export_action))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel))
-            }
-        },
+    SettingsPromptV5(
+        title = stringResource(R.string.data_archive_export_warning_title),
+        message = message,
+        confirm = stringResource(R.string.data_archive_export_action),
+        onConfirm = onConfirm,
+        onDismiss = onDismiss,
     )
 }
 
@@ -78,65 +40,22 @@ internal fun AppDataImportConfirmationDialog(
     onConfirm: () -> Unit,
 ) {
     val hasVersionMismatch = pending.compatibility != AppDataArchiveCompatibility.Same
-    if (rememberDrawsV5()) {
-        SettingsPromptV5(
-            title = stringResource(R.string.data_archive_import_confirm_title),
-            message = stringResource(
-                R.string.data_archive_import_confirm_message,
-                pending.staged.inspection.manifest.appVersionName,
-                pending.staged.inspection.entries.count { entry -> !entry.isDirectory },
-            ),
-            confirm = stringResource(
-                if (hasVersionMismatch) {
-                    R.string.data_archive_import_mismatch_action
-                } else {
-                    R.string.data_archive_import_action
-                },
-            ),
-            onConfirm = onConfirm,
-            onDismiss = onDismiss,
-            warning = if (hasVersionMismatch) stringResource(R.string.data_archive_import_version_warning) else null,
-        )
-        return
-    }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.data_archive_import_confirm_title)) },
-        text = {
-            Column {
-                Text(
-                    stringResource(
-                        R.string.data_archive_import_confirm_message,
-                        pending.staged.inspection.manifest.appVersionName,
-                        pending.staged.inspection.entries.count { entry -> !entry.isDirectory },
-                    ),
-                )
-                if (hasVersionMismatch) {
-                    Spacer(Modifier.height(12.dp))
-                    Text(
-                        stringResource(R.string.data_archive_import_version_warning),
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            Button(onClick = onConfirm) {
-                Text(
-                    stringResource(
-                        if (hasVersionMismatch) {
-                            R.string.data_archive_import_mismatch_action
-                        } else {
-                            R.string.data_archive_import_action
-                        },
-                    ),
-                )
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel))
-            }
-        },
+    SettingsPromptV5(
+        title = stringResource(R.string.data_archive_import_confirm_title),
+        message = stringResource(
+            R.string.data_archive_import_confirm_message,
+            pending.staged.inspection.manifest.appVersionName,
+            pending.staged.inspection.entries.count { entry -> !entry.isDirectory },
+        ),
+        confirm = stringResource(
+            if (hasVersionMismatch) {
+                R.string.data_archive_import_mismatch_action
+            } else {
+                R.string.data_archive_import_action
+            },
+        ),
+        onConfirm = onConfirm,
+        onDismiss = onDismiss,
+        warning = if (hasVersionMismatch) stringResource(R.string.data_archive_import_version_warning) else null,
     )
 }

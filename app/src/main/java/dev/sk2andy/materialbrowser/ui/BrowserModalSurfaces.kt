@@ -44,8 +44,6 @@ import dev.sk2andy.materialbrowser.ui.passwords.VaultLoginPromptSheets
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.v5.V5FeedbackNotice
-import eightbitlab.com.blurview.BlurTarget
-
 @Composable
 internal fun BoxScope.BrowserModalSurfaces(
     controller: BrowserController,
@@ -54,7 +52,6 @@ internal fun BoxScope.BrowserModalSurfaces(
     permissionRadarOrigin: String?,
     filterStudioVisible: Boolean,
     filterStudioSelectedRuleId: String?,
-    browserContentBlurTarget: BlurTarget?,
     visibleProfiles: List<BrowserProfile>,
     favoriteFeedbackEvent: FavoriteFeedbackEvent?,
     feedbackSnackbarHostState: SnackbarHostState,
@@ -88,21 +85,18 @@ internal fun BoxScope.BrowserModalSurfaces(
         )
     }
 
-    // Under v5 the shield opens the v5 site protection panel (V17); its «Permissions and site info»
+    // The shield opens the v5 site protection panel (V17); its «Permissions and site info»
     // opens this sheet for the same tab.
-    val drawsV5 = rememberDrawsV5()
     var siteInfoTabId by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(privacyXRayTabId) { if (privacyXRayTabId == null) siteInfoTabId = null }
-    if (drawsV5) {
-        BrowserSiteProtectionV5(
-            controller = controller,
-            tabId = privacyXRayTabId?.takeIf { it != siteInfoTabId },
-            onDismiss = onPrivacyXRayDismiss,
-            onSiteInfo = { siteInfoTabId = privacyXRayTabId },
-            onOpenProtectionSettings = onOpenProtectionSettings,
-        )
-    }
-    privacyXRayTabId?.takeIf { !drawsV5 || it == siteInfoTabId }?.let { tabId ->
+    BrowserSiteProtectionV5(
+        controller = controller,
+        tabId = privacyXRayTabId?.takeIf { it != siteInfoTabId },
+        onDismiss = onPrivacyXRayDismiss,
+        onSiteInfo = { siteInfoTabId = privacyXRayTabId },
+        onOpenProtectionSettings = onOpenProtectionSettings,
+    )
+    privacyXRayTabId?.takeIf { it == siteInfoTabId }?.let { tabId ->
         val xRayTab = controller.tabs.firstOrNull { it.id == tabId }
         if (xRayTab != null) {
             val permissionSnapshot = controller.permissionRadarSnapshot(tabId, permissionRadarOrigin)
@@ -123,7 +117,6 @@ internal fun BoxScope.BrowserModalSurfaces(
                 workspaceName = workspaceName,
                 supportedPermissions =
                     AndroidBrowserEngineRules.capabilities(controller.browserEngineKind).sitePermissions,
-                backdropSource = browserContentBlurTarget.asCandyChromeBackdropSource(),
                 onPause = { persistently ->
                     controller.pauseSiteProtection(tabId, persistently)
                 },
@@ -360,27 +353,16 @@ internal fun BoxScope.BrowserModalSurfaces(
     }
 
     V5FeedbackHostEffect(feedbackSnackbarHostState)
-    if (rememberDrawsV5()) {
-        // Under v5 the same messages as a v5 line just above the bar (canvas «ц1», «ц2»), over every screen.
-        SnackbarHost(
-            hostState = feedbackSnackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .padding(bottom = V5Sizes.bar + V5Spacing.space2)
-                .zIndex(30f),
-            snackbar = { data -> V5PromptTheme { V5FeedbackNotice(data) } },
-        )
-    } else {
-        SnackbarHost(
-            hostState = feedbackSnackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 84.dp) // token-exempt: the v4 snackbar keeps its old place
-                .zIndex(30f),
-        )
-    }
+    // Messages as a v5 line just above the bar (canvas «ц1», «ц2»), over every screen.
+    SnackbarHost(
+        hostState = feedbackSnackbarHostState,
+        modifier = Modifier
+            .align(Alignment.BottomCenter)
+            .navigationBarsPadding()
+            .padding(bottom = V5Sizes.bar + V5Spacing.space2)
+            .zIndex(30f),
+        snackbar = { data -> V5PromptTheme { V5FeedbackNotice(data) } },
+    )
 
     // motion-exempt: the snoozed tabs screen only fades, which is what reduced motion keeps.
     AnimatedVisibility(

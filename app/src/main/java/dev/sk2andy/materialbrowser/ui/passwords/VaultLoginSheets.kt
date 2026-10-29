@@ -16,15 +16,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,7 +43,6 @@ import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.LibraryRow
 import dev.sk2andy.materialbrowser.ui.LibrarySiteTile
-import dev.sk2andy.materialbrowser.ui.rememberDrawsV5
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaPasswords
 import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
@@ -68,45 +64,13 @@ internal object VaultLoginSheetTestTags {
  * The sheets of Vola's password host over the page: «Save password?» after a sign-in and «Sign in
  * to …» when a login field is touched. Only the window that asked shows them.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun VaultLoginPromptSheets() {
     val request = VaultLoginPrompts.current ?: return
     val activity = AndroidCredentialPromptHost.activityContext(LocalContext.current)
     if (activity == null || System.identityHashCode(activity) != request.windowId) return
     val dismiss = { VaultLoginPrompts.answer(request.id, VaultLoginAnswer.Dismiss) }
-    if (rememberDrawsV5() && VaultLoginPromptSheetV5(request, dismiss)) return
-    ModalBottomSheet(
-        onDismissRequest = dismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-    ) {
-        when (request) {
-            is VaultLoginRequest.Save -> VaultSaveSheetContent(
-                request = request,
-                onSave = { VaultLoginPrompts.answer(request.id, VaultLoginAnswer.Save) },
-                onDismiss = dismiss,
-            )
-            is VaultLoginRequest.Generate -> PasswordGeneratorContent(
-                subtitle = request.site,
-                useLabel = stringResource(
-                    if (request.canSave) R.string.passwords_generator_use_and_save else R.string.passwords_generator_use,
-                ),
-                useNeedsFingerprint = request.canSave,
-                onUse = { password -> VaultLoginPrompts.answer(request.id, VaultLoginAnswer.Use(password)) },
-            )
-            is VaultLoginRequest.Offer -> VaultOfferSheetContent(
-                request = request,
-                onSetUp = { VaultLoginPrompts.answer(request.id, VaultLoginAnswer.SetUp) },
-                onDismiss = dismiss,
-            )
-            is VaultLoginRequest.Select -> VaultSelectSheetContent(
-                request = request,
-                onPick = { username -> VaultLoginPrompts.answer(request.id, VaultLoginAnswer.Pick(username)) },
-                onDismiss = dismiss,
-            )
-        }
-    }
+    VaultLoginPromptSheetV5(request, dismiss)
 }
 
 @Composable

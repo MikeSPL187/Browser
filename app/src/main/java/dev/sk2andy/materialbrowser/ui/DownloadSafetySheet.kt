@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -27,11 +26,9 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,8 +48,6 @@ import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaDownloadCheck
 import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
-import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
-
 internal object DownloadSafetyTestTags {
     const val Sheet = "download_safety_sheet"
     const val Cancel = "download_safety_cancel"
@@ -71,24 +66,7 @@ internal fun DownloadSafetySheet(
 ) {
     // V28, B9c: under v5 on a phone the one v5 prompt sheet; not downloading is the suggested
     // answer, downloading reads as the risky one, and closing the sheet cancels.
-    if (rememberDrawsV5()) {
-        DownloadSafetySheetV5(pending, onDownload, onCancel)
-        return
-    }
-    ModalBottomSheet(
-        onDismissRequest = onCancel,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = browserChromeColor(MaterialTheme.colorScheme.surfaceContainerLow),
-    ) {
-        DownloadSafetyContent(
-            fileName = pending.fileName,
-            sourceHost = pending.sourceHost,
-            findings = pending.findings,
-            onDownload = onDownload,
-            onCancel = onCancel,
-            modifier = Modifier.navigationBarsPadding(),
-        )
-    }
+    DownloadSafetySheetV5(pending, onDownload, onCancel)
 }
 
 @Composable

@@ -14,37 +14,22 @@ import androidx.activity.compose.BackHandler
 import dev.sk2andy.materialbrowser.browser.SiteCertificate
 
 import android.view.HapticFeedbackConstants
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.paneTitle
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.blocking.CandyRuleAction
@@ -57,8 +42,6 @@ import dev.sk2andy.materialbrowser.browser.permissions.SitePermission
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
 import dev.sk2andy.materialbrowser.data.ProtectionWeek
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
-import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
-import dev.sk2andy.materialbrowser.ui.theme.browserChromeSurfaceTokens
 import dev.sk2andy.materialbrowser.ui.theme.VolaSiteInfo
 
 internal object PrivacyXRayTestTags {
@@ -86,7 +69,6 @@ internal fun PrivacyXRaySheet(
     permissionSnapshot: PermissionRadarSnapshot,
     workspaceName: String,
     supportedPermissions: Set<SitePermission>,
-    backdropSource: CandyChromeBackdropSource? = null,
     onPause: (persistently: Boolean) -> Unit,
     onResume: () -> Unit,
     onRevokeThirdPartyCookieCompatibility: () -> Unit = {},
@@ -110,15 +92,6 @@ internal fun PrivacyXRaySheet(
     var page by remember(pageUrl) { mutableStateOf(SiteInfoPage.Overview) }
     var pauseWarningVisible by remember(siteState.host) { mutableStateOf(false) }
     val view = LocalView.current
-    val chromeTokens = browserChromeSurfaceTokens().copy(
-        containerColor = browserChromeColor(MaterialTheme.colorScheme.surfaceContainerLow),
-        tonalElevation = 0.dp,
-        shadowElevation = 0.dp,
-    )
-
-    // On a wide window the sheet is a card that fits whole; opened half-way on a tall tablet, its
-    // last rows sat under the navigation bar.
-    val wideWindow = LocalConfiguration.current.screenWidthDp >= AddressBarWideLayoutRules.MIN_WINDOW_WIDTH_DP
     val pages: @Composable () -> Unit = {
                 // Inside the sheet's window, so Back returns to the overview before it closes.
                 BackHandler(enabled = page != SiteInfoPage.Overview) { page = SiteInfoPage.Overview }
@@ -223,63 +196,28 @@ internal fun PrivacyXRaySheet(
                     )
                 }
     }
-    // V28, B8: under v5 on a phone the same pages in a v5 sheet, their pieces drawn the v5 way.
-    if (rememberDrawsV5()) {
-        VolaV5Theme(dark = MaterialTheme.colorScheme.background.luminance() < SITE_INFO_DARK_LUMINANCE) {
-            CompositionLocalProvider(LocalSiteInfoV5 provides true) {
-                V5WindowSheet(
-                    visible = true,
-                    onDismiss = onDismiss,
-                    title = title,
-                    modifier = Modifier.testTag(PrivacyXRayTestTags.Sheet),
-                ) {
-                    V5SheetHeader(title = title, onClose = onDismiss)
-                    pages()
-                }
-            }
-        }
-    } else ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = wideWindow),
-        modifier = Modifier
-            .testTag(PrivacyXRayTestTags.Sheet)
-            .semantics { paneTitle = title },
-        containerColor = Color.Transparent,
-        dragHandle = {
-            CandyChromeSurface(
-                backdropSource = backdropSource,
-                tokens = chromeTokens,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RectangleShape,
-                blurCornerRadius = 0.dp,
+    // V28, B8: the pages in a v5 sheet, their pieces drawn the v5 way.
+    VolaV5Theme(dark = MaterialTheme.colorScheme.background.luminance() < SITE_INFO_DARK_LUMINANCE) {
+        CompositionLocalProvider(LocalSiteInfoV5 provides true) {
+            V5WindowSheet(
+                visible = true,
+                onDismiss = onDismiss,
+                title = title,
+                modifier = Modifier.testTag(PrivacyXRayTestTags.Sheet),
             ) {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    BottomSheetDefaults.DragHandle()
-                }
+                V5SheetHeader(title = title, onClose = onDismiss)
+                pages()
             }
-        },
-    ) {
-        CandyChromeSurface(
-            backdropSource = backdropSource,
-            tokens = chromeTokens,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RectangleShape,
-            blurCornerRadius = 0.dp,
-        ) {
-            Column { pages() }
         }
     }
 
-    if (pauseWarningVisible && rememberDrawsV5()) {
+    if (pauseWarningVisible) {
         val pause = { persistent: Boolean ->
             pauseWarningVisible = false
             view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
             onPause(persistent)
         }
-        // Under v5 the question is the v5 prompt sheet: both answers turn protection off, so red.
+        // The question is the v5 prompt sheet: both answers turn protection off, so red.
         V5PromptTheme {
             V5PromptSheet(
                 visible = true,
@@ -303,51 +241,6 @@ internal fun PrivacyXRaySheet(
                 testTag = PrivacyXRayTestTags.Warning,
             )
         }
-    } else if (pauseWarningVisible) {
-        AlertDialog(
-            onDismissRequest = { pauseWarningVisible = false },
-            modifier = Modifier.testTag(PrivacyXRayTestTags.Warning),
-            title = { Text(stringResource(R.string.privacy_pause_warning_title)) },
-            text = {
-                Text(
-                    stringResource(
-                        R.string.privacy_pause_warning_message,
-                        siteState.host.orEmpty(),
-                    ),
-                )
-            },
-            confirmButton = {
-                Column(horizontalAlignment = Alignment.End) {
-                    TextButton(
-                        onClick = {
-                            pauseWarningVisible = false
-                            view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
-                            onPause(false)
-                        },
-                        modifier = Modifier.testTag(PrivacyXRayTestTags.PauseTemporary),
-                    ) {
-                        Text(stringResource(R.string.privacy_pause_temporary))
-                    }
-                    if (siteState.canPersist) {
-                        TextButton(
-                            onClick = {
-                                pauseWarningVisible = false
-                                view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
-                                onPause(true)
-                            },
-                            modifier = Modifier.testTag(PrivacyXRayTestTags.PausePersistent),
-                        ) {
-                            Text(stringResource(R.string.privacy_pause_persistent))
-                        }
-                    }
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { pauseWarningVisible = false }) {
-                    Text(stringResource(R.string.action_cancel))
-                }
-            },
-        )
     }
 }
 

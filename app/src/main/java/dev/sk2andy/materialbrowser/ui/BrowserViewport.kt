@@ -69,7 +69,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
@@ -102,11 +101,9 @@ import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.BrowserPullToRefreshRules
 import dev.sk2andy.materialbrowser.browser.BrowserTab
-import dev.sk2andy.materialbrowser.browser.FindInPageRules
 import dev.sk2andy.materialbrowser.browser.ExternalLinkPreviewCommitResult
 import dev.sk2andy.materialbrowser.browser.ExternalLinkPreviewState
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
-import dev.sk2andy.materialbrowser.ui.theme.browserChromeSurfaceTokens
 import eightbitlab.com.blurview.BlurTarget
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
@@ -121,7 +118,6 @@ internal fun ExternalLinkPreviewScreen(
 ) {
     var rootBottomInWindowPx by remember { mutableIntStateOf(0) }
     var blurTarget by remember { mutableStateOf<BlurTarget?>(null) }
-    val drawsV5 = rememberDrawsV5()
     val context = LocalContext.current
     val fullWindowHeightPx = remember(context) {
         context.getSystemService(WindowManager::class.java).currentWindowMetrics.bounds.height()
@@ -158,9 +154,9 @@ internal fun ExternalLinkPreviewScreen(
                 if (blurTarget === target) blurTarget = null
             },
         )
-        // Under v5 on a phone, find takes the bar's place as in the browser (canvas «с1»).
-        val findV5 = drawsV5 && controller.findInPageState != null
-        controller.findInPageState?.takeIf { drawsV5 }?.let { findState ->
+        // Find takes the bar's place as in the browser (canvas «с1»).
+        val findV5 = controller.findInPageState != null
+        controller.findInPageState?.let { findState ->
             BrowserFindInPage(
                 controller = controller,
                 findState = findState,
@@ -168,34 +164,6 @@ internal fun ExternalLinkPreviewScreen(
                 fullWindowHeightPx = fullWindowHeightPx,
                 rootBottomInWindowPx = rootBottomInWindowPx,
                 modifier = Modifier.align(Alignment.BottomCenter),
-            )
-        }
-        controller.findInPageState?.takeIf { !drawsV5 }?.let { findState ->
-            val matchPosition = FindInPageRules.displayPosition(findState)
-            FindInPageBar(
-                query = findState.query,
-                onQueryChange = controller::updateFindInPageQuery,
-                matchText = findInPageMatchText(matchPosition),
-                isCounting = findState.query.isNotEmpty() && !findState.isDoneCounting,
-                canNavigate = FindInPageRules.canNavigate(findState),
-                focusNonce = 0,
-                autoFocus = true,
-                placeholder = stringResource(R.string.action_find_in_page),
-                queryContentDescription = stringResource(R.string.cd_find_in_page_query),
-                countingContentDescription = stringResource(R.string.cd_find_in_page_counting),
-                previousMatchContentDescription = stringResource(
-                    R.string.cd_find_in_page_previous,
-                ),
-                nextMatchContentDescription = stringResource(R.string.cd_find_in_page_next),
-                closeContentDescription = stringResource(R.string.cd_find_in_page_close),
-                onPreviousMatch = { controller.findNextInPage(forward = false) },
-                onNextMatch = { controller.findNextInPage(forward = true) },
-                onClose = controller::closeFindInPage,
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .statusBarsPadding()
-                    .padding(12.dp)
-                    .zIndex(25f),
             )
         }
         if (!findV5) ExternalLinkPreviewChrome(
@@ -337,8 +305,6 @@ internal fun BrowserViewport(
     tabOverviewVisible: Boolean,
     onLiveFrame: (String) -> Unit,
     onFavorite: (String) -> Unit,
-    blankTabModeProgress: Float,
-    blankTabModeRevealOrigin: Offset,
     onRetry: () -> Boolean,
     onBlurTargetAttached: (BlurTarget) -> Unit,
     onBlurTargetReleased: (BlurTarget) -> Unit,
@@ -522,7 +488,6 @@ internal fun BrowserViewport(
         // Read here, outside the blur target: its nested ComposeView gets no window insets, so a
         // new tab measured inside it ran under the status bar while the chrome was frosted.
         val newTabSafeDrawingPadding = WindowInsets.safeDrawing.asPaddingValues()
-        val newTabSystemBarsPadding = WindowInsets.systemBars.asPaddingValues()
         val newTabBottomPadding = NewTabLayoutRules.bottomContentPadding(
             addressBarDocked = controller.addressBar.isDocked && controller.addressBar.isDockingEnabled,
             addressBarHeight = addressBarExpandedHeight(controller.appearanceSettings.addressBarStyle),
@@ -549,52 +514,57 @@ internal fun BrowserViewport(
                             controller.protectionReport.refresh()
                         }
                     }
-                    NewTabPage(
-                        essentials = essentials.entriesFor(profileId),
-                        essentialIcons = essentials.iconsByUrl,
-                        incognito = selectedTab.isIncognito,
-                        modeProgress = blankTabModeProgress,
-                        revealOriginInRoot = blankTabModeRevealOrigin,
-                        onOpenEssential = onFavorite,
-                        editor = rememberNewTabEssentialsEditor(controller, profileId),
-                        explicitSafeDrawingPadding = newTabSafeDrawingPadding,
-                        explicitSystemBarsPadding = newTabSystemBarsPadding,
-                        bottomContentPadding = newTabBottomPadding,
-                        privateTab = NewTabPrivate(
-                            storage = PrivateTabRules.storage(
-                                engine = controller.browserEngineKind,
-                                profilesSupported = controller.isProfileIsolationSupported,
-                            ),
-                            count = controller.tabs.count(BrowserTab::isIncognito),
-                            onCloseAll = { controller.closeAllPrivateTabs() },
-                            lock = controller.privateTabLockRow(),
-                        ),
-                        protection = controller.protectionReport.takeIf { it.isCardVisible }?.let { report ->
-                            NewTabProtection(
-                                week = report.week,
-                                onClear = report::clear,
-                                onHideCard = { report.updateCardVisible(false) },
-                                summary = report::summary,
-                            )
-                        },
-                        recentTabs = controller.activeTabs
-                            .filter { tab ->
-                                tab.id != selectedTab.id &&
-                                    !tab.isIncognito &&
-                                    tab.url != BLANK_URL
-                            }
-                            .sortedByDescending(BrowserTab::lastAccessedAt)
-                            .take(NEW_TAB_RECENT_TAB_COUNT),
-                        recentTabFavicons = controller.favicons,
-                        onRecentTab = controller::selectTab,
-                        // The tab's own workspace, synced ones included; a workspace without a
-                        // name of its own shows its localized default.
-                        title = controller.profiles
-                            .firstOrNull { profile -> profile.id == profileId }
-                            ?.workspaceDisplayName(),
-                        titleIconKey = controller.profiles.firstOrNull { profile -> profile.id == profileId }?.emoji,
-                        fresh = rememberNewTabFreshStart(controller, profileId, selectedTab.id),
+                    val newTabPadding = PaddingValues(
+                        top = newTabSafeDrawingPadding.calculateTopPadding(),
+                        bottom = newTabSafeDrawingPadding.calculateBottomPadding() + newTabBottomPadding,
                     )
+                    // The regular new tab (V13a) or the private one (V14a).
+                    if (selectedTab.isIncognito) {
+                        BrowserPrivateNewTabV5(
+                            privateTab = NewTabPrivate(
+                                storage = PrivateTabRules.storage(
+                                    engine = controller.browserEngineKind,
+                                    profilesSupported = controller.isProfileIsolationSupported,
+                                ),
+                                count = controller.tabs.count(BrowserTab::isIncognito),
+                                onCloseAll = { controller.closeAllPrivateTabs() },
+                                lock = controller.privateTabLockRow(),
+                            ),
+                            contentPadding = newTabPadding,
+                        )
+                    } else {
+                        val profile = controller.profiles.firstOrNull { it.id == profileId }
+                        BrowserNewTabV5(
+                            essentials = essentials.entriesFor(profileId),
+                            essentialIcons = essentials.iconsByUrl,
+                            onOpenEssential = onFavorite,
+                            editor = rememberNewTabEssentialsEditor(controller, profileId),
+                            // The tab's own workspace, synced ones included; a workspace without a
+                            // name of its own shows its localized default.
+                            profileLabel = profile?.workspaceDisplayName(),
+                            profileIconKey = profile?.emoji,
+                            recentTabs = controller.activeTabs
+                                .filter { tab ->
+                                    tab.id != selectedTab.id &&
+                                        !tab.isIncognito &&
+                                        tab.url != BLANK_URL
+                                }
+                                .sortedByDescending(BrowserTab::lastAccessedAt)
+                                .take(NEW_TAB_RECENT_TAB_COUNT),
+                            recentTabFavicons = controller.favicons,
+                            onRecentTab = controller::selectTab,
+                            protection = controller.protectionReport.takeIf { it.isCardVisible }?.let { report ->
+                                NewTabProtection(
+                                    week = report.week,
+                                    onClear = report::clear,
+                                    onHideCard = { report.updateCardVisible(false) },
+                                    summary = report::summary,
+                                )
+                            },
+                            contentPadding = newTabPadding,
+                            fresh = rememberNewTabFreshStart(controller, profileId, selectedTab.id),
+                        )
+                    }
                 }
             }
         }
@@ -776,8 +746,7 @@ private fun ActiveBrowserEngineView(
     LaunchedEffect(selectedTabId, isLoading) {
         if (!isLoading) pullRefreshRequested = false
     }
-    // V16: under v5 the page itself is pulled (BrowserPullRefreshV5.kt).
-    val pullV5 = rememberPullRefreshV5()
+    // V16: the page itself is pulled (BrowserPullRefreshV5.kt).
     val pullV5State = rememberV5PullRefresh(selectedTabId, isLoading, refreshIndicatorTopInsetPx)
     val indicatorColor = MaterialTheme.colorScheme.primary.toArgb()
     val indicatorContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh.toArgb()
@@ -785,14 +754,14 @@ private fun ActiveBrowserEngineView(
     val currentOnLiveFrame by rememberUpdatedState(onLiveFrame)
     val currentOnBlurTargetAttached by rememberUpdatedState(onBlurTargetAttached)
     val currentOnBlurTargetReleased by rememberUpdatedState(onBlurTargetReleased)
-    key(browserContentBlurEnabled, pullV5) {
+    key(browserContentBlurEnabled) {
         AndroidView(
             factory = { context ->
                 StatusBarStaticOverlayHost(
                     context = context,
                     browserContentBlurEnabled = browserContentBlurEnabled,
                     pullToRefreshEnabled = true,
-                    v5Pull = pullV5,
+                    v5Pull = true,
                 ).apply {
                     tag = BrowserEngineViewHostState(contentContainer)
                 }
@@ -876,14 +845,12 @@ private fun ActiveBrowserEngineView(
             modifier = Modifier.fillMaxSize(),
         )
     }
-    if (pullV5) {
-        V5PullRefreshOverlay(
-            state = pullV5State,
-            siteColorRgb = controller.selectedSiteThemeColor,
-            privateBrowsing = controller.selectedTab.isIncognito,
-            topInsetPx = refreshIndicatorTopInsetPx,
-        )
-    }
+    V5PullRefreshOverlay(
+        state = pullV5State,
+        siteColorRgb = controller.selectedSiteThemeColor,
+        privateBrowsing = controller.selectedTab.isIncognito,
+        topInsetPx = refreshIndicatorTopInsetPx,
+    )
 }
 
 private class BrowserEngineViewHostState(val container: FrameLayout) {
@@ -1134,7 +1101,6 @@ internal fun BlankTabPreview(
     essentials: EssentialsController? = null,
     essentialsAlpha: () -> Float,
 ) {
-    val drawsV5 = rememberDrawsV5()
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
     val rootView = LocalView.current
@@ -1179,37 +1145,22 @@ internal fun BlankTabPreview(
                     transformOrigin = TransformOrigin(0f, 0f)
                 },
         ) {
-            // While tabs are swiped under v5, a new tab next door previews as the v5 page it opens to.
-            if (drawsV5) {
-                BrowserNewTabV5(
-                    essentials = essentials?.entriesFor(profileId).orEmpty(),
-                    essentialIcons = essentials?.iconsByUrl.orEmpty(),
-                    onOpenEssential = {},
-                    editor = null,
-                    profileLabel = null,
-                    profileIconKey = null,
-                    recentTabs = emptyList(),
-                    recentTabFavicons = emptyMap(),
-                    onRecentTab = {},
-                    protection = null,
-                    contentPadding = PaddingValues(
-                        top = rootSafeDrawingPadding.calculateTopPadding(),
-                        bottom = rootSafeDrawingPadding.calculateBottomPadding(),
-                    ),
-                )
-                return@Box
-            }
-            NewTabPage(
+            // While tabs are swiped, a new tab next door previews as the v5 page it opens to.
+            BrowserNewTabV5(
                 essentials = essentials?.entriesFor(profileId).orEmpty(),
                 essentialIcons = essentials?.iconsByUrl.orEmpty(),
-                incognito = false,
-                modeProgress = 0f,
-                revealOriginInRoot = Offset.Zero,
                 onOpenEssential = {},
-                interactive = false,
-                essentialsAlpha = essentialsAlpha,
-                explicitSafeDrawingPadding = rootSafeDrawingPadding,
-                explicitSystemBarsPadding = rootSystemBarsPadding,
+                editor = null,
+                profileLabel = null,
+                profileIconKey = null,
+                recentTabs = emptyList(),
+                recentTabFavicons = emptyMap(),
+                onRecentTab = {},
+                protection = null,
+                contentPadding = PaddingValues(
+                    top = rootSafeDrawingPadding.calculateTopPadding(),
+                    bottom = rootSafeDrawingPadding.calculateBottomPadding(),
+                ),
             )
         }
     }

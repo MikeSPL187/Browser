@@ -28,7 +28,6 @@ import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
-import dev.sk2andy.materialbrowser.ui.theme.VolaMotion
 import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
@@ -45,7 +44,6 @@ internal object PageErrorFeedbackTestTags {
     const val Retry = "page_error_retry"
     const val RetryProgress = "page_error_retry_progress"
     const val Offline = "page_error_offline"
-    const val NetworkSettings = "page_error_network_settings"
     const val CheckWifi = "page_error_check_wifi"
     const val CheckCellular = "page_error_check_cellular"
     const val Search = "page_error_search"
@@ -62,10 +60,8 @@ internal fun PageErrorFeedback(
     /** Searches the typed words instead: a name that does not exist is rarely meant as an address. */
     onSearch: ((String) -> Unit)? = null,
 ) {
-    // Under v5 the page fades on V5Motion's springs, and only fades quickly with system animations off.
-    val v5 = rememberDrawsV5()
+    // The page fades on V5Motion's springs, and only fades quickly with system animations off.
     val fade: FiniteAnimationSpec<Float> = when {
-        !v5 -> VolaMotion.effects()
         V5Motion.animationsEnabled -> V5Motion.effects.spec()
         else -> V5Motion.reducedFade()
     }
@@ -198,17 +194,16 @@ private fun InsecureConnectionPage(host: String, onBack: (() -> Unit)?, onRetry:
 }
 
 /**
- * No connection (board W-Offline): the page reloads by itself when the connection is back. Under
- * v5 (canvas «Error») the glyph waits inside rings, the sentence names the site, and «What to check»
+ * No connection (board W-Offline): the page reloads by itself when the connection is back. The
+ * glyph waits inside rings (canvas «Error»), the sentence names the site, and «What to check»
  * says how Wi-Fi and the mobile network stand, each opening its system panel.
  */
 @Composable
 private fun OfflinePage(host: String, onRetry: () -> Unit) {
     val context = LocalContext.current
-    val v5 = rememberDrawsV5()
     VolaStatePage(
         title = stringResource(R.string.page_error_offline_title),
-        message = if (v5 && host.isNotBlank()) {
+        message = if (host.isNotBlank()) {
             stringResource(R.string.page_error_offline_body_host, host)
         } else {
             stringResource(R.string.page_error_offline_body)
@@ -216,21 +211,12 @@ private fun OfflinePage(host: String, onRetry: () -> Unit) {
         icon = { VolaStatePageWaves(icon = VolaIcons.WifiOff) },
         modifier = Modifier.testTag(PageErrorFeedbackTestTags.Offline),
         announce = true,
-        details = if (v5) {
-            { NetworkChecksGroup(rememberNetworkChecks(), onOpen = { panel -> context.openPanel(panel) }) }
-        } else {
-            null
+        details = {
+            NetworkChecksGroup(rememberNetworkChecks(), onOpen = { panel -> context.openPanel(panel) })
         },
     ) {
         RetryButton(onRetry = onRetry)
-        // Under v5 the rows of «What to check» open the system panels themselves.
-        if (!v5) {
-            VolaStatePageSecondaryButton(
-                text = stringResource(R.string.page_error_network_settings),
-                onClick = { context.openPanel(Settings.Panel.ACTION_INTERNET_CONNECTIVITY) },
-                modifier = Modifier.testTag(PageErrorFeedbackTestTags.NetworkSettings),
-            )
-        }
+        // The rows of «What to check» open the system panels themselves.
     }
 }
 

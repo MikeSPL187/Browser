@@ -4,18 +4,6 @@ import dev.sk2andy.materialbrowser.ui.v5.V5NameField
 import dev.sk2andy.materialbrowser.ui.v5.V5PromptAction
 import dev.sk2andy.materialbrowser.ui.v5.V5PromptRole
 import dev.sk2andy.materialbrowser.ui.v5.V5PromptSheet
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,12 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.credentials.HttpAuthPrompt
 
@@ -42,162 +25,52 @@ internal fun HttpAuthPromptDialog(
     var password by remember(prompt.id) { mutableStateOf("") }
     var passwordVisible by remember(prompt.id) { mutableStateOf(false) }
     // V28, B9b: under v5 on a phone the one v5 prompt sheet with the two fields; closing it cancels.
-    if (rememberDrawsV5()) {
-        val message = stringResource(
-            if (prompt.isProxy) R.string.http_auth_proxy_dialog_message else R.string.http_auth_dialog_message,
-            prompt.host,
-        )
-        val realm = prompt.realm?.let { stringResource(R.string.http_auth_dialog_realm, it) }
-        val insecure = stringResource(
-            if (prompt.isProxy) R.string.http_auth_proxy_insecure_warning else R.string.http_auth_dialog_insecure_warning,
-        ).takeUnless { prompt.isPageSecure }
-        V5PromptTheme {
-            V5PromptSheet(
-                visible = true,
-                title = stringResource(
-                    if (prompt.isProxy) R.string.http_auth_proxy_dialog_title else R.string.http_auth_dialog_title,
-                ),
-                message = listOfNotNull(message, realm, insecure).joinToString("\n\n"),
-                actions = listOf(
-                    V5PromptAction(
-                        stringResource(R.string.http_auth_sign_in),
-                        { onSubmit(username, password) },
-                        V5PromptRole.Primary,
-                        HttpAuthPromptTestTags.Submit,
-                    ),
-                ),
-                onDismiss = onCancel,
-                testTag = HttpAuthPromptTestTags.Dialog,
-            ) {
-                V5NameField(
-                    value = username,
-                    placeholder = stringResource(R.string.http_auth_username),
-                    onValueChange = { username = it },
-                    onDone = {},
-                    maxLength = MAX_HTTP_AUTH_USERNAME_LENGTH,
-                    modifier = Modifier.testTag(HttpAuthPromptTestTags.Username),
-                    capitalize = false,
-                )
-                V5NameField(
-                    value = password,
-                    placeholder = stringResource(R.string.http_auth_password),
-                    onValueChange = { password = it },
-                    onDone = { onSubmit(username, password) },
-                    maxLength = MAX_HTTP_AUTH_PASSWORD_LENGTH,
-                    modifier = Modifier.testTag(HttpAuthPromptTestTags.Password),
-                    password = true,
-                )
-            }
-        }
-        return
-    }
-    AlertDialog(
-        onDismissRequest = onCancel,
-        modifier = Modifier.testTag(HttpAuthPromptTestTags.Dialog),
-        title = {
-            Text(
-                stringResource(
-                    if (prompt.isProxy) {
-                        R.string.http_auth_proxy_dialog_title
-                    } else {
-                        R.string.http_auth_dialog_title
-                    },
-                ),
-            )
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(
-                    stringResource(
-                        if (prompt.isProxy) {
-                            R.string.http_auth_proxy_dialog_message
-                        } else {
-                            R.string.http_auth_dialog_message
-                        },
-                        prompt.host,
-                    ),
-                )
-                prompt.realm?.let { realm ->
-                    Text(
-                        stringResource(R.string.http_auth_dialog_realm, realm),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                if (!prompt.isPageSecure) {
-                    Text(
-                        stringResource(
-                            if (prompt.isProxy) {
-                                R.string.http_auth_proxy_insecure_warning
-                            } else {
-                                R.string.http_auth_dialog_insecure_warning
-                            },
-                        ),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
-                OutlinedTextField(
-                    value = username,
-                    onValueChange = { value -> username = value.take(MAX_HTTP_AUTH_USERNAME_LENGTH) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag(HttpAuthPromptTestTags.Username),
-                    label = { Text(stringResource(R.string.http_auth_username)) },
-                    singleLine = true,
-                )
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { value -> password = value.take(MAX_HTTP_AUTH_PASSWORD_LENGTH) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag(HttpAuthPromptTestTags.Password),
-                    label = { Text(stringResource(R.string.http_auth_password)) },
-                    trailingIcon = {
-                        val visibilityDescription = stringResource(
-                            if (passwordVisible) {
-                                R.string.http_auth_hide_password
-                            } else {
-                                R.string.http_auth_show_password
-                            },
-                        )
-                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                            Icon(
-                                painter = painterResource(
-                                    if (passwordVisible) {
-                                        R.drawable.ic_visibility_off
-                                    } else {
-                                        R.drawable.ic_visibility
-                                    },
-                                ),
-                                contentDescription = visibilityDescription,
-                            )
-                        }
-                    },
-                    singleLine = true,
-                    visualTransformation = if (passwordVisible) {
-                        VisualTransformation.None
-                    } else {
-                        PasswordVisualTransformation()
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = { onSubmit(username, password) },
-                modifier = Modifier.testTag(HttpAuthPromptTestTags.Submit),
-            ) {
-                Text(stringResource(R.string.http_auth_sign_in))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onCancel) {
-                Text(stringResource(R.string.action_cancel))
-            }
-        },
+    val message = stringResource(
+        if (prompt.isProxy) R.string.http_auth_proxy_dialog_message else R.string.http_auth_dialog_message,
+        prompt.host,
     )
+    val realm = prompt.realm?.let { stringResource(R.string.http_auth_dialog_realm, it) }
+    val insecure = stringResource(
+        if (prompt.isProxy) R.string.http_auth_proxy_insecure_warning else R.string.http_auth_dialog_insecure_warning,
+    ).takeUnless { prompt.isPageSecure }
+    V5PromptTheme {
+        V5PromptSheet(
+            visible = true,
+            title = stringResource(
+                if (prompt.isProxy) R.string.http_auth_proxy_dialog_title else R.string.http_auth_dialog_title,
+            ),
+            message = listOfNotNull(message, realm, insecure).joinToString("\n\n"),
+            actions = listOf(
+                V5PromptAction(
+                    stringResource(R.string.http_auth_sign_in),
+                    { onSubmit(username, password) },
+                    V5PromptRole.Primary,
+                    HttpAuthPromptTestTags.Submit,
+                ),
+            ),
+            onDismiss = onCancel,
+            testTag = HttpAuthPromptTestTags.Dialog,
+        ) {
+            V5NameField(
+                value = username,
+                placeholder = stringResource(R.string.http_auth_username),
+                onValueChange = { username = it },
+                onDone = {},
+                maxLength = MAX_HTTP_AUTH_USERNAME_LENGTH,
+                modifier = Modifier.testTag(HttpAuthPromptTestTags.Username),
+                capitalize = false,
+            )
+            V5NameField(
+                value = password,
+                placeholder = stringResource(R.string.http_auth_password),
+                onValueChange = { password = it },
+                onDone = { onSubmit(username, password) },
+                maxLength = MAX_HTTP_AUTH_PASSWORD_LENGTH,
+                modifier = Modifier.testTag(HttpAuthPromptTestTags.Password),
+                password = true,
+            )
+        }
+    }
 }
 
 internal object HttpAuthPromptTestTags {

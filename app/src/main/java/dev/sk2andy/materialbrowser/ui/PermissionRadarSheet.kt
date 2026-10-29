@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
@@ -25,7 +24,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -56,7 +54,6 @@ import dev.sk2andy.materialbrowser.browser.permissions.SitePermission
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionActivity
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
-import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 import dev.sk2andy.materialbrowser.ui.v5.V5SheetHeader
 import dev.sk2andy.materialbrowser.ui.v5.V5WindowSheet
 import kotlinx.coroutines.delay
@@ -73,49 +70,27 @@ internal fun PermissionRadarSheet(
 ) {
     // Opened from settings under v5 on a phone: the v5 sheet with the radar's v5 content, as the
     // site information sheet shows it (V28, B8).
-    if (rememberDrawsV5()) {
-        val title = stringResource(R.string.permission_radar_title)
-        V5PromptTheme {
-            CompositionLocalProvider(LocalSiteInfoV5 provides true) {
-                V5WindowSheet(
-                    visible = true,
-                    onDismiss = onDismiss,
-                    title = title,
-                    modifier = Modifier.testTag(PermissionRadarTestTags.Sheet),
-                ) {
-                    V5SheetHeader(title = title, onClose = onDismiss)
-                    PermissionRadarContent(
-                        snapshot = snapshot,
-                        workspaceName = workspaceName,
-                        supportedPermissions = supportedPermissions,
-                        onOriginSelected = onOriginSelected,
-                        onDecisionChanged = onDecisionChanged,
-                        onResetSite = onResetSite,
-                        modifier = Modifier.verticalScroll(rememberScrollState()),
-                    )
-                }
+    val title = stringResource(R.string.permission_radar_title)
+    V5PromptTheme {
+        CompositionLocalProvider(LocalSiteInfoV5 provides true) {
+            V5WindowSheet(
+                visible = true,
+                onDismiss = onDismiss,
+                title = title,
+                modifier = Modifier.testTag(PermissionRadarTestTags.Sheet),
+            ) {
+                V5SheetHeader(title = title, onClose = onDismiss)
+                PermissionRadarContent(
+                    snapshot = snapshot,
+                    workspaceName = workspaceName,
+                    supportedPermissions = supportedPermissions,
+                    onOriginSelected = onOriginSelected,
+                    onDecisionChanged = onDecisionChanged,
+                    onResetSite = onResetSite,
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                )
             }
         }
-        return
-    }
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        modifier = Modifier.testTag(PermissionRadarTestTags.Sheet),
-        containerColor = browserChromeColor(MaterialTheme.colorScheme.surfaceContainerLow),
-    ) {
-        PermissionRadarContent(
-            snapshot = snapshot,
-            workspaceName = workspaceName,
-            supportedPermissions = supportedPermissions,
-            onOriginSelected = onOriginSelected,
-            onDecisionChanged = onDecisionChanged,
-            onResetSite = onResetSite,
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .verticalScroll(rememberScrollState())
-                .padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
-        )
     }
 }
 

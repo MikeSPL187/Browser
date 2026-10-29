@@ -12,21 +12,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
@@ -47,12 +38,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -151,230 +140,25 @@ internal fun FilterStudioScreen(
     onExport: () -> String,
     onDismiss: () -> Unit,
 ) {
-    if (rememberSettingsUiV5()) {
-        FilterStudioV5(
-            rules = rules,
-            subscriptionRules = subscriptionRules,
-            isIncognito = isIncognito,
-            profiles = profiles,
-            currentProfileId = currentProfileId,
-            currentUrl = currentUrl,
-            recentDomain = recentDomain,
-            selectedRuleId = selectedRuleId,
-            onTest = onTest,
-            onAdd = onAdd,
-            onUpdate = onUpdate,
-            onToggle = onToggle,
-            onDelete = onDelete,
-            onParseImport = onParseImport,
-            onApplyImport = onApplyImport,
-            onApplySubscription = onApplySubscription,
-            onExport = onExport,
-            onDismiss = onDismiss,
-        )
-        return
-    }
-    var query by rememberSaveable { mutableStateOf("") }
-    var typeFilter by rememberSaveable { mutableStateOf(StudioTypeFilter.All) }
-    var profileOnly by rememberSaveable { mutableStateOf(false) }
-    var liveInput by rememberSaveable(recentDomain, currentUrl) {
-        mutableStateOf(recentDomain.orEmpty().ifBlank { currentUrl })
-    }
-    var liveDecision by remember { mutableStateOf<CandyRuleDecision?>(null) }
-    val dialogs = remember { FilterStudioDialogState() }
-    val listState = rememberLazyListState()
-    val view = LocalView.current
-    val filtered = remember(rules, query, typeFilter, profileOnly, currentProfileId) {
-        filterStudioRules(rules, query, typeFilter, profileOnly, currentProfileId)
-    }
-    LaunchedEffect(selectedRuleId, filtered.map(CandyRule::id)) {
-        val index = filtered.indexOfFirst { it.id == selectedRuleId }
-        if (index >= 0) listState.animateScrollToItem(RULE_ITEMS_START_INDEX + index)
-    }
-
-    Surface(
-        modifier = Modifier
-            .fillMaxSize()
-            .testTag(FilterStudioTestTags.Screen),
-        color = MaterialTheme.colorScheme.surface,
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding()
-                .padding(horizontal = 20.dp),
-        ) {
-            Row(
-                modifier = Modifier.padding(top = 6.dp, bottom = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IconButton(onClick = onDismiss) {
-                    Icon(
-                        VolaIcons.ArrowBack,
-                        contentDescription = stringResource(R.string.action_back),
-                    )
-                }
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        stringResource(R.string.filter_studio_title),
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        stringResource(R.string.filter_studio_subtitle),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .testTag(FilterStudioTestTags.Body),
-                state = listState,
-                contentPadding = PaddingValues(bottom = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                item {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(
-                            onClick = { dialogs.addVisible = true },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .sizeIn(minHeight = 52.dp)
-                                .testTag(FilterStudioTestTags.Add),
-                            shape = RoundedCornerShape(18.dp),
-                        ) {
-                            Icon(VolaIcons.Add, contentDescription = null)
-                            Spacer(Modifier.width(8.dp))
-                            Text(stringResource(R.string.filter_add_rule))
-                        }
-                        Text(
-                            stringResource(R.string.filter_add_rule_explanation),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-                item {
-                    StudioSectionHeader(title = stringResource(R.string.filter_rules_section))
-                }
-                item {
-                    OutlinedTextField(
-                        value = query,
-                        onValueChange = { query = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag(FilterStudioTestTags.Search),
-                        leadingIcon = { Icon(VolaIcons.Search, contentDescription = null) },
-                        label = { Text(stringResource(R.string.filter_search)) },
-                        singleLine = true,
-                        shape = RoundedCornerShape(22.dp),
-                    )
-                }
-                item {
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        StudioTypeFilter.entries.forEach { filter ->
-                            FilterChip(
-                                selected = typeFilter == filter,
-                                onClick = { typeFilter = filter },
-                                label = { Text(filter.label()) },
-                            )
-                        }
-                        FilterChip(
-                            selected = profileOnly,
-                            onClick = { profileOnly = !profileOnly },
-                            label = { Text(stringResource(R.string.filter_scope_profile)) },
-                        )
-                    }
-                }
-                item {
-                    StudioSectionHeader(title = stringResource(R.string.filter_test_section))
-                }
-                item {
-                    FilterLiveTestCard(
-                        liveInput = liveInput,
-                        onInputChanged = { liveInput = it },
-                        decision = liveDecision,
-                        onTest = {
-                            liveDecision = onTest(liveInput)
-                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                        },
-                    )
-                }
-                item {
-                    StudioSectionHeader(title = stringResource(R.string.filter_tools_section))
-                }
-                item {
-                    BuiltInProtectionCard()
-                }
-                item {
-                    RuleTransferCard(
-                        onImport = { dialogs.importVisible = true },
-                        onExport = { dialogs.exportVisible = true },
-                    )
-                }
-                item {
-                    WebFilterListCard(onOpen = { dialogs.subscriptionVisible = true })
-                }
-                item {
-                    StudioSectionHeader(
-                        title = stringResource(R.string.filter_rule_results_section),
-                        trailing = stringResource(R.string.filter_rules_count, filtered.size),
-                    )
-                }
-                if (filtered.isEmpty()) {
-                    item {
-                        StudioEmptyState(
-                            title = stringResource(
-                                if (rules.isEmpty()) {
-                                    R.string.filter_empty_title
-                                } else {
-                                    R.string.filter_no_results_title
-                                },
-                            ),
-                            body = stringResource(
-                                if (rules.isEmpty()) {
-                                    R.string.filter_empty_body
-                                } else {
-                                    R.string.filter_no_results_body
-                                },
-                            ),
-                            actionVisible = rules.isEmpty(),
-                            onAdd = { dialogs.addVisible = true },
-                        )
-                    }
-                } else {
-                    items(filtered, key = CandyRule::id) { rule ->
-                        FilterRuleCard(
-                            rule = rule,
-                            profileLabel = rule.profileId?.let { id ->
-                                profiles.firstOrNull { it.id == id }?.workspaceDisplayName() ?: id
-                            } ?: stringResource(R.string.filter_scope_global),
-                            selected = rule.id == selectedRuleId,
-                            onToggle = { onToggle(rule.id, it) },
-                            onEdit = { dialogs.editingRule = rule },
-                            onDelete = { onDelete(rule.id) },
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    FilterStudioDialogs(
-        dialogs = dialogs,
+    FilterStudioV5(
+        rules = rules,
         subscriptionRules = subscriptionRules,
         isIncognito = isIncognito,
         profiles = profiles,
         currentProfileId = currentProfileId,
+        currentUrl = currentUrl,
+        recentDomain = recentDomain,
+        selectedRuleId = selectedRuleId,
+        onTest = onTest,
         onAdd = onAdd,
         onUpdate = onUpdate,
+        onToggle = onToggle,
+        onDelete = onDelete,
         onParseImport = onParseImport,
         onApplyImport = onApplyImport,
         onApplySubscription = onApplySubscription,
         onExport = onExport,
+        onDismiss = onDismiss,
     )
 }
 

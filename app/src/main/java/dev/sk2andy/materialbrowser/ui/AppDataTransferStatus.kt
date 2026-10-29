@@ -1,7 +1,5 @@
 package dev.sk2andy.materialbrowser.ui
 
-import android.view.Gravity
-import android.widget.TextView
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -24,7 +22,6 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.viewinterop.AndroidView
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
@@ -51,20 +48,6 @@ internal data class AppDataTransferStatusState(
  */
 @Composable
 internal fun AppDataTransferStatus(state: AppDataTransferStatusState) {
-    if (!rememberDrawsV5()) {
-        val text = stringResource(state.message)
-        AndroidView(
-            factory = { context ->
-                TextView(context).apply {
-                    gravity = Gravity.CENTER
-                    textSize = LEGACY_TEXT_SP
-                }
-            },
-            update = { view -> view.text = text },
-            modifier = Modifier.fillMaxSize().testTag(AppDataTransferStatusTestTags.Screen),
-        )
-        return
-    }
     AppDataTransferStatusV5(state)
 }
 

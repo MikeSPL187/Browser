@@ -1,12 +1,10 @@
 package dev.sk2andy.materialbrowser.ui
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -18,11 +16,8 @@ import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
@@ -31,11 +26,8 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionActionKey
@@ -66,65 +58,23 @@ internal fun FirefoxExtensionOptionsTopBar(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (rememberDrawsV5()) {
-        // Under v5 the options page is a page of Vola's own: the v5 bar over it.
-        V5PromptTheme {
-            V5PageBar(
-                title = title,
-                onBack = onBack,
-                modifier = modifier
-                    .background(V5Theme.colors.background)
-                    .statusBarsPadding()
-                    .testTag(FirefoxExtensionChromeTestTags.OptionsTopBar),
-            )
-        }
-        return
+    // Under v5 the options page is a page of Vola's own: the v5 bar over it.
+    V5PromptTheme {
+        V5PageBar(
+            title = title,
+            onBack = onBack,
+            modifier = modifier
+                .background(V5Theme.colors.background)
+                .statusBarsPadding()
+                .testTag(FirefoxExtensionChromeTestTags.OptionsTopBar),
+        )
     }
-    TopAppBar(
-        title = {
-            Text(
-                text = title,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        },
-        navigationIcon = {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = VolaIcons.ArrowBack,
-                    contentDescription = stringResource(R.string.action_back),
-                )
-            }
-        },
-        modifier = modifier.testTag(FirefoxExtensionChromeTestTags.OptionsTopBar),
-    )
 }
 
 /** Firefox popup hosted by Candy chrome; extension content never owns browser controls. */
 @Composable
 internal fun FirefoxExtensionChrome(controller: BrowserController) {
-    if (rememberDrawsV5()) return FirefoxExtensionPopupV5(controller)
-    controller.firefoxExtensionPopupView?.let { popupView ->
-        Dialog(
-            onDismissRequest = controller::dismissFirefoxExtensionPopup,
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-        ) {
-            BackHandler(onBack = controller::dismissFirefoxExtensionPopup)
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth(0.92f)
-                    .heightIn(min = 160.dp, max = 560.dp)
-                    .testTag(FirefoxExtensionChromeTestTags.Popup),
-                shape = MaterialTheme.shapes.extraLarge,
-                tonalElevation = 6.dp,
-            ) {
-                AndroidView(
-                    factory = { popupView },
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
-        }
-    }
+    FirefoxExtensionPopupV5(controller)
 }
 
 /**

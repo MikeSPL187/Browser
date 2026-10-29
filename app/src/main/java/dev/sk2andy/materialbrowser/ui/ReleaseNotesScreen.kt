@@ -2,7 +2,6 @@ package dev.sk2andy.materialbrowser.ui
 
 import android.content.Context
 import android.graphics.BitmapFactory
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -11,22 +10,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -82,71 +75,7 @@ internal fun ReleaseNotesScreen(
     onOpenLink: (String) -> Unit,
 ) {
     // V28, B14b: under v5 on a phone the v5 screen, the same notes in v5 type and colors.
-    if (rememberDrawsV5()) {
-        ReleaseNotesScreenV5(versionName, document, onDone, onOpenLink)
-        return
-    }
-    BackHandler(onBack = onDone)
-    Surface(
-        modifier = Modifier
-            .fillMaxSize()
-            .testTag(ReleaseNotesTestTags.Screen),
-        color = MaterialTheme.colorScheme.surface,
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .safeDrawingPadding(),
-        ) {
-            ReleaseNotesHero(
-                versionName = versionName,
-                title = document.title.text,
-                onClose = onDone,
-            )
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .testTag(ReleaseNotesTestTags.Content),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                    start = 24.dp,
-                    top = 24.dp,
-                    end = 24.dp,
-                    bottom = 28.dp,
-                ),
-                verticalArrangement = Arrangement.spacedBy(18.dp),
-            ) {
-                items(document.blocks.drop(1)) { block ->
-                    ReleaseNotesBlock(
-                        block = block,
-                        onOpenLink = onOpenLink,
-                    )
-                }
-            }
-            Surface(
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 12.dp,
-            ) {
-                Button(
-                    onClick = onDone,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 16.dp)
-                        .height(54.dp)
-                        .testTag(ReleaseNotesTestTags.Done),
-                    shape = RoundedCornerShape(18.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                    ),
-                ) {
-                    Text(
-                        stringResource(R.string.release_notes_done),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
-            }
-        }
-    }
+    ReleaseNotesScreenV5(versionName, document, onDone, onOpenLink)
 }
 
 @Composable

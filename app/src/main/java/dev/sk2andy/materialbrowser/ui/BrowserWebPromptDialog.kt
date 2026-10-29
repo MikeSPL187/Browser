@@ -7,15 +7,7 @@ import dev.sk2andy.materialbrowser.ui.v5.V5PromptAction
 import dev.sk2andy.materialbrowser.ui.v5.V5PromptRole
 import dev.sk2andy.materialbrowser.ui.v5.V5PromptSheet
 import dev.sk2andy.materialbrowser.ui.v5.V5RowTrailing
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,121 +33,19 @@ internal fun BrowserWebPromptDialog(
         mutableStateOf(prompt.choices.filter(BrowserWebPromptChoice::selected).map(BrowserWebPromptChoice::id).toSet())
     }
     // V28, B9b: under v5 on a phone the one v5 prompt sheet; closing it cancels, as Back did.
-    if (rememberDrawsV5()) {
-        BrowserWebPromptSheetV5(
-            prompt = prompt,
-            value = value,
-            onValueChange = { value = it },
-            selectedChoices = selectedChoices,
-            onToggleChoice = { id ->
-                val selected = id in selectedChoices
-                selectedChoices = if (prompt.allowMultiple) {
-                    if (selected) selectedChoices - id else selectedChoices + id
-                } else setOf(id)
-            },
-            onConfirm = onConfirm,
-            onCancel = onCancel,
-        )
-        return
-    }
-    AlertDialog(
-        onDismissRequest = onCancel,
-        modifier = Modifier.testTag(BrowserWebPromptTestTags.Dialog),
-        title = {
-            Text(
-                prompt.title ?: stringResource(
-                    when (prompt.kind) {
-                        BrowserWebPromptKind.BeforeUnload -> R.string.web_prompt_leave_title
-                        BrowserWebPromptKind.Repost -> R.string.web_prompt_repost_title
-                        else -> R.string.web_prompt_title
-                    },
-                ),
-            )
+    BrowserWebPromptSheetV5(
+        prompt = prompt,
+        value = value,
+        onValueChange = { value = it },
+        selectedChoices = selectedChoices,
+        onToggleChoice = { id ->
+            val selected = id in selectedChoices
+            selectedChoices = if (prompt.allowMultiple) {
+                if (selected) selectedChoices - id else selectedChoices + id
+            } else setOf(id)
         },
-        text = {
-            Column {
-                val message = prompt.message ?: when (prompt.kind) {
-                    BrowserWebPromptKind.BeforeUnload ->
-                        stringResource(R.string.web_prompt_leave_message)
-                    BrowserWebPromptKind.Repost -> stringResource(R.string.web_prompt_repost_message)
-                    else -> null
-                }
-                message?.let { Text(it) }
-                if (prompt.kind in setOf(BrowserWebPromptKind.Text, BrowserWebPromptKind.Color, BrowserWebPromptKind.DateTime)) {
-                    OutlinedTextField(
-                        value = value,
-                        onValueChange = { updated ->
-                            value = updated.take(BrowserWebPromptRules.MAX_INPUT_LENGTH)
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag(BrowserWebPromptTestTags.Input),
-                        singleLine = true,
-                    )
-                }
-                if (prompt.kind == BrowserWebPromptKind.Choice) {
-                    prompt.choices.filterNot(BrowserWebPromptChoice::separator).forEach { choice ->
-                        val selected = choice.id in selectedChoices
-                        TextButton(
-                            enabled = !choice.disabled,
-                            onClick = {
-                                selectedChoices = if (prompt.allowMultiple) {
-                                    if (selected) selectedChoices - choice.id else selectedChoices + choice.id
-                                } else setOf(choice.id)
-                            },
-                        ) {
-                            if (prompt.allowMultiple) Checkbox(checked = selected, onCheckedChange = null)
-                            else RadioButton(selected = selected, onClick = null)
-                            Text(choice.label)
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    onConfirm(
-                        when (prompt.kind) {
-                            BrowserWebPromptKind.Text,
-                            BrowserWebPromptKind.Color,
-                            BrowserWebPromptKind.DateTime,
-                            -> value
-                            BrowserWebPromptKind.Choice -> selectedChoices.joinToString("\u001F")
-                            else -> null
-                        },
-                    )
-                },
-                modifier = Modifier.testTag(BrowserWebPromptTestTags.Confirm),
-            ) {
-                Text(
-                    stringResource(
-                        when (prompt.kind) {
-                            BrowserWebPromptKind.BeforeUnload -> R.string.web_prompt_leave
-                            BrowserWebPromptKind.Repost -> R.string.web_prompt_resend
-                            else -> R.string.web_prompt_ok
-                        },
-                    ),
-                )
-            }
-        },
-        dismissButton = if (prompt.kind == BrowserWebPromptKind.Alert) {
-            null
-        } else {
-            {
-                TextButton(onClick = onCancel) {
-                    Text(
-                        stringResource(
-                            if (prompt.kind == BrowserWebPromptKind.BeforeUnload) {
-                                R.string.web_prompt_stay
-                            } else {
-                                R.string.action_cancel
-                            },
-                        ),
-                    )
-                }
-            }
-        },
+        onConfirm = onConfirm,
+        onCancel = onCancel,
     )
 }
 

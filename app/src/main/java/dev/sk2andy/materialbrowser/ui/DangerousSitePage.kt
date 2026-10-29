@@ -3,7 +3,6 @@ package dev.sk2andy.materialbrowser.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -52,38 +51,8 @@ internal fun DangerousSitePage(
 ) {
     // Under v5 the page is the canvas «Danger» screen (owner 17.10: the phone all v5); the current
     // interface paints the page red.
-    if (rememberDrawsV5()) {
-        VolaV5Theme(dark = MaterialTheme.colorScheme.surface.luminance() < DARK_SURFACE_LUMINANCE) {
-            V5DangerousSite(site, onBackToSafety, onOpenAnyway, onOpenRealSite, modifier)
-        }
-        return
-    }
-    val colors = MaterialTheme.colorScheme
-    val dark = colors.surface.luminance() < DARK_SURFACE_LUMINANCE
-    val background = if (dark) colors.errorContainer else colors.error
-    val content = if (dark) colors.onErrorContainer else colors.onError
-    val secondary = content.copy(alpha = VolaDangerousSite.SECONDARY_TEXT_ALPHA)
-    // The state page reads its colors from the theme: here the danger color is the surface.
-    MaterialTheme(
-        colorScheme = colors.copy(
-            surface = background,
-            onSurface = content,
-            onSurfaceVariant = secondary,
-            primary = content,
-            onPrimary = background,
-            primaryContainer = content,
-            onPrimaryContainer = background,
-        ),
-    ) {
-        Surface(
-            modifier = modifier
-                .fillMaxSize()
-                .testTag(DangerousSiteTestTags.Page),
-            color = background,
-            contentColor = content,
-        ) {
-            DangerousSiteContent(site, onBackToSafety, onOpenAnyway, onOpenRealSite)
-        }
+    VolaV5Theme(dark = MaterialTheme.colorScheme.surface.luminance() < DARK_SURFACE_LUMINANCE) {
+        V5DangerousSite(site, onBackToSafety, onOpenAnyway, onOpenRealSite, modifier)
     }
 }
 

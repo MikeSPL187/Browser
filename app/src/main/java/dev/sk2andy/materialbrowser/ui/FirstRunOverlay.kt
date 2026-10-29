@@ -18,7 +18,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserController
-import dev.sk2andy.materialbrowser.browser.HttpsOnlyMode
 import dev.sk2andy.materialbrowser.browser.integration.PasswordsActivityContract
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
@@ -107,55 +106,7 @@ internal fun FirstRunOverlay(
     showIntro: Boolean,
     onCompleted: () -> Unit,
 ) {
-    if (rememberDrawsV5()) {
-        V5FirstRunOverlay(controller, showIntro, onCompleted)
-        return
-    }
-    val context = LocalContext.current
-    var stage by rememberSaveable { mutableStateOf(FirstRunRules.firstStage(showIntro)) }
-    var showGestures by rememberSaveable { mutableStateOf(true) }
-    BackHandler(enabled = FirstRunRules.handlesBack(stage)) {
-        FirstRunRules.back(stage, showIntro)?.let { stage = it }
-    }
-    AnimatedContent(targetState = stage, label = "first_run") { current ->
-        when (current) {
-            FirstRunStage.Welcome -> FirstRunWelcomeScreen(
-                stepCount = FirstRunRules.stepCount(showGestures),
-                onStart = { stage = FirstRunStage.Setup },
-                // «Move to Vola» opens over the welcome, which waits for the user to come back.
-                onImport = { context.startActivity(PasswordsActivityContract.importIntent(context)) },
-            )
-            FirstRunStage.Setup -> FirstRunSetupScreen(
-                setup = FirstRunSetup(
-                    appearanceMode = controller.appearanceSettings.appearanceMode,
-                    trackerProtection = controller.blockerSettings.blockAdsAndTrackers,
-                    httpsOnly = (controller.httpsOnlyMode == HttpsOnlyMode.Always)
-                        .takeIf { controller.isHttpsOnlySupported },
-                    showGestures = showGestures,
-                    isDefaultBrowser = controller.isDefaultBrowser,
-                ),
-                onAppearanceModeChange = { mode ->
-                    controller.updateAppearanceSettings(controller.appearanceSettings.copy(appearanceMode = mode))
-                },
-                onTrackerProtectionChange = { on ->
-                    controller.updateBlockerSettings(controller.blockerSettings.copy(blockAdsAndTrackers = on))
-                },
-                onHttpsOnlyChange = { on ->
-                    controller.updateHttpsOnlyMode(if (on) HttpsOnlyMode.Always else HttpsOnlyMode.Off)
-                },
-                onShowGesturesChange = { showGestures = it },
-                onMakeDefault = controller::openDefaultBrowserSettings,
-                onNext = { FirstRunRules.afterSetup(showGestures)?.let { stage = it } ?: onCompleted() },
-            )
-            FirstRunStage.Gestures -> GestureOnboardingScreen(
-                onCompleted = onCompleted,
-                onBack = { FirstRunRules.back(FirstRunStage.Gestures, showIntro)?.let { stage = it } ?: onCompleted() },
-                showWelcome = !showIntro,
-            )
-            // v5 only; the v4 first run never reaches them.
-            FirstRunStage.DefaultBrowser, FirstRunStage.GestureSheet -> Unit
-        }
-    }
+    V5FirstRunOverlay(controller, showIntro, onCompleted)
 }
 
 /**
