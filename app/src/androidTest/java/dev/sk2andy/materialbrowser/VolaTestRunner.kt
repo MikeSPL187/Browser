@@ -11,8 +11,7 @@ import dev.sk2andy.materialbrowser.diagnostics.CrashJournal
  * open the first run over the browser, and the crash journal would report the crashes of earlier
  * tests. Tests that cover the first run or the journal reset these stores themselves.
  *
- * Tests meet the app as people do: on v5, the only interface once v4 leaves (owner, 28.10). The
- * screen walk still turns the flag off for its v4 groups until that code is gone.
+ * Tests meet the app as people do: on v5, its only interface since v4 left (owner, 28.10).
  */
 class VolaTestRunner : AndroidJUnitRunner() {
     override fun callApplicationOnCreate(app: Application) {

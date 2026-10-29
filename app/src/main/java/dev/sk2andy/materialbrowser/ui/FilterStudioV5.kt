@@ -195,7 +195,6 @@ internal fun FilterStudioV5(
             onApplyImport = onApplyImport,
             onApplySubscription = onApplySubscription,
             onExport = onExport,
-            uiV5 = true,
         )
         val deleting = rules.firstOrNull { it.id == deletingId }
         V5PromptSheet(

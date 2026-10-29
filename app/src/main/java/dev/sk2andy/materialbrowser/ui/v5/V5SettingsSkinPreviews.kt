@@ -24,7 +24,7 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 @Composable
 private fun V5SearchSettingsPreview() {
     MaterialBrowserTheme {
-        ProvideV5SettingsSkin(enabled = true) {
+        ProvideV5SettingsSkin() {
             SearchSettingsPage(
                 searchEngine = SearchEngine.DuckDuckGo,
                 searxngSettings = SearxngSettings(instanceUrl = "https://search.example.org"),
@@ -47,7 +47,7 @@ private fun V5SearchSettingsPreview() {
 @Composable
 private fun V5SettingsRowsPreview() {
     MaterialBrowserTheme {
-        ProvideV5SettingsSkin(enabled = true) {
+        ProvideV5SettingsSkin() {
             SettingsPage(title = "Загрузки", onBack = {}) {
                 val separator = V5Theme.colors.separator
                 SettingsCardHeader("Куда сохранять")
@@ -94,7 +94,7 @@ private fun V5SettingsRowsPreview() {
 @Composable
 private fun V5AppearanceSettingsPreview() {
     MaterialBrowserTheme {
-        ProvideV5SettingsSkin(enabled = true) {
+        ProvideV5SettingsSkin() {
             AppearanceSettingsPageV5(
                 settings = AppearanceSettings(),
                 onSettingsChanged = {},

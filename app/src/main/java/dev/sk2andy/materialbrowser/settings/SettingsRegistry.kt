@@ -504,25 +504,25 @@ internal object SettingsRegistry {
         TabsAndGestures to (SettingsDestination.TabsMore to tabsMoreKeys),
     )
 
-    /** Where search under ui.v5 opens the setting [key] that the registry keeps on [destination]. */
+    /** Where search opens the setting [key] that the registry keeps on [destination]. */
     fun v5Destination(key: String, destination: SettingsDestination): SettingsDestination {
         val (more, keys) = moreLayers[destination] ?: return destination
         return if (key in keys) more else destination
     }
 
-    /** Whether search under ui.v5 offers the setting [key] (or a page) on [destination]. */
+    /** Whether search offers the setting [key] (or a page) on [destination]. */
     fun searchableInV5(key: String, destination: SettingsDestination): Boolean =
         destination !in currentInterfaceOnlyPages && key !in currentInterfaceOnlyKeys
 
-    /** Pages that ui.v5 names differently: its gestures are the interface's own, so «Tabs». */
+    /** Pages that v5 names differently: its gestures are the interface's own, so «Tabs». */
     private val v5PageTitles = mapOf(TabsAndGestures to R.string.settings_section_tabs)
 
-    fun searchCandidates(resources: Resources, uiV5: Boolean = false): List<SettingSearchCandidate> =
-        allSearchCandidates(resources, if (uiV5) v5PageTitles else emptyMap()).mapNotNull { candidate ->
-            when {
-                !uiV5 -> candidate
-                !searchableInV5(candidate.key, candidate.destination) -> null
-                else -> candidate.copy(destination = v5Destination(candidate.key, candidate.destination))
+    fun searchCandidates(resources: Resources): List<SettingSearchCandidate> =
+        allSearchCandidates(resources, v5PageTitles).mapNotNull { candidate ->
+            if (!searchableInV5(candidate.key, candidate.destination)) {
+                null
+            } else {
+                candidate.copy(destination = v5Destination(candidate.key, candidate.destination))
             }
         }
 

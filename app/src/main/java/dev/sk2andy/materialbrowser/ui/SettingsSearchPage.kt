@@ -37,7 +37,7 @@ internal fun SettingsSearchPage(
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
     val candidates = remember(configuration) {
-        SettingsRegistry.searchCandidates(context.resources, true)
+        SettingsRegistry.searchCandidates(context.resources)
     }
     var query by rememberSaveable { mutableStateOf("") }
     val results = remember(query, candidates) { SettingsSearchRules.search(query, candidates) }
