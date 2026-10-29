@@ -64,6 +64,14 @@ env:
   SHARDS: 8
   # New failures a shard reruns once; more than this is a breakage, not flakiness.
   RERUN_LIMIT: 15
+  # The picture-in-picture tests play video through the emulator's goldfish decoder, and the
+  # emulator's system then sometimes dies (System UI and system_server, 29.10): every later test of
+  # that shard was lost. They run on an emulator of their own, the "video" shard, which an unfiltered
+  # GeckoView run adds; the eight shards leave them out.
+  VIDEO_CLASS: dev.sk2andy.materialbrowser.browser.gecko.GeckoPictureInPictureInstrumentedTest
+  VIDEO_SHARD: >-
+    ${{ (github.event.inputs.filter || '') == '' && github.event.inputs.flavor != 'systemwebview' &&
+    github.event.schedule != '53 2 * * *' }}
 
 jobs:
   android-test:
@@ -77,7 +85,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3, 4, 5, 6, 7]
+        shard: >-
+          ${{ fromJSON(((github.event.inputs.filter || '') == '' &&
+          github.event.inputs.flavor != 'systemwebview' && github.event.schedule != '53 2 * * *') &&
+          '[0, 1, 2, 3, 4, 5, 6, 7, "video"]' || '[0, 1, 2, 3, 4, 5, 6, 7]') }}
 
     steps:
       - name: Check out source
@@ -196,9 +207,18 @@ jobs:
           args=(
             -Pandroid.testInstrumentationRunnerArguments.clearPackageData=true
             -Pandroid.testInstrumentationRunnerArguments.timeout_msec=120000
-            -Pandroid.testInstrumentationRunnerArguments.numShards="$SHARDS"
-            -Pandroid.testInstrumentationRunnerArguments.shardIndex="$SHARD"
           )
+          if [[ "$SHARD" == video ]]; then
+            args+=(-Pandroid.testInstrumentationRunnerArguments.class="$VIDEO_CLASS")
+          else
+            args+=(
+              -Pandroid.testInstrumentationRunnerArguments.numShards="$SHARDS"
+              -Pandroid.testInstrumentationRunnerArguments.shardIndex="$SHARD"
+            )
+            if [[ "$VIDEO_SHARD" == true ]]; then
+              args+=(-Pandroid.testInstrumentationRunnerArguments.notClass="$VIDEO_CLASS")
+            fi
+          fi
           adb logcat -c || true
           nohup adb logcat -v threadtime > "$RUNNER_TEMP/logcat.txt" 2>&1 &
           # Gradle prints nothing until the shard ends. Show each test as it starts and ends, and
@@ -380,14 +400,14 @@ jobs:
         run: |
           gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" \
             --pattern 'instrumented-shard-*' --dir "$RUNNER_TEMP/shards" || true
-          for shard in $(seq 0 $((SHARDS - 1))); do
+          for shard in $(seq 0 $((SHARDS - 1))) $([[ "$VIDEO_SHARD" == true ]] && echo video); do
             mkdir -p "$RUNNER_TEMP/shards/instrumented-shard-$shard"
           done
 
       - name: Summary
         run: |
           shards=()
-          for shard in $(seq 0 $((SHARDS - 1))); do
+          for shard in $(seq 0 $((SHARDS - 1))) $([[ "$VIDEO_SHARD" == true ]] && echo video); do
             shards+=("$RUNNER_TEMP/shards/instrumented-shard-$shard")
           done
           python3 scripts/ci/instrumented_summary.py "${shards[@]}" \
