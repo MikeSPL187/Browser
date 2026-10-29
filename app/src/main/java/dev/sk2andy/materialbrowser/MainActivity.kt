@@ -500,7 +500,7 @@ class MainActivity : AppCompatActivity() {
                 val castController = if (::castSessionController.isInitialized) castSessionController else null
                 CompositionLocalProvider(
                     LocalPrivateTabsLocked provides browserController.privateTabsLock.isLocked,
-                    LocalBrowserUnderFirstRun provides (!videoOnlyPresentation && onboardingVisible),
+                    LocalBrowserUnderFirstRun provides ((!videoOnlyPresentation && onboardingVisible) || showReleaseNotes),
                 ) {
                     BrowserScreen(
                         controller = browserController,
