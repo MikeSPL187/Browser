@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import android.util.Base64
@@ -37,6 +38,7 @@ import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.URLDecoder
 import java.nio.file.Files
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import org.json.JSONObject
@@ -1611,11 +1613,23 @@ class GeckoPictureInPictureInstrumentedTest {
     ) {
         val deadline = System.currentTimeMillis() + timeoutMillis
         while (System.currentTimeMillis() < deadline) {
-            if (waitForIdle) instrumentation.waitForIdleSync()
+            if (waitForIdle) awaitMainIdle(description)
             if (condition()) return
             Thread.sleep(50)
         }
         assertTrue("${description()} within ${timeoutMillis}ms", condition())
+    }
+
+    /**
+     * Waits for the main thread to go idle, at most [MAIN_IDLE_TIMEOUT_MILLIS]: a main thread that
+     * never idles fails the test with its stack instead of hanging until the runner's timeout.
+     */
+    private fun awaitMainIdle(description: () -> String) {
+        val idle = CountDownLatch(1)
+        instrumentation.waitForIdle { idle.countDown() }
+        if (idle.await(MAIN_IDLE_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) return
+        val stack = Looper.getMainLooper().thread.stackTrace.joinToString("\n") { "    at $it" }
+        throw AssertionError("${description()}: main thread not idle after ${MAIN_IDLE_TIMEOUT_MILLIS}ms\n$stack")
     }
 
     private fun eligibleMediaState() = GeckoMediaSessionState(
@@ -1722,6 +1736,7 @@ class GeckoPictureInPictureInstrumentedTest {
     }
 
     private companion object {
+        const val MAIN_IDLE_TIMEOUT_MILLIS = 45_000L
         const val READY_TITLE = "ready"
         const val EXITED_TITLE = "exited"
         const val INLINE_LOADED_TITLE = "inline-loaded"
