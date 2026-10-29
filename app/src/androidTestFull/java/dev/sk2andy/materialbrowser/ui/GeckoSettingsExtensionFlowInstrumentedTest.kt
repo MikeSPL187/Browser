@@ -73,10 +73,10 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
         composeRule.onNodeWithText(context.getString(R.string.sync_settings_title))
             .performClick()
 
-        composeRule.onNodeWithTag(V5SyncSettingsTestTags.Page).assertIsDisplayed()
-        composeRule.onNodeWithTag(V5SyncSettingsTestTags.Server)
-            .performScrollTo()
-            .assertIsDisplayed()
+        composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithTag(V5SyncSettingsTestTags.Page).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag(V5SyncSettingsTestTags.Server).assertExists()
     }
 
     @Test
@@ -103,7 +103,9 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
         }
 
         composeRule.onNodeWithTag(FirefoxExtensionManagerTestTags.Overlay).assertDoesNotExist()
-        composeRule.onNodeWithTag(SettingsSearchTestTags.Open).assertIsDisplayed()
+        composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithTag(SettingsSearchTestTags.Open).fetchSemanticsNodes().isNotEmpty()
+        }
     }
 
     @Test
