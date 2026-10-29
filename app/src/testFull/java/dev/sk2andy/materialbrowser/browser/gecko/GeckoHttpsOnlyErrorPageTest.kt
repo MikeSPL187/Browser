@@ -43,7 +43,8 @@ class GeckoHttpsOnlyErrorPageTest {
         )
 
         assertFalse(html.contains("<script>alert(1)</script>"))
-        assertFalse(html.contains("<b>"))
+        // The page has a <b> of its own (the card's heading); the title's must not get through.
+        assertFalse(html.contains("<b>\"title\"</b>"))
         assertTrue(html.contains("evil.example&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt;"))
         assertTrue(html.contains("&lt;b&gt;&quot;title&quot;&lt;/b&gt;"))
     }
