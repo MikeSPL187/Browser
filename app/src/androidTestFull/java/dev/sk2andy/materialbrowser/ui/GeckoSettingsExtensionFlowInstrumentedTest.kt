@@ -210,6 +210,11 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
     fun externalNavigationFromExtensionOptionsRestoresNormalBrowserChrome() {
         ensureBuiltInExtensionFixture()
         openFirefoxExtensionSettings()
+        // The extension's own page holds its «Options».
+        composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithText(FIXTURE_EXTENSION_NAME).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText(FIXTURE_EXTENSION_NAME).performScrollTo().performClick()
         composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
             composeRule.onAllNodesWithTag(
                 FirefoxExtensionManagerTestTags.optionsPage(FIXTURE_EXTENSION_ID),
@@ -217,7 +222,7 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
         }
         composeRule.onNodeWithTag(
             FirefoxExtensionManagerTestTags.optionsPage(FIXTURE_EXTENSION_ID),
-        ).assertIsDisplayed().performClick()
+        ).performScrollTo().assertIsDisplayed().performClick()
         composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
             composeRule.onAllNodesWithTag(FirefoxExtensionChromeTestTags.OptionsTopBar)
                 .fetchSemanticsNodes().isNotEmpty()

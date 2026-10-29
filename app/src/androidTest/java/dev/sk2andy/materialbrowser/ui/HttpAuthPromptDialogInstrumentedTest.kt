@@ -46,11 +46,14 @@ class HttpAuthPromptDialogInstrumentedTest {
         }
 
         composeRule.onNodeWithTag(HttpAuthPromptTestTags.Dialog).assertExists()
+        // The v5 prompt sheet says the host and the realm in one message.
         composeRule.onNodeWithText(
             context.getString(R.string.http_auth_dialog_message, "auth.example.com"),
+            substring = true,
         ).assertExists()
         composeRule.onNodeWithText(
             context.getString(R.string.http_auth_dialog_realm, "Members"),
+            substring = true,
         ).assertExists()
         composeRule.onNodeWithTag(HttpAuthPromptTestTags.Username).performTextInput("candy")
         composeRule.onNodeWithTag(HttpAuthPromptTestTags.Password).performTextInput("secret")
