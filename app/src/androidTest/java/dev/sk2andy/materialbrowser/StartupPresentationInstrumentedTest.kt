@@ -48,7 +48,7 @@ class StartupPresentationInstrumentedTest {
         composeRule.awaitAddressEditorFocused()
         assertImeVisible()
 
-        composeRule.onNode(closeAddressInputButton(context)).performClick()
+        composeRule.onNode(closeAddressInputButton()).performClick()
         composeRule.onNodeWithTag(V5EditorTestTags.Field).assertDoesNotExist()
 
         composeRule.activityRule.scenario.onActivity { activity ->
