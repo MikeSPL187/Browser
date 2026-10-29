@@ -28,7 +28,10 @@ import dev.sk2andy.materialbrowser.ui.v5.V5FirstRunGestures
 import dev.sk2andy.materialbrowser.ui.v5.V5FirstRunPromise
 import dev.sk2andy.materialbrowser.ui.v5.V5FirstRunWelcome
 
-/** Whether the first run covers the browser, which then leaves the accessibility tree as under a dialog. */
+/**
+ * Whether the first run or «What's new» covers the browser, which then leaves the accessibility tree
+ * as under a dialog: the bar beneath is not reachable through the cover.
+ */
 internal val LocalBrowserUnderFirstRun = compositionLocalOf { false }
 
 /** Where the first run is. */
