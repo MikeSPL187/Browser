@@ -70,10 +70,7 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
     fun syncDestinationRendersThroughRealMainMenuWithoutFlowRowLinkageCrash() {
         openSettings()
 
-        composeRule.onNodeWithText(context.getString(R.string.sync_settings_title))
-            .performClick()
-
-        composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
+        tapRowUntil(R.string.sync_settings_title) {
             composeRule.onAllNodesWithTag(V5SyncSettingsTestTags.Page).fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithTag(V5SyncSettingsTestTags.Server).assertExists()
@@ -81,11 +78,7 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
 
     @Test
     fun settingsExtensionBackReturnsToSettingsHome() {
-        openSettings()
-        composeRule.onNodeWithText(context.getString(R.string.gecko_extensions_title))
-            .performScrollTo()
-            .performClick()
-        composeRule.onNodeWithTag(FirefoxExtensionManagerTestTags.Overlay).assertIsDisplayed()
+        openFirefoxExtensionSettings()
 
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         assertTrue(
@@ -282,10 +275,25 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
 
     private fun openFirefoxExtensionSettings() {
         openSettings()
-        composeRule.onNodeWithText(context.getString(R.string.gecko_extensions_title))
-            .performScrollTo()
-            .performClick()
+        tapRowUntil(R.string.gecko_extensions_title) {
+            composeRule.onAllNodesWithTag(FirefoxExtensionManagerTestTags.Overlay).fetchSemanticsNodes().isNotEmpty()
+        }
         composeRule.onNodeWithTag(FirefoxExtensionManagerTestTags.Overlay).assertIsDisplayed()
+    }
+
+    /**
+     * Taps a settings home row until its page opens: a tap while the settings still slide in can
+     * be lost, so it is repeated, as the screen walk does.
+     */
+    private fun tapRowUntil(title: Int, opened: () -> Boolean) {
+        repeat(ROW_TAP_ATTEMPTS) {
+            composeRule.onNodeWithText(context.getString(title)).performScrollTo().performClick()
+            val done = runCatching {
+                composeRule.waitUntil(timeoutMillis = ROW_RETAP_AFTER_MILLIS) { opened() }
+            }.isSuccess
+            if (done) return
+        }
+        composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) { opened() }
     }
 
     private fun openSettings() {
@@ -362,5 +370,7 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
         const val BOTTOM_INSET_PX = 48
         const val EDGE_BACK_SWIPE_STEPS = 30
         const val TIMEOUT_MILLIS = 30_000L
+        const val ROW_TAP_ATTEMPTS = 3
+        const val ROW_RETAP_AFTER_MILLIS = 3_000L
     }
 }
