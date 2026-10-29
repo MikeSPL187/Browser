@@ -9,6 +9,9 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5ColorScheme
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Colors
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 import java.net.URI
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+
 /**
  * Warning page for navigations that HTTPS-only mode stopped because the site has no working HTTPS.
  *
@@ -100,6 +103,71 @@ internal object GeckoHttpsOnlyErrorPage {
         return runCatching { URI(failedUri).host }.getOrNull()
             ?.takeIf(String::isNotBlank)
             ?: failedUri
+    }
+
+    /**
+     * The page as v5 draws it (canvas «HttpsOnly»): the badge on its tile, the large title at the
+     * start, what it means, a card saying reading is fine and typing is not, «Go back» filled under
+     * the thumb, «Open over HTTP» on a gray plate, and that the exception holds for this site only.
+     */
+    fun htmlV5(
+        strings: Strings,
+        host: String,
+        palettes: Pair<PaletteV5, PaletteV5> = defaultPalettesV5,
+    ): String {
+        fun withHost(text: String) = escape(text).replace(escape(HOST_MARKER), "<strong>${escape(host)}</strong>")
+        return listOf(
+            "<!DOCTYPE html>",
+            "<html lang=\"${escape(strings.languageTag)}\">",
+            "<head>",
+            "<meta charset=\"utf-8\">",
+            "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
+            "<meta name=\"color-scheme\" content=\"light dark\">",
+            "<title>${escape(strings.title)}</title>",
+            "<style>${colorsV5(palettes)}\n$STYLE_V5</style>",
+            "</head>",
+            "<body>",
+            "<main>",
+            "<div class=\"badge\" aria-hidden=\"true\">$NO_ENCRYPTION_ICON</div>",
+            "<h1>${escape(strings.title)}</h1>",
+            "<p>${withHost(strings.body)}</p>",
+            "<div class=\"card\"><span class=\"tile\" aria-hidden=\"true\">$VISIBILITY_ICON</span>" +
+                "<span><b>${escape(strings.adviceTitle)}</b><span>${escape(strings.advice)}</span></span></div>",
+            "<div class=\"actions\">",
+            "<button id=\"back\" class=\"primary\">${escape(strings.backLabel)}</button>",
+            "<button id=\"continue\" class=\"plate\">${escape(strings.continueLabel)}</button>",
+            "<p class=\"note\">${withHost(strings.exceptionNote)}</p>",
+            "</div>",
+            "</main>",
+            "<script>$SCRIPT</script>",
+            "</body>",
+            "</html>",
+        ).joinToString(separator = "\n")
+    }
+
+    private fun colorsV5(palettes: Pair<PaletteV5, PaletteV5>): String {
+        fun PaletteV5.variables() = "--bg: $background; --sf: $surface; --label: $label; " +
+            "--label2: $labelSecondary; --fill: $fill; --acc: $accentFill; --on-acc: $onAccentFill; " +
+            "--badge: $badge; --safe: $safe;"
+        return ":root { ${palettes.first.variables()} }\n" +
+            "@media (prefers-color-scheme: dark) { :root { ${palettes.second.variables()} } }"
+    }
+
+    fun dataUri(html: String): String =
+        "data:text/html;charset=utf-8;base64," +
+            Base64.getEncoder().encodeToString(html.toByteArray(StandardCharsets.UTF_8))
+
+    fun escape(value: String): String = buildString(value.length) {
+        value.forEach { character ->
+            when (character) {
+                '&' -> append("&amp;")
+                '<' -> append("&lt;")
+                '>' -> append("&gt;")
+                '"' -> append("&quot;")
+                '\'' -> append("&#39;")
+                else -> append(character)
+            }
+        }
     }
 
     // Material Symbols Rounded (Apache License 2.0): no_encryption (filled).
