@@ -420,15 +420,20 @@ class GeckoPictureInPictureInstrumentedTest {
                         .removePrefix(INLINE_ACTION_GEOMETRY_PREFIX)
                         .split(':')
                         .map(String::toFloat)
-                    assertEquals(5, geometry.size)
-                    val (left, top, width, height, viewportWidth) = geometry
-                    val webScale = host.width / viewportWidth
+                    assertEquals(7, geometry.size)
+                    val (left, top, width, height) = geometry
+                    // The page is placed by the visual viewport: Gecko picks the initial zoom of a
+                    // page without a viewport tag itself, so the layout width does not give the scale.
+                    val visualWidth = geometry[4]
+                    val visualLeft = geometry[5]
+                    val visualTop = geometry[6]
+                    val webScale = host.width / visualWidth
                     host.getLocationOnScreen(location)
-                    inlineActionTapPoint[0] = location[0] + (left + width / 2f) * webScale
-                    inlineActionTapPoint[1] = location[1] + (top + height / 2f) * webScale
+                    inlineActionTapPoint[0] = location[0] + (left - visualLeft + width / 2f) * webScale
+                    inlineActionTapPoint[1] = location[1] + (top - visualTop + height / 2f) * webScale
                     val videoHeight = host.width * 9f / 16f
                     inlineVideoSwipe[0] = location[0] + host.width / 2f
-                    inlineVideoSwipe[1] = location[1] + 48f * webScale + videoHeight / 2f
+                    inlineVideoSwipe[1] = location[1] + (48f - visualTop) * webScale + videoHeight / 2f
                     inlineVideoSwipe[2] = inlineVideoSwipe[0]
                     inlineVideoSwipe[3] = inlineVideoSwipe[1] - 140f * webScale
                 }
@@ -439,7 +444,10 @@ class GeckoPictureInPictureInstrumentedTest {
                 }
                 var presentationTitle = ""
                 awaitCondition(
-                    description = { "Inline action did not replace player; title=$presentationTitle" },
+                    description = {
+                        "Inline action did not replace player; title=$presentationTitle, " +
+                            "geometry=$inlineActionGeometry, tap=${inlineActionTapPoint.toList()}"
+                    },
                 ) {
                     var presented = false
                     scenario.onActivity { activity ->
@@ -2084,7 +2092,9 @@ class GeckoPictureInPictureInstrumentedTest {
                       bounds.top,
                       bounds.width,
                       bounds.height,
-                      document.documentElement.clientWidth
+                      visualViewport.width,
+                      visualViewport.offsetLeft,
+                      visualViewport.offsetTop
                     ].join(':');
                   }, 250);
                 }).observe(document.documentElement, { childList:true });
