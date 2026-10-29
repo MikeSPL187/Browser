@@ -1629,7 +1629,11 @@ class GeckoPictureInPictureInstrumentedTest {
         instrumentation.waitForIdle { idle.countDown() }
         if (idle.await(MAIN_IDLE_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) return
         val stack = Looper.getMainLooper().thread.stackTrace.joinToString("\n") { "    at $it" }
-        throw AssertionError("${description()}: main thread not idle after ${MAIN_IDLE_TIMEOUT_MILLIS}ms\n$stack")
+        val message = "${description()}: main thread not idle after ${MAIN_IDLE_TIMEOUT_MILLIS}ms\n$stack"
+        // Logged first: closing the scenario then waits on the same main thread, and the runner's
+        // timeout replaces this failure with its own.
+        Log.e("CandyPipIdle", message)
+        throw AssertionError(message)
     }
 
     private fun eligibleMediaState() = GeckoMediaSessionState(
