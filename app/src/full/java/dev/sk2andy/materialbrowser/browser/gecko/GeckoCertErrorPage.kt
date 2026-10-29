@@ -3,12 +3,10 @@ package dev.sk2andy.materialbrowser.browser.gecko
 import android.content.Context
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import dev.sk2andy.materialbrowser.BrowserWindowStateRules
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.CertificateProblem
 import dev.sk2andy.materialbrowser.browser.CertificateProblemRules
 import dev.sk2andy.materialbrowser.browser.SiteCertificateRules
-import dev.sk2andy.materialbrowser.ui.theme.v5.UiV5Flag
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5ColorScheme
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Colors
@@ -17,20 +15,15 @@ import java.text.DateFormat
 import java.util.Date
 
 /**
- * Warning page for a site whose certificate failed (canvas screen «CertError»), on the v5 phone.
+ * Warning page for a site whose certificate failed (canvas screen «CertError»).
  *
  * GeckoView renders the page returned from NavigationDelegate.onLoadError as the certificate error
  * document and exposes document.addCertException(isTemporary) to it. The page asks for a temporary
  * exception only: it lasts until Vola's process ends, for this site alone. That call is the page's
  * only privileged action and sits behind «Details»; everything shown is escaped.
- *
- * Elsewhere (v4, a large screen) [dataUri] gives null and Vola's own page with «Back» and «Try
- * again» stays, without a way past the warning.
  */
 internal class GeckoCertErrorPages(private val context: Context) {
     fun dataUri(failedUri: String?, certificate: X509Certificate?, nowMillis: Long = System.currentTimeMillis()): String? {
-        val phone = context.resources.configuration.smallestScreenWidthDp < BrowserWindowStateRules.LARGE_SCREEN_MIN_WIDTH_DP
-        if (!UiV5Flag.isEnabled(context) || !phone) return null
         val host = GeckoHttpsOnlyErrorPage.displayHost(failedUri)
         val problem = CertificateProblemRules.problem(certificate, host, nowMillis)
         val dates = DateFormat.getDateInstance(DateFormat.LONG, context.resources.configuration.locales[0])

@@ -56,14 +56,6 @@ class AddressBarGestureRulesTest {
     }
 
     @Test
-    fun `wide tab strip starts at 600 dp`() {
-        assertEquals(false, AddressBarWideLayoutRules.usesTabStrip(599f))
-        assertEquals(true, AddressBarWideLayoutRules.usesTabStrip(600f))
-        assertEquals(true, AddressBarWideLayoutRules.usesTabStrip(840f))
-        assertEquals(false, AddressBarWideLayoutRules.usesTabStrip(Float.NaN))
-    }
-
-    @Test
     fun `past the last tab only a rubber band pulled nearly to its end opens a new tab`() {
         val edge = 42f
         assertTrue(AddressBarTabSwitchRules.opensNewTabPastLast(offsetPx = -40f, edgeTravelMaxPx = edge, newTabFraction = 0.9f))

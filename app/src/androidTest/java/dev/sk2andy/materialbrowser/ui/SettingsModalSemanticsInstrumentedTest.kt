@@ -7,6 +7,7 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -15,7 +16,9 @@ import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.StartupAddressFocusMode
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
-import dev.sk2andy.materialbrowser.shared.ui.BrowserMainMenuTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5NewTabTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5PageMenuTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5SheetTestTags
 import org.junit.After
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -51,7 +54,7 @@ class SettingsModalSemanticsInstrumentedTest {
 
     @Test
     fun browserUnderOpenSettingsIsNotInTheAccessibilityTree() {
-        val newTabHeader = hasTestTag(NewTabPageTestTags.Header)
+        val newTabHeader = hasTestTag(V5NewTabTestTags.Page)
         val tabButton = hasTestTag(AddressBarTestTags.TabButton)
         composeRule.waitUntil(TIMEOUT_MILLIS) { exists(newTabHeader) && exists(tabButton) }
 
@@ -68,12 +71,9 @@ class SettingsModalSemanticsInstrumentedTest {
 
     private fun openSettings() {
         click(hasContentDescription(context.getString(R.string.cd_more_options)))
-        composeRule.waitUntil(TIMEOUT_MILLIS) { exists(hasTestTag(BrowserMainMenuTestTags.Menu)) }
-        if (!exists(hasTestTag(BrowserMainMenuTestTags.Settings))) {
-            click(hasTestTag(BrowserMainMenuTestTags.More))
-            composeRule.waitUntil(TIMEOUT_MILLIS) { exists(hasTestTag(BrowserMainMenuTestTags.Settings)) }
-        }
-        click(hasTestTag(BrowserMainMenuTestTags.Settings))
+        composeRule.waitUntil(TIMEOUT_MILLIS) { exists(hasTestTag(V5SheetTestTags.Sheet)) }
+        composeRule.onNode(hasTestTag(V5PageMenuTestTags.Settings)).performScrollTo().performClick()
+        composeRule.waitForIdle()
     }
 
     private fun click(matcher: SemanticsMatcher) {

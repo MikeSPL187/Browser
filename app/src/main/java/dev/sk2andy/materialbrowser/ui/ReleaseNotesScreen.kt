@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -21,8 +20,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -32,13 +29,10 @@ import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
@@ -49,13 +43,11 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.ReleaseNotesBlock
 import dev.sk2andy.materialbrowser.browser.ReleaseNotesDecoration
 import dev.sk2andy.materialbrowser.browser.ReleaseNotesDocument
 import dev.sk2andy.materialbrowser.browser.ReleaseNotesInline
 import dev.sk2andy.materialbrowser.browser.ReleaseNotesInlineStyle
-import dev.sk2andy.materialbrowser.ui.theme.VolaBrand
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -76,80 +68,6 @@ internal fun ReleaseNotesScreen(
 ) {
     // V28, B14b: under v5 on a phone the v5 screen, the same notes in v5 type and colors.
     ReleaseNotesScreenV5(versionName, document, onDone, onOpenLink)
-}
-
-@Composable
-private fun ReleaseNotesHero(
-    versionName: String,
-    title: String,
-    onClose: () -> Unit,
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                Brush.linearGradient(
-                    colors = listOf(
-                        VolaBrand.Violet.copy(alpha = 0.30f),
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f),
-                        VolaBrand.Cyan.copy(alpha = 0.24f),
-                    ),
-                ),
-            )
-            .padding(horizontal = 24.dp, vertical = 22.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Surface(
-                modifier = Modifier.size(78.dp),
-                shape = RoundedCornerShape(25.dp),
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
-                shadowElevation = 8.dp,
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.ic_launcher_foreground_art),
-                    contentDescription = null,
-                    modifier = Modifier.padding(9.dp),
-                )
-            }
-            Spacer(Modifier.width(18.dp))
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(5.dp),
-            ) {
-                Text(
-                    stringResource(R.string.release_notes_eyebrow),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    title,
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    stringResource(R.string.release_notes_version, versionName),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            IconButton(
-                onClick = onClose,
-                modifier = Modifier
-                    .align(Alignment.Top)
-                    .testTag(ReleaseNotesTestTags.Close),
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_symbol_close),
-                    contentDescription = stringResource(R.string.cd_close_release_notes),
-                )
-            }
-        }
-    }
 }
 
 @Composable

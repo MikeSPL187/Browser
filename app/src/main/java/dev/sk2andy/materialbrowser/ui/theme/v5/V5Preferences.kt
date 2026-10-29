@@ -9,7 +9,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.edit
 
 /*
- * Switches of the v5 interface. They live in their own preferences file so the screens of v5 can
+ * Switches of the interface. They live in their own preferences file so the screens can
  * read them without the browser session store, and each is one shared state, so turning it on in
  * settings changes the browser screen underneath at once.
  */
@@ -41,14 +41,6 @@ open class V5Preference internal constructor(
 }
 
 /**
- * The ui.v5 flag (plan-v5.md, section 9): the new interface on a phone. On by default since V28,
- * step 2; a tablet stays on the current interface whatever it says (`rememberDrawsV5`). Since
- * V28, step 4 nothing in the app turns it off: only instrumented tests of the current interface
- * do (`VolaTestRunner`), until that interface leaves with the tablet's v5.
- */
-object UiV5Flag : V5Preference(key = "ui.v5", default = true)
-
-/**
  * «Tint the bar with the site's color» (system-v5.md, section 1.3): on by default; off keeps the
  * neutral bar on every site, as Safari allows after complaints about unreadable bars.
  */
@@ -59,10 +51,6 @@ object V5SiteTintSetting : V5Preference(key = "ui.v5.site_tint", default = true)
  * «Translate» out of the page menu.
  */
 object V5TranslateOfferSetting : V5Preference(key = "ui.v5.translate_offer", default = true)
-
-/** The flag as Compose state; writing the state stores it. */
-@Composable
-fun rememberUiV5Flag(): MutableState<Boolean> = rememberV5Preference(UiV5Flag)
 
 /** [preference] as Compose state; writing the state stores it. */
 @Composable

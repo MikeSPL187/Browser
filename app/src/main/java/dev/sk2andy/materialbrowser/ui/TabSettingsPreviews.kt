@@ -45,7 +45,7 @@ private fun TabSettingsHeroPreview() {
 @Composable
 private fun TabSettingsV5Preview(layer: SettingsLayer) {
     MaterialBrowserTheme {
-        ProvideV5SettingsSkin(enabled = true) {
+        ProvideV5SettingsSkin() {
             TabsAndGesturesSettingsPage(
                 layer = layer,
                 inactiveTabLifetime = InactiveTabLifetime.entries.first { it.maxAgeMillis != null },

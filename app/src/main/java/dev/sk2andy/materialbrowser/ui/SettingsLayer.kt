@@ -2,8 +2,6 @@ package dev.sk2andy.materialbrowser.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.platform.LocalConfiguration
-import dev.sk2andy.materialbrowser.ui.theme.v5.rememberUiV5Flag
 
 /**
  * Which part of a settings page a screen shows (V15d): under ui.v5 a page keeps one layer of what
@@ -25,13 +23,6 @@ internal enum class SettingsLayer {
 }
 
 internal object SettingsLayerRules {
-    /**
-     * Whether settings speak for the v5 interface: whenever the flag is on, since v5 draws the
-     * browser on every width.
-     */
-    @Suppress("UNUSED_PARAMETER")
-    fun speaksForV5(flag: Boolean, smallestWidthDp: Float): Boolean = flag
-
     /** The «More» screen of each page that has one, and the page it belongs to. */
     val moreOf: Map<SettingsDestination, SettingsDestination> = mapOf(
         SettingsDestination.ProtectionMore to SettingsDestination.ProtectionAndData,
@@ -39,18 +30,8 @@ internal object SettingsLayerRules {
         SettingsDestination.TabsMore to SettingsDestination.TabsAndGestures,
     )
 
-    fun layer(uiV5: Boolean, destination: SettingsDestination): SettingsLayer = when {
-        !uiV5 -> SettingsLayer.All
-        destination in moreOf -> SettingsLayer.More
-        else -> SettingsLayer.Main
-    }
-}
-
-/** [SettingsLayerRules.speaksForV5] for this window. */
-@Composable
-internal fun rememberSettingsUiV5(): Boolean {
-    val flag by rememberUiV5Flag()
-    return SettingsLayerRules.speaksForV5(flag, LocalConfiguration.current.smallestScreenWidthDp.toFloat())
+    fun layer(destination: SettingsDestination): SettingsLayer =
+        if (destination in moreOf) SettingsLayer.More else SettingsLayer.Main
 }
 
 /** One row of a settings card that knows whether a line follows it. */

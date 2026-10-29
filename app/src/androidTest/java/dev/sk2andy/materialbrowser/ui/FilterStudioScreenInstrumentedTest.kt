@@ -39,7 +39,8 @@ class FilterStudioScreenInstrumentedTest {
                     currentProfileId = "default",
                     currentUrl = "https://news.example",
                     recentDomain = "tracker.example",
-                    selectedRuleId = rule.id,
+                    // No rule open: the v5 studio opens a selected rule on its own page, without the search.
+                    selectedRuleId = null,
                     onTest = { null },
                     onAdd = { it },
                     onUpdate = { it },

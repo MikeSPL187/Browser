@@ -218,7 +218,7 @@ internal fun SettingsScreen(
         ?.accent
         ?: WorkspaceAccent.Default
     // Under ui.v5 the inner pages draw their shared components as v5 lists (V15d).
-    ProvideV5SettingsSkin(enabled = true) {
+    ProvideV5SettingsSkin() {
     SettingsRouter(
         destination = destination,
         modifier = modifier,
@@ -269,7 +269,7 @@ internal fun SettingsScreen(
                 SettingsDestination.TabsAndGestures,
                 SettingsDestination.TabsMore,
                 -> TabsAndGesturesSettingsPage(
-                    layer = SettingsLayerRules.layer(true, currentDestination),
+                    layer = SettingsLayerRules.layer(currentDestination),
                     onOpenMore = { onDestinationChanged(SettingsDestination.TabsMore) },
                     inactiveTabLifetime = inactiveTabLifetime,
                     archiveInactiveTabs = archiveInactiveTabs,
@@ -412,7 +412,7 @@ internal fun SettingsScreen(
                 SettingsDestination.Browser,
                 SettingsDestination.BrowserMore,
                 -> BrowserSettingsPage(
-                    layer = SettingsLayerRules.layer(true, currentDestination),
+                    layer = SettingsLayerRules.layer(currentDestination),
                     onOpenMore = { onDestinationChanged(SettingsDestination.BrowserMore) },
                     browserEngineKind = browserEngineKind,
                     pageTranslationProvider = pageTranslationProvider,
@@ -512,7 +512,7 @@ internal fun SettingsScreen(
                 -> {
                     val context = LocalContext.current
                     ProtectionAndDataSettingsPage(
-                        layer = SettingsLayerRules.layer(true, currentDestination),
+                        layer = SettingsLayerRules.layer(currentDestination),
                         onOpenMore = { onDestinationChanged(SettingsDestination.ProtectionMore) },
                         onOpenFirefoxExtensions = onOpenFirefoxExtensions,
                         blockerSettings = blockerSettings,

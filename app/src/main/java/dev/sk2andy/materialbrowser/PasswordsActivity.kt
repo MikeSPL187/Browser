@@ -220,7 +220,7 @@ class PasswordsActivity : FragmentActivity() {
             SideEffect { applyAppearanceSystemBars(appearanceDark) }
             CandyTheme(settings = appearanceSettings, workspaceAccent = workspaceAccent) {
                 // V28 B3: the screens take the v5 palette, type and shapes through Material.
-                ProvideV5SettingsSkin(enabled = true) {
+                ProvideV5SettingsSkin() {
                     Content()
                 }
             }

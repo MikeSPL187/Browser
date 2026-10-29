@@ -6,15 +6,8 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 import dev.sk2andy.materialbrowser.ui.v5.V5StateAction
 import dev.sk2andy.materialbrowser.ui.v5.V5StatePage
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -26,10 +19,8 @@ import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
 import dev.sk2andy.materialbrowser.shared.ui.WorkspaceIcons
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
-import dev.sk2andy.materialbrowser.ui.theme.VolaElevation
 import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
-import dev.sk2andy.materialbrowser.ui.theme.VolaStatePageTokens
-import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
+
 /**
  * «Workspace locked» (board W-Locked) over a protected workspace until the user confirms it is
  * them. Its tabs are hidden underneath; the way out goes to another workspace.
@@ -76,36 +67,6 @@ internal fun ProfileLockedOverlay(
             ),
             modifier = Modifier.testTag(ProfileProtectionTestTags.LockedOverlay),
         )
-    }
-}
-
-/** The workspace's gem with a lock on its corner; a lock alone when the workspace is unknown. */
-@Composable
-private fun LockedWorkspaceGem(workspace: BrowserProfile?) {
-    if (workspace == null) {
-        VolaStatePageIcon(icon = VolaIcons.Lock, tone = VolaStatePageTone.Accent)
-        return
-    }
-    Box {
-        WorkspaceGem(workspace = workspace, size = VolaStatePageTokens.iconContainerSize)
-        Surface(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .offset(x = VolaStatePageTokens.badgeOffset, y = VolaStatePageTokens.badgeOffset)
-                .size(VolaStatePageTokens.badgeSize),
-            shape = CircleShape,
-            color = VolaTheme.extendedColors.card,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            shadowElevation = VolaElevation.level2,
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = VolaIcons.Lock,
-                    contentDescription = null,
-                    modifier = Modifier.size(VolaStatePageTokens.badgeIconSize),
-                )
-            }
-        }
     }
 }
 

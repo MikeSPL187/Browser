@@ -19,7 +19,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -29,21 +28,13 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import dev.sk2andy.materialbrowser.R
-import dev.sk2andy.materialbrowser.data.AppearanceSettings
-import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
-import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
-import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
-import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
 import dev.sk2andy.materialbrowser.ui.theme.VolaStatePageTokens
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
-import dev.sk2andy.materialbrowser.ui.theme.auraBrush
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
@@ -262,28 +253,6 @@ internal fun VolaStatePagePrimaryButton(
     }
 }
 
-/** A second action of a [VolaStatePage]: an outlined pill under the main one. */
-@Composable
-internal fun VolaStatePageSecondaryButton(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    if (LocalStatePageV5.current) {
-        V5StateQuietAction(V5StateAction(text, onClick), modifier)
-        return
-    }
-    OutlinedButton(
-        onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = VolaStatePageTokens.buttonHeight),
-        shape = CircleShape,
-    ) {
-        Text(text = text, style = MaterialTheme.typography.labelLarge)
-    }
-}
-
 /**
  * A quiet way out of a [VolaStatePage], such as going to another workspace. Under v5 one that
  * goes against the page's advice is red ([destructive]).
@@ -307,29 +276,5 @@ internal fun VolaStatePageTextButton(
         ),
     ) {
         Text(text = text, style = MaterialTheme.typography.labelLarge)
-    }
-}
-
-@VolaPreviews
-@Composable
-private fun VolaStatePagePreview() {
-    MaterialBrowserTheme(settings = AppearanceSettings(appearanceMode = BrowserAppearanceMode.System)) {
-        Box(modifier = Modifier.background(VolaTheme.auraBrush)) {
-            VolaStatePage(
-                title = stringResource(R.string.page_error_offline_title),
-                message = stringResource(R.string.page_error_offline_body),
-                icon = { VolaStatePageIcon(icon = VolaIcons.WifiOff) },
-            ) {
-                VolaStatePagePrimaryButton(
-                    text = stringResource(R.string.action_retry),
-                    onClick = {},
-                    icon = VolaIcons.Refresh,
-                )
-                VolaStatePageSecondaryButton(
-                    text = stringResource(R.string.page_error_network_settings),
-                    onClick = {},
-                )
-            }
-        }
     }
 }

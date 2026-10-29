@@ -9,7 +9,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineCapabilities
-import dev.sk2andy.materialbrowser.browser.SiteConnectionKind
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionPrompt
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionPromptChoice
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionRadarEntry
@@ -21,7 +20,6 @@ import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -101,27 +99,6 @@ class PermissionRadarSheetInstrumentedTest {
             .performClick()
 
         assertEquals(PermissionPromptChoice.AllowOnce, selected.get())
-    }
-
-    @Test
-    fun siteInfoButtonRemainsAvailableWithoutPermissionActivity() {
-        var opened = false
-        composeRule.setContent {
-            MaterialBrowserTheme {
-                PermissionRadarBadge(
-                    siteAvailable = true,
-                    activityVisible = false,
-                    connectionKind = SiteConnectionKind.Https,
-                    blockedCount = 0,
-                    onClick = { opened = true },
-                )
-            }
-        }
-
-        composeRule.onNodeWithTag(PermissionRadarTestTags.ActivityBadge)
-            .assertHasClickAction()
-            .performClick()
-        assertTrue(opened)
     }
 
     @Test

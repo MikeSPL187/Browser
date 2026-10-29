@@ -118,30 +118,6 @@ internal fun AddressBarLongPressAction.labelRes(): Int = when (this) {
 }
 
 @StringRes
-internal fun AddressBarLongPressAction.runtimeLabelRes(
-    isFavorite: Boolean,
-    isPinned: Boolean,
-    isDesktopView: Boolean,
-): Int = when (this) {
-    AddressBarLongPressAction.ToggleFavorite -> if (isFavorite) {
-        R.string.action_remove_favorite
-    } else {
-        R.string.action_add_favorite
-    }
-    AddressBarLongPressAction.TogglePinned -> if (isPinned) {
-        R.string.action_remove_pin
-    } else {
-        R.string.action_pin_tab
-    }
-    AddressBarLongPressAction.ToggleDesktopView -> if (isDesktopView) {
-        R.string.action_mobile_view
-    } else {
-        R.string.action_desktop_view
-    }
-    else -> labelRes()
-}
-
-@StringRes
 private fun AddressBarLongPressActionSection.labelRes(): Int = when (this) {
     AddressBarLongPressActionSection.Reading -> R.string.reader_studio_title
     AddressBarLongPressActionSection.Navigation -> R.string.browser_menu_navigation_group

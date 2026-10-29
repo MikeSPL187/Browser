@@ -741,7 +741,7 @@ private fun ProtectionSettingsPageSystemWebViewPreview() {
 @Composable
 private fun ProtectionSettingsV5Preview(layer: SettingsLayer) {
     MaterialBrowserTheme {
-        ProvideV5SettingsSkin(enabled = true) {
+        ProvideV5SettingsSkin() {
             ProtectionAndDataSettingsPage(
                 blockerSettings = BlockerSettings(),
                 layer = layer,

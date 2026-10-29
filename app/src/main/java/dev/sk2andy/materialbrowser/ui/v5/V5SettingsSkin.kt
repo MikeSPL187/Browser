@@ -61,7 +61,7 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
 import kotlinx.coroutines.launch
 
 /**
- * Under ui.v5 the inner settings pages (V15d) draw their shared components as v5 lists, the way
+ * The inner settings pages (V15d) draw their shared components as v5 lists, the way
  * the settings home does (canvas screen «ж», system-v5.md sections 1.5 and 3.4): a bar with the
  * back arrow and the page's name, rounded groups on the grouped background, 17 sp rows of at least
  * 52 dp, dividers from under the text, the v5 switch with its tick, and a grey press highlight
@@ -69,11 +69,7 @@ import kotlinx.coroutines.launch
  * does and announces stays the components' own.
  */
 @Composable
-internal fun ProvideV5SettingsSkin(enabled: Boolean, content: @Composable () -> Unit) {
-    if (!enabled) {
-        content()
-        return
-    }
+internal fun ProvideV5SettingsSkin(content: @Composable () -> Unit) {
     val dark = MaterialTheme.colorScheme.background.luminance() < DARK_SHELL_LUMINANCE
     VolaV5Theme(dark = dark) {
         val view = LocalView.current

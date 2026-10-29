@@ -36,49 +36,15 @@ class GeckoHttpsOnlyErrorPageTest {
     }
 
     @Test
-    fun `page emphasizes the host and offers both actions`() {
-        val html = GeckoHttpsOnlyErrorPage.html(strings, host = "neverssl.com")
-
-        assertTrue(html.contains("Vola could not reach <strong>neverssl.com</strong> over HTTPS."))
-        assertTrue(html.contains("document.reloadWithHttpsOnlyException()"))
-        assertTrue(html.contains(">Go back</button>"))
-        assertTrue(html.contains(">Continue to HTTP site</button>"))
-        assertTrue(html.contains("<span>Others can read what you send.</span>"))
-        assertTrue(html.startsWith("<!DOCTYPE html>"))
-    }
-
-    @Test
-    fun `page takes the v4 colors of the default workspace in both themes`() {
-        val light = GeckoHttpsOnlyErrorPage.Palette(
-            surface = "#FFFFFF",
-            onSurface = "#111111",
-            onSurfaceVariant = "#222222",
-            primary = "#333333",
-            onPrimary = "#444444",
-            warnContainer = "#555555",
-            onWarnContainer = "#666666",
-        )
-        val dark = light.copy(surface = "#000000", primary = "#777777")
-
-        val html = GeckoHttpsOnlyErrorPage.html(strings, host = "a.b", palettes = light to dark)
-
-        assertTrue(html.contains(":root { --sf: #FFFFFF;"))
-        assertTrue(html.contains("@media (prefers-color-scheme: dark) { :root { --sf: #000000;"))
-        assertTrue(html.contains("--pri: #777777;"))
-        val (defaultLight, defaultDark) = GeckoHttpsOnlyErrorPage.defaultPalettes
-        assertTrue(defaultLight.surface.matches(Regex("#[0-9A-F]{6}")))
-        assertEquals("#000000", defaultDark.surface)
-    }
-
-    @Test
     fun `host and strings cannot inject markup`() {
-        val html = GeckoHttpsOnlyErrorPage.html(
+        val html = GeckoHttpsOnlyErrorPage.htmlV5(
             strings.copy(title = "<b>\"title\"</b>"),
             host = "evil.example\"><script>alert(1)</script>",
         )
 
         assertFalse(html.contains("<script>alert(1)</script>"))
-        assertFalse(html.contains("<b>"))
+        // The page has a <b> of its own (the card's heading); the title's must not get through.
+        assertFalse(html.contains("<b>\"title\"</b>"))
         assertTrue(html.contains("evil.example&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt;"))
         assertTrue(html.contains("&lt;b&gt;&quot;title&quot;&lt;/b&gt;"))
     }
@@ -130,7 +96,7 @@ class GeckoHttpsOnlyErrorPageTest {
 
     @Test
     fun `data URI carries the page as UTF-8`() {
-        val html = GeckoHttpsOnlyErrorPage.html(strings.copy(title = "Защищённая версия"), "a.b")
+        val html = GeckoHttpsOnlyErrorPage.htmlV5(strings.copy(title = "Защищённая версия"), "a.b")
         val uri = GeckoHttpsOnlyErrorPage.dataUri(html)
         val prefix = "data:text/html;charset=utf-8;base64,"
 

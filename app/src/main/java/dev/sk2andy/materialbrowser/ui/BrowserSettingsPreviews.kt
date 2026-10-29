@@ -36,7 +36,7 @@ private fun BrowserSettingsPreview() {
 @Composable
 private fun BrowserSettingsV5Preview(layer: SettingsLayer) {
     MaterialBrowserTheme {
-        ProvideV5SettingsSkin(enabled = true) {
+        ProvideV5SettingsSkin() {
             BrowserSettingsPage(
                 layer = layer,
                 pageTranslationProvider = PageTranslationProvider.Kagi,

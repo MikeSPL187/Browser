@@ -38,20 +38,6 @@ import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 import dev.sk2andy.materialbrowser.shared.ui.theme.densityRowMinHeight
 import dev.sk2andy.materialbrowser.shared.ui.theme.densityRowPadding
 
-/** «Today», «Yesterday», «No folder»: the small title over a card of rows. */
-@Composable
-internal fun LibrarySectionLabel(text: String, modifier: Modifier = Modifier) {
-    Text(
-        text = text,
-        modifier = modifier
-            .padding(horizontal = VolaLibrary.sidePadding)
-            .padding(VolaLibrary.sectionLabelPadding),
-        style = MaterialTheme.typography.labelLarge,
-        fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-}
-
 /**
  * One row of a card: rows of a day or of «No folder» share one rounded card, split by hairlines,
  * so each lazy item draws only its own slice of it.

@@ -158,8 +158,11 @@ fun V5FindInPage(
                     BasicTextField(
                         value = field,
                         onValueChange = { value ->
+                            // Against the field's own last text: the field can report the same text
+                            // twice before [query] comes back, and the page was then searched twice.
+                            val changed = value.text != field.text
                             field = value
-                            if (value.text != query) onQueryChange(value.text)
+                            if (changed) onQueryChange(value.text)
                         },
                         singleLine = true,
                         textStyle = V5Theme.type.body.copy(color = colors.label),

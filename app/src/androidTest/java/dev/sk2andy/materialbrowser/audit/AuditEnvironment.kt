@@ -12,8 +12,6 @@ import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
 import dev.sk2andy.materialbrowser.data.ReleaseNotesStore
-import dev.sk2andy.materialbrowser.ui.theme.v5.UiV5Flag
-
 /** The device's shape: the window size class every screen adapts to. */
 enum class AuditLayout(val label: String) {
     PhonePortrait("phone"),
@@ -60,13 +58,9 @@ data class AuditConfig(
 
 /** Puts the device and the app into an [AuditConfig] before launch, and back afterwards. */
 internal object AuditEnvironment {
-    /**
-     * [firstRun]: a fresh install that still shows the welcome and setup screens. [uiV5]: the v5
-     * interface instead of the current one.
-     */
-    fun enter(context: Context, config: AuditConfig, firstRun: Boolean = false, uiV5: Boolean = false) {
+    /** [firstRun]: a fresh install that still shows the welcome and setup screens. */
+    fun enter(context: Context, config: AuditConfig, firstRun: Boolean = false) {
         context.getSharedPreferences("browser_session", Context.MODE_PRIVATE).edit().clear().commit()
-        UiV5Flag.setEnabled(context, uiV5)
         setFontScale(config.fontScale)
         setLayout(config.layout)
         setAppLanguage(context, config.languageTag)
@@ -98,7 +92,6 @@ internal object AuditEnvironment {
     }
 
     fun reset(context: Context) {
-        UiV5Flag.setEnabled(context, false)
         shell("cmd uimode night no")
         setFontScale(1f)
         setLayout(AuditLayout.PhonePortrait)

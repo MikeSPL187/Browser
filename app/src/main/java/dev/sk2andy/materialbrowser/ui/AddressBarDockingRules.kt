@@ -6,12 +6,6 @@ import dev.sk2andy.materialbrowser.data.AddressBarDockEdge
 import dev.sk2andy.materialbrowser.data.AddressBarDockPlacement
 
 @Immutable
-internal data class AddressBarDockState(
-    val enabled: Boolean,
-    val placement: AddressBarDockPlacement?,
-)
-
-@Immutable
 internal data class AddressBarDockSnap(
     val position: Offset,
     val snappedToNormalAnchor: Boolean,

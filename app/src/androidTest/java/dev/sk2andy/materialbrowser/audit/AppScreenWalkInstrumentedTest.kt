@@ -158,7 +158,7 @@ class AppScreenWalkInstrumentedTest(
         // Before the environment: the grant asks UiAutomation with flags of its own, and the
         // reconnect would put the rotation back (AuditEnvironment.turnScreen).
         grantNotificationPermissionForTests()
-        AuditEnvironment.enter(context, auditConfig, firstRun, uiV5 = true)
+        AuditEnvironment.enter(context, auditConfig, firstRun)
         scenario = ActivityScenario.launch(MainActivity::class.java)
         awaitOrientation()
         if (firstRun) walkV5FirstRun()

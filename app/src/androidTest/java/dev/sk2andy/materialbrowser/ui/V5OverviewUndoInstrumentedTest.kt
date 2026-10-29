@@ -14,7 +14,6 @@ import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.StartupAddressFocusMode
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
-import dev.sk2andy.materialbrowser.ui.theme.v5.UiV5Flag
 import dev.sk2andy.materialbrowser.ui.v5.V5OverviewTestTags
 import org.junit.After
 import org.junit.Assert.assertTrue
@@ -33,7 +32,6 @@ class V5OverviewUndoInstrumentedTest {
 
     init {
         clearPreferences()
-        UiV5Flag.setEnabled(context, true)
         GestureOnboardingStore(context).markCompleted()
         BrowserSessionStore(context).apply {
             saveStartupAnimationEnabled(false)
@@ -88,8 +86,6 @@ class V5OverviewUndoInstrumentedTest {
 
     private fun clearPreferences() {
         context.getSharedPreferences("browser_session", Context.MODE_PRIVATE).edit().clear().commit()
-        // The runner starts every test on the current interface.
-        UiV5Flag.setEnabled(context, false)
     }
 
     private companion object {

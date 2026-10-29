@@ -1,18 +1,13 @@
 package dev.sk2andy.materialbrowser.ui
 
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.contentDescription
 import dev.sk2andy.materialbrowser.browser.BrowserBackdropBlurRegion
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.ExternalLinkPreviewState
+
 internal object ExternalLinkPreviewTestTags {
     const val Bar = "external_link_preview_bar"
     const val Back = "external_link_preview_back"
@@ -58,25 +53,5 @@ internal fun ExternalLinkPreviewBar(
         onDesktopViewChange = onDesktopViewChange,
         onBackdropBlurRegionChanged = onBackdropBlurRegionChanged,
         modifier = modifier,
-    )
-}
-
-@Composable
-private fun PreviewMenuItem(
-    label: String,
-    icon: Int,
-    testTag: String,
-    onClick: () -> Unit,
-) {
-    DropdownMenuItem(
-        text = { Text(label) },
-        leadingIcon = {
-            Icon(
-                painter = painterResource(icon),
-                contentDescription = null,
-            )
-        },
-        onClick = onClick,
-        modifier = Modifier.testTag(testTag),
     )
 }
