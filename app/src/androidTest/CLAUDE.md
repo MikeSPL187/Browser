@@ -25,6 +25,11 @@
   аппаратный VP8 (`AndroidDecoderModule::SupportsMimeType`, `UseVP8HwDecode`), иначе декодирует сам
   (ffvpx). Эмулятор заявляет аппаратный декодер goldfish, и на API 37 его настройка падает. Это среда,
   а не PiP Vola: строки в baseline не добавлять, Gecko на программный декодер не переключать.
+- **Видеотесты PiP — на своём эмуляторе** (шард `video`, 29.10). На API 35 Gecko играет VP8 через
+  `c2.goldfish.vp8.decoder`, и при `GeckoPictureInPictureInstrumentedTest` система эмулятора иногда
+  умирает (падают System UI и system_server, память qemu +4 ГБ; с GeckoView 159 — почти каждый раз):
+  главный поток стоит в `nSyncAndDrawFrame`, следующий тест не стартует, шард терял все тесты после
+  него. Восемь шардов исключают класс (`notClass`); ручной фильтр по классу запускает его как обычно.
 - **Тесты широкой раскладки** (`assumeTrue(screenWidthDp >= 600)`, например `WideAddressBarInstrumentedTest`)
   на эмуляторе CI (телефон, книжно) **всегда пропускаются**. Планшет и альбомную ориентацию в CI проверяет
   только обход экранов (`AuditLayout.Tablet`/`PhoneLandscape`, #163) — так нашлись планшетные пробелы.
@@ -85,8 +90,8 @@
   смотри порядок модификаторов в `src/main`.
 - `boundsInRoot` обрезается родителями (край карточки, сетки, экрана). Размер зоны касания проверяй по
   `SemanticsNode.size` / `touchBoundsInRoot`, а не по видимым границам.
-- Кнопка закрытия редактора адреса и затемнение за ним имеют одну подпись: искать
-  `closeAddressInputButton(context)` (подпись + `Role.Button`).
+- Редактор адреса — v5: поле `V5EditorTestTags.Field` (фокус ждать `awaitAddressEditorFocused()`),
+  закрытие — `closeAddressInputButton()` (тег «Отмены»). С 28.10 все тесты идут на v5 (`VolaTestRunner`).
 - `performScrollTo()`/`performScrollToNode()` в обходе экранов шли по 2–7 минут и вешали тест за 20-минутный
   предел, а главный поток приложения при этом простаивал больше половины времени (замер `MainThreadSampler`,
   сборка WebView, #165). В обходе прокрутка — действием самого списка (`SemanticsActions.ScrollBy`,

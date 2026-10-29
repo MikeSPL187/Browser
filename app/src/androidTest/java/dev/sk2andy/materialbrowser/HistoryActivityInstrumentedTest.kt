@@ -3,6 +3,8 @@ package dev.sk2andy.materialbrowser
 import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
 import androidx.lifecycle.Lifecycle
 import androidx.test.platform.app.InstrumentationRegistry
@@ -48,7 +50,9 @@ class HistoryActivityInstrumentedTest {
 
     @Test
     fun displaysPersistedHistoryInDedicatedActivity() {
-        composeRule.onNodeWithText(context.getString(R.string.history_title))
+        // The library's large title and its segment both say «History».
+        composeRule.onAllNodesWithText(context.getString(R.string.history_title))
+            .onFirst()
             .assertIsDisplayed()
         composeRule.onNodeWithText("Activity history").assertIsDisplayed()
     }

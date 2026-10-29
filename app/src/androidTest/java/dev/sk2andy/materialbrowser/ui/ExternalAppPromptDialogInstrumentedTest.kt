@@ -7,6 +7,7 @@ import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.sk2andy.materialbrowser.browser.ExternalAppPrompt
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
+import dev.sk2andy.materialbrowser.ui.v5.V5SheetTestTags
 import java.util.concurrent.atomic.AtomicBoolean
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -51,7 +52,8 @@ class ExternalAppPromptDialogInstrumentedTest {
             }
         }
 
-        composeRule.onNodeWithTag(ExternalAppPromptTestTags.Cancel).performClick()
+        // «Close» on the v5 prompt sheet cancels.
+        composeRule.onNodeWithTag(V5SheetTestTags.Close).performClick()
 
         assertTrue(cancelled.get())
     }

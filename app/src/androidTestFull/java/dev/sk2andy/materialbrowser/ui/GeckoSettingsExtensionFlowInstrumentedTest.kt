@@ -9,6 +9,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -29,6 +30,9 @@ import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
 import dev.sk2andy.materialbrowser.data.ReleaseNotesStore
 import dev.sk2andy.materialbrowser.grantNotificationPermissionForTests
+import dev.sk2andy.materialbrowser.ui.v5.V5PageMenuTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5SheetTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5SyncSettingsTestTags
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.junit.After
@@ -66,22 +70,15 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
     fun syncDestinationRendersThroughRealMainMenuWithoutFlowRowLinkageCrash() {
         openSettings()
 
-        composeRule.onNodeWithText(context.getString(R.string.sync_settings_title))
-            .performClick()
-
-        composeRule.onNodeWithTag(SyncSettingsTestTags.Endpoint).assertIsDisplayed()
-        composeRule.onNodeWithTag(SyncSettingsTestTags.AccentColors)
-            .performScrollTo()
-            .assertIsDisplayed()
+        tapRowUntil(R.string.sync_settings_title) {
+            composeRule.onAllNodesWithTag(V5SyncSettingsTestTags.Page).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag(V5SyncSettingsTestTags.Server).assertExists()
     }
 
     @Test
     fun settingsExtensionBackReturnsToSettingsHome() {
-        openSettings()
-        composeRule.onNodeWithText(context.getString(R.string.gecko_extensions_title))
-            .performScrollTo()
-            .performClick()
-        composeRule.onNodeWithTag(FirefoxExtensionManagerTestTags.Overlay).assertIsDisplayed()
+        openFirefoxExtensionSettings()
 
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         assertTrue(
@@ -99,7 +96,9 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
         }
 
         composeRule.onNodeWithTag(FirefoxExtensionManagerTestTags.Overlay).assertDoesNotExist()
-        composeRule.onNodeWithText(context.getString(R.string.settings_title)).assertIsDisplayed()
+        composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithTag(SettingsSearchTestTags.Open).fetchSemanticsNodes().isNotEmpty()
+        }
     }
 
     @Test
@@ -115,17 +114,19 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
         }
 
         openFirefoxExtensionSettings()
+        // The extension's own page holds its «Options».
+        composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithText(FIXTURE_EXTENSION_NAME).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText(FIXTURE_EXTENSION_NAME).performScrollTo().performClick()
         composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
             composeRule.onAllNodesWithTag(
                 FirefoxExtensionManagerTestTags.optionsPage(FIXTURE_EXTENSION_ID),
             ).fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithContentDescription(
-            context.getString(R.string.gecko_extension_install),
-        ).assertIsDisplayed()
         composeRule.onNodeWithTag(
             FirefoxExtensionManagerTestTags.optionsPage(FIXTURE_EXTENSION_ID),
-        ).assertIsDisplayed().performClick()
+        ).performScrollTo().assertIsDisplayed().performClick()
 
         var optionsTabId = ""
         composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
@@ -274,22 +275,37 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
 
     private fun openFirefoxExtensionSettings() {
         openSettings()
-        composeRule.onNodeWithText(context.getString(R.string.gecko_extensions_title))
-            .performScrollTo()
-            .performClick()
+        tapRowUntil(R.string.gecko_extensions_title) {
+            composeRule.onAllNodesWithTag(FirefoxExtensionManagerTestTags.Overlay).fetchSemanticsNodes().isNotEmpty()
+        }
         composeRule.onNodeWithTag(FirefoxExtensionManagerTestTags.Overlay).assertIsDisplayed()
+    }
+
+    /**
+     * Taps a settings home row until its page opens: a tap while the settings still slide in can
+     * be lost, so it is repeated, as the screen walk does.
+     */
+    private fun tapRowUntil(title: Int, opened: () -> Boolean) {
+        repeat(ROW_TAP_ATTEMPTS) {
+            composeRule.onNodeWithText(context.getString(title)).performScrollTo().performClick()
+            val done = runCatching {
+                composeRule.waitUntil(timeoutMillis = ROW_RETAP_AFTER_MILLIS) { opened() }
+            }.isSuccess
+            if (done) return
+        }
+        composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) { opened() }
     }
 
     private fun openSettings() {
         openBrowserMenu()
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.Settings)
+        composeRule.onNodeWithTag(V5PageMenuTestTags.Settings)
             .performScrollTo()
             .performClick()
         composeRule.onNodeWithText(context.getString(R.string.settings_title)).assertIsDisplayed()
     }
 
     private fun openBrowserMenu() {
-        val closeAddressButton = closeAddressInputButton(context)
+        val closeAddressButton = closeAddressInputButton()
         if (composeRule.onAllNodes(closeAddressButton).fetchSemanticsNodes().isNotEmpty()) {
             composeRule.onNode(closeAddressButton).performClick()
         }
@@ -302,7 +318,7 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
         composeRule.onNodeWithContentDescription(
             context.getString(R.string.cd_more_options),
         ).performClick()
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.Menu).assertIsDisplayed()
+        composeRule.onNodeWithTag(V5SheetTestTags.Sheet).assertIsDisplayed()
     }
 
     private fun ensureBuiltInExtensionFixture(): String {
@@ -354,5 +370,7 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
         const val BOTTOM_INSET_PX = 48
         const val EDGE_BACK_SWIPE_STEPS = 30
         const val TIMEOUT_MILLIS = 30_000L
+        const val ROW_TAP_ATTEMPTS = 3
+        const val ROW_RETAP_AFTER_MILLIS = 3_000L
     }
 }

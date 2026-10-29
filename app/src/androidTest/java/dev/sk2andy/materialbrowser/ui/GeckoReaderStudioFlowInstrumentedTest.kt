@@ -10,8 +10,8 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.MainActivity
@@ -19,6 +19,7 @@ import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
 import dev.sk2andy.materialbrowser.reader.ReaderLibraryStore
+import dev.sk2andy.materialbrowser.ui.v5.V5PageMenuTestTags
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.SocketException
@@ -54,7 +55,11 @@ class GeckoReaderStudioFlowInstrumentedTest {
     @Test
     fun geckoReaderMenuActionIsEnabledAndOpensExtractedArticle() {
         ReaderStudioFixtureServer().use { server ->
-            composeRule.onNode(closeAddressInputButton(context)).performClick()
+            // With the launch animation off the address editor opens at start: close it first.
+            composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
+                composeRule.onAllNodes(closeAddressInputButton()).fetchSemanticsNodes().isNotEmpty()
+            }
+            composeRule.onNode(closeAddressInputButton()).performClick()
             composeRule.activityRule.scenario.onActivity { activity ->
                 val controller = activity.browserControllerForTesting()
                 assertTrue(controller.usesGeckoEngine)
@@ -65,7 +70,8 @@ class GeckoReaderStudioFlowInstrumentedTest {
             composeRule.onNodeWithContentDescription(
                 context.getString(R.string.cd_more_options),
             ).performClick()
-            composeRule.onNodeWithText(context.getString(R.string.reader_open_action))
+            composeRule.onNodeWithTag(V5PageMenuTestTags.Read)
+                .performScrollTo()
                 .assertIsDisplayed()
                 .assertIsEnabled()
                 .performClick()

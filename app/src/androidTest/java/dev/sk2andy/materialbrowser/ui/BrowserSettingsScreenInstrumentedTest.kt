@@ -269,7 +269,7 @@ class BrowserSettingsScreenInstrumentedTest {
             }
         }
 
-        composeRule.onNodeWithTag(BrowserSettingsTestTags.OpenHomeOnStartup).performClick()
+        composeRule.onNodeWithTag(BrowserSettingsTestTags.OpenHomeOnStartup).performScrollTo().performClick()
 
         assertTrue(enabled)
     }

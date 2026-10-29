@@ -10,6 +10,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.credentials.HttpAuthPrompt
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
+import dev.sk2andy.materialbrowser.ui.v5.V5SheetTestTags
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
@@ -77,10 +78,12 @@ class HttpAuthPromptDialogInstrumentedTest {
             }
         }
 
+        // The warning closes the sheet's message; «Close» cancels.
         composeRule.onNodeWithText(
             context.getString(R.string.http_auth_dialog_insecure_warning),
+            substring = true,
         ).assertExists()
-        composeRule.onNodeWithText(context.getString(R.string.action_cancel)).performClick()
+        composeRule.onNodeWithTag(V5SheetTestTags.Close).performClick()
 
         assertTrue(canceled.get())
     }

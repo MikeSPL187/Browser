@@ -14,9 +14,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
-import dev.sk2andy.materialbrowser.ui.AddressBarTestTags
 import dev.sk2andy.materialbrowser.ui.awaitAddressEditorFocused
 import dev.sk2andy.materialbrowser.ui.closeAddressInputButton
+import dev.sk2andy.materialbrowser.ui.v5.V5EditorTestTags
 import org.junit.After
 import org.junit.Rule
 import org.junit.Test
@@ -43,13 +43,13 @@ class StartupPresentationInstrumentedTest {
 
     @Test
     fun disabledAnimationOpensFocusedAddressEditorOnLauncherStart() {
-        composeRule.onNodeWithTag(AddressBarTestTags.Editor).assertIsDisplayed()
+        composeRule.onNodeWithTag(V5EditorTestTags.Field).assertIsDisplayed()
         awaitWindowFocusForTests(composeRule.activity)
         composeRule.awaitAddressEditorFocused()
         assertImeVisible()
 
-        composeRule.onNode(closeAddressInputButton(context)).performClick()
-        composeRule.onNodeWithTag(AddressBarTestTags.Editor).assertDoesNotExist()
+        composeRule.onNode(closeAddressInputButton()).performClick()
+        composeRule.onNodeWithTag(V5EditorTestTags.Field).assertDoesNotExist()
 
         composeRule.activityRule.scenario.onActivity { activity ->
             activity.startActivity(
@@ -64,10 +64,10 @@ class StartupPresentationInstrumentedTest {
         }
         // The launcher intent asks for the editor through a request id; it opens a frame later.
         composeRule.waitUntil(timeoutMillis = 5_000L) {
-            composeRule.onAllNodesWithTag(AddressBarTestTags.Editor).fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag(V5EditorTestTags.Field).fetchSemanticsNodes().isNotEmpty()
         }
 
-        composeRule.onNodeWithTag(AddressBarTestTags.Editor).assertIsDisplayed()
+        composeRule.onNodeWithTag(V5EditorTestTags.Field).assertIsDisplayed()
         composeRule.awaitAddressEditorFocused()
         assertImeVisible()
     }

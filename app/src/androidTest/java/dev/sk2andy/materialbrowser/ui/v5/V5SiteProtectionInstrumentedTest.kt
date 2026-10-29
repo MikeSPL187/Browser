@@ -5,6 +5,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.R
@@ -96,8 +97,8 @@ class V5SiteProtectionInstrumentedTest {
         show(site)
 
         composeRule.onNodeWithTag(V5SiteProtectionTestTags.Details).performClick()
-        composeRule.onNodeWithTag(V5SiteProtectionTestTags.Report).performClick()
-        composeRule.onNodeWithTag(V5SiteProtectionTestTags.Reset).performClick()
+        composeRule.onNodeWithTag(V5SiteProtectionTestTags.Report).performScrollTo().performClick()
+        composeRule.onNodeWithTag(V5SiteProtectionTestTags.Reset).performScrollTo().performClick()
         assertEquals(listOf("report"), calls)
 
         composeRule.onNodeWithText(context.getString(R.string.v5_site_reset_title, site.host)).assertExists()

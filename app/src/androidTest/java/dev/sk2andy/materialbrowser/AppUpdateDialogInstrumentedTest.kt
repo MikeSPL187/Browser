@@ -1,11 +1,14 @@
 package dev.sk2andy.materialbrowser
 
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
+import dev.sk2andy.materialbrowser.ui.v5.V5SheetTestTags
 import dev.sk2andy.materialbrowser.update.AvailableAppUpdate
 import java.util.concurrent.atomic.AtomicInteger
 import org.junit.Assert.assertEquals
@@ -45,19 +48,20 @@ class AppUpdateDialogInstrumentedTest {
             context.getString(R.string.update_available_message, "0.99"),
         ).assertExists()
         composeRule.onNodeWithText(context.getString(R.string.action_view_release_notes))
-            .performClick()
+            .performSemanticsAction(SemanticsActions.OnClick)
 
         assertEquals(1, openedNotes.get())
         assertEquals(0, downloads.get())
         assertEquals(0, dismissals.get())
 
         composeRule.onNodeWithText(context.getString(R.string.action_download_update))
-            .performClick()
+            .performSemanticsAction(SemanticsActions.OnClick)
         assertEquals(1, downloads.get())
         assertEquals(1, openedNotes.get())
         assertEquals(0, dismissals.get())
 
-        composeRule.onNodeWithText(context.getString(R.string.action_later)).performClick()
+        // The v5 prompt sheet's «Close» is «Later».
+        composeRule.onNodeWithTag(V5SheetTestTags.Close).performSemanticsAction(SemanticsActions.OnClick)
         assertEquals(1, dismissals.get())
         assertEquals(1, downloads.get())
         assertEquals(1, openedNotes.get())
