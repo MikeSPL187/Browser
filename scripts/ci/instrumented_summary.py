@@ -19,6 +19,10 @@ signature naming a class the emulator's API level lacks) fails in the orchestrat
 so none of its tests reach the JUnit XML. Such classes are read from the shard's logcat.txt.gz and
 reported as one failed "initializationError" test per class.
 
+A shard whose runner listed more tests than its JUnit XML holds lost the rest (the emulator went
+offline mid-run, and the orchestrator stopped): the listing count comes from the largest
+"run finished: N tests" in the shard's logcat.txt.gz, and such a shard fails the run.
+
 Baseline lines are "package.Class#method" or "package.Class" (every method of the class);
 text after " -- " is a note, lines starting with "#" are comments.
 """
@@ -41,6 +45,9 @@ LOG_LINES = 20
 # Errors and crashes in a logcat line: "10-06 05:20:00.000  1234  1240 E Tag: message".
 LOG_ERROR = re.compile(r"^\S+ \S+\s+\d+\s+\d+ [EF] |FATAL EXCEPTION")
 INIT_ERROR = re.compile(r"TestRunner\s*:\s*failed: initializationError\(([\w.$]+)\)")
+RUN_FINISHED = re.compile(r"TestRunner\s*:\s*run finished: (\d+) tests")
+# Runs of their own next to a shard's main run, with their own listings.
+SEPARATE_RUN_DIRS = ("extension-phases", "extra-runs")
 ASSUMPTION_FAILURES = (
     "org.junit.AssumptionViolatedException",
     "org.junit.internal.AssumptionViolatedException",
@@ -67,6 +74,8 @@ class Summary:
     results: list
     empty_shards: list
     shard_seconds: dict
+    # (shard, tests in its XML, tests its runner listed) for a shard that lost tests mid-run.
+    incomplete_shards: list = dataclasses.field(default_factory=list)
 
 
 def read_results(path: Path) -> list:
@@ -143,12 +152,19 @@ def has_readable_xml(files: list) -> bool:
 
 
 def collect(shard_dirs: list) -> Summary:
-    results, empty_shards, shard_seconds = [], [], {}
+    results, empty_shards, shard_seconds, incomplete_shards = [], [], {}, []
     for shard in map(Path, shard_dirs):
         xml_files = first_run_files(shard, "*.xml")
         shard_results = read_all(xml_files)
         if not shard_results and not has_readable_xml(xml_files):
             empty_shards.append(str(shard))
+        else:
+            main_run = [
+                file for file in xml_files if file.relative_to(shard).parts[0] not in SEPARATE_RUN_DIRS
+            ]
+            ran, listed = len(read_all(main_run)), listed_tests(shard)
+            if listed > ran:
+                incomplete_shards.append((str(shard), ran, listed))
         passed_on_retry = {
             result.test_id
             for result in read_all(sorted((shard / RETRY_DIR).rglob("*.xml")))
@@ -177,7 +193,29 @@ def collect(shard_dirs: list) -> Summary:
                     details="TestRunner: failed: initializationError — see the shard's logcat.txt.gz",
                 )
             )
-    return Summary(results=results, empty_shards=empty_shards, shard_seconds=shard_seconds)
+    return Summary(
+        results=results,
+        empty_shards=empty_shards,
+        shard_seconds=shard_seconds,
+        incomplete_shards=incomplete_shards,
+    )
+
+
+def listed_tests(shard: Path) -> int:
+    """The most tests one runner listed in the shard's logcat.txt.gz: its main run; 0 without a log."""
+    log = shard / "logcat.txt.gz"
+    if not log.is_file():
+        return 0
+    listed = 0
+    try:
+        with gzip.open(log, "rt", encoding="utf-8", errors="replace") as lines:
+            for line in lines:
+                match = RUN_FINISHED.search(line)
+                if match:
+                    listed = max(listed, int(match.group(1)))
+    except (OSError, EOFError):
+        return listed
+    return listed
 
 
 def init_errors(shard_dirs: list) -> list:
@@ -274,6 +312,12 @@ def render(summary: Summary, baseline: set) -> tuple:
         lines.extend([f"Shards: {shard_times}.", ""])
     for shard in summary.empty_shards:
         lines.extend([f"**{Path(shard).name}: no test results** (build, install or emulator failed).", ""])
+    for shard, ran, listed in summary.incomplete_shards:
+        lines.extend([
+            f"**{Path(shard).name}: {ran} of {listed} tests ran** — the rest never started "
+            "(the emulator went offline or the runner stopped; see the shard's log).",
+            "",
+        ])
 
     if new_failures:
         lines.extend([f"#### New failures ({len(new_failures)})", ""])
@@ -295,7 +339,7 @@ def render(summary: Summary, baseline: set) -> tuple:
         lines.extend(f"- `{test_id}`" for test_id in fixed)
         lines.append("")
 
-    status = 1 if new_failures or summary.empty_shards or not results else 0
+    status = 1 if new_failures or summary.empty_shards or summary.incomplete_shards or not results else 0
     if not results:
         lines.append("**No test results at all.**")
     return lines, status

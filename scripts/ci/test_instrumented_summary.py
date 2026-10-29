@@ -191,6 +191,27 @@ class InstrumentedSummaryTest(unittest.TestCase):
         self.assertIn("#### New failures (1)", text)
         self.assertIn("<code>EdgeTest#initializationError</code> — the class failed to start", text)
 
+    def test_a_shard_that_lost_tests_mid_run_fails_the_run(self):
+        baseline = {
+            "dev.sk2andy.materialbrowser.ui.TabsTest",
+            "dev.sk2andy.materialbrowser.browser.gecko.GeckoTest",
+        }
+        # Shard 0's runner listed 9 tests, its XML holds 4: the emulator went offline mid-run.
+        with gzip.open(self.root / "shard-0" / "logcat.txt.gz", "wt", encoding="utf-8") as log:
+            log.write(
+                "10-29 09:33:58.492  5024  5044 I TestRunner: run finished: 9 tests, 0 failed, 0 ignored\n"
+                "10-29 09:34:04.883  5118  5134 I TestRunner: run finished: 1 tests, 0 failed, 0 ignored\n"
+            )
+        # Shard 1 ran all it listed; a separate run's own listing is not compared with the main run.
+        with gzip.open(self.root / "shard-1" / "logcat.txt.gz", "wt", encoding="utf-8") as log:
+            log.write("10-29 09:33:58.492  5024  5044 I TestRunner: run finished: 2 tests, 0 failed, 0 ignored\n")
+        lines, status = render(collect(self.shards), baseline)
+        text = "\n".join(lines)
+
+        self.assertEqual(1, status)
+        self.assertIn("**shard-0: 4 of 9 tests ran**", text)
+        self.assertNotIn("shard-1:", text)
+
     def test_no_results_at_all_fails(self):
         empty = self.root / "nothing"
         empty.mkdir()
