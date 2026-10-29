@@ -5,7 +5,6 @@ import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performSemanticsAction
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -43,8 +42,9 @@ class FavoritesActivityInstrumentedTest {
                 composeRule.onNodeWithTag(V5LibraryTestTags.row(parent.id)).performClick()
                 composeRule.onNodeWithTag(V5LibraryTestTags.row(child.id)).performClick()
                 // «Delete» as TalkBack offers it: the same action as the swipe, without its timing.
-                composeRule.onNodeWithTag(V5LibraryTestTags.row(first.id))
-                    .performSemanticsAction(SemanticsActions.CustomActions) { actions -> actions.first().action() }
+                val delete = composeRule.onNodeWithTag(V5LibraryTestTags.row(first.id))
+                    .fetchSemanticsNode().config[SemanticsActions.CustomActions].first()
+                composeRule.runOnIdle { delete.action() }
                 composeRule.waitUntil(5_000) { store.loadFavoriteLibrary().favorites.size == 1 }
                 assertEquals(listOf(parent, child, second), store.loadFavoriteLibrary().entries)
                 composeRule.onNodeWithText(context.getString(R.string.action_undo)).performClick()
