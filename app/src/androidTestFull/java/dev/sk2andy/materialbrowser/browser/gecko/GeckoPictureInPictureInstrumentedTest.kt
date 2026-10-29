@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.os.Handler
 import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.os.SystemClock
@@ -340,6 +341,10 @@ class GeckoPictureInPictureInstrumentedTest {
 
     @Test
     fun inlineVideoOpensInCandyPlayerWithoutWebsiteFullscreen() {
+        MainThreadWatchdog().use { inlineVideoOpensInCandyPlayer() }
+    }
+
+    private fun inlineVideoOpensInCandyPlayer() {
         FixtureServer(INLINE_PLAYER_HTML).use { server ->
             ActivityScenario.launch(MainActivity::class.java).use { scenario ->
                 scenario.onActivity { activity ->
@@ -420,15 +425,20 @@ class GeckoPictureInPictureInstrumentedTest {
                         .removePrefix(INLINE_ACTION_GEOMETRY_PREFIX)
                         .split(':')
                         .map(String::toFloat)
-                    assertEquals(5, geometry.size)
-                    val (left, top, width, height, viewportWidth) = geometry
-                    val webScale = host.width / viewportWidth
+                    assertEquals(7, geometry.size)
+                    val (left, top, width, height) = geometry
+                    // The page is placed by the visual viewport: Gecko picks the initial zoom of a
+                    // page without a viewport tag itself, so the layout width does not give the scale.
+                    val visualWidth = geometry[4]
+                    val visualLeft = geometry[5]
+                    val visualTop = geometry[6]
+                    val webScale = host.width / visualWidth
                     host.getLocationOnScreen(location)
-                    inlineActionTapPoint[0] = location[0] + (left + width / 2f) * webScale
-                    inlineActionTapPoint[1] = location[1] + (top + height / 2f) * webScale
+                    inlineActionTapPoint[0] = location[0] + (left - visualLeft + width / 2f) * webScale
+                    inlineActionTapPoint[1] = location[1] + (top - visualTop + height / 2f) * webScale
                     val videoHeight = host.width * 9f / 16f
                     inlineVideoSwipe[0] = location[0] + host.width / 2f
-                    inlineVideoSwipe[1] = location[1] + 48f * webScale + videoHeight / 2f
+                    inlineVideoSwipe[1] = location[1] + (48f - visualTop) * webScale + videoHeight / 2f
                     inlineVideoSwipe[2] = inlineVideoSwipe[0]
                     inlineVideoSwipe[3] = inlineVideoSwipe[1] - 140f * webScale
                 }
@@ -439,7 +449,10 @@ class GeckoPictureInPictureInstrumentedTest {
                 }
                 var presentationTitle = ""
                 awaitCondition(
-                    description = { "Inline action did not replace player; title=$presentationTitle" },
+                    description = {
+                        "Inline action did not replace player; title=$presentationTitle, " +
+                            "geometry=$inlineActionGeometry, tap=${inlineActionTapPoint.toList()}"
+                    },
                 ) {
                     var presented = false
                     scenario.onActivity { activity ->
@@ -1633,7 +1646,61 @@ class GeckoPictureInPictureInstrumentedTest {
         // Logged first: closing the scenario then waits on the same main thread, and the runner's
         // timeout replaces this failure with its own.
         Log.e("CandyPipIdle", message)
+        logNativeRenderStacks()
         throw AssertionError(message)
+    }
+
+    /**
+     * The main thread's Java stack ends in a native frame draw; the native stacks of the threads
+     * that draw say what the frame waits on. The debug build lets the shell dump them.
+     */
+    private fun logNativeRenderStacks() {
+        val dump = runCatching { shell("timeout 30 debuggerd -b ${android.os.Process.myPid()}") }
+            .getOrElse { error -> "debuggerd failed: $error" }
+        val wanted = Regex("\"(main|RenderThread|hwui[^\"]*|Compositor[^\"]*|Gecko[^\"]*|SurfaceSync[^\"]*)\"")
+        dump.split(Regex("\n(?=\")"))
+            .filter { block -> block.isNotBlank() && wanted.containsMatchIn(block.lineSequence().first()) }
+            .joinToString("\n")
+            .ifBlank { dump.take(NATIVE_DUMP_CHUNK) }
+            .chunked(NATIVE_DUMP_CHUNK)
+            .forEach { chunk -> Log.e("CandyPipIdle", chunk) }
+    }
+
+    /**
+     * Logs the main thread's Java and native stacks once, when it has not run a posted message for
+     * [MAIN_IDLE_TIMEOUT_MILLIS]: a stuck frame can start between two of the test's own waits.
+     */
+    private inner class MainThreadWatchdog : Closeable {
+        private val main = Handler(Looper.getMainLooper())
+        private val thread = Thread({
+            while (!Thread.currentThread().isInterrupted) {
+                val ran = CountDownLatch(1)
+                main.post { ran.countDown() }
+                val responsive = try {
+                    ran.await(MAIN_IDLE_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
+                } catch (_: InterruptedException) {
+                    return@Thread
+                }
+                if (!responsive) {
+                    val stack = Looper.getMainLooper().thread.stackTrace.joinToString("\n") { "    at $it" }
+                    Log.e("CandyPipIdle", "main thread ran no message for ${MAIN_IDLE_TIMEOUT_MILLIS}ms\n$stack")
+                    logNativeRenderStacks()
+                    return@Thread
+                }
+                try {
+                    Thread.sleep(WATCHDOG_PERIOD_MILLIS)
+                } catch (_: InterruptedException) {
+                    return@Thread
+                }
+            }
+        }, "pip-main-thread-watchdog").apply {
+            isDaemon = true
+            start()
+        }
+
+        override fun close() {
+            thread.interrupt()
+        }
     }
 
     private fun eligibleMediaState() = GeckoMediaSessionState(
@@ -1741,6 +1808,8 @@ class GeckoPictureInPictureInstrumentedTest {
 
     private companion object {
         const val MAIN_IDLE_TIMEOUT_MILLIS = 45_000L
+        const val NATIVE_DUMP_CHUNK = 3_500
+        const val WATCHDOG_PERIOD_MILLIS = 5_000L
         const val READY_TITLE = "ready"
         const val EXITED_TITLE = "exited"
         const val INLINE_LOADED_TITLE = "inline-loaded"
@@ -2084,7 +2153,9 @@ class GeckoPictureInPictureInstrumentedTest {
                       bounds.top,
                       bounds.width,
                       bounds.height,
-                      document.documentElement.clientWidth
+                      visualViewport.width,
+                      visualViewport.offsetLeft,
+                      visualViewport.offsetTop
                     ].join(':');
                   }, 250);
                 }).observe(document.documentElement, { childList:true });
