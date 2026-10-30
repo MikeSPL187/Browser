@@ -54,7 +54,7 @@ internal object GeckoLoginStorageRules {
  * - Fetching every login is refused: nothing in the engine needs the whole vault.
  * - Saves arrive only after the user confirmed the save prompt, which opens the vault first and
  *   which private tabs never show.
- * - Writes run on [io]; reads use the open vault in memory or the index.
+ * - Writes run on [io]; reads use the open vault in memory, or the index on [io].
  */
 internal class GeckoLoginStorageDelegate(
     private val vault: CredentialVault,
@@ -65,12 +65,17 @@ internal class GeckoLoginStorageDelegate(
 ) : Autocomplete.StorageDelegate {
     @UiThread
     override fun onLoginFetch(domain: String): GeckoResult<Array<Autocomplete.LoginEntry>> {
-        val entries = if (isOpen()) {
-            CredentialVaultRules.loginsUnderDomain(vault.allLogins(), domain).map(::entry)
-        } else {
-            CredentialVaultRules.hintsUnderDomain(vault.loginHints(), domain).map(::lockedEntry)
+        if (isOpen()) {
+            val entries = CredentialVaultRules.loginsUnderDomain(vault.allLogins(), domain).map(::entry)
+            return GeckoResult.fromValue(entries.toTypedArray())
         }
-        return GeckoResult.fromValue(entries.toTypedArray())
+        // The locked answer may first open the index with its Keystore key: off the main thread.
+        val result = GeckoResult<Array<Autocomplete.LoginEntry>>()
+        io.execute {
+            val entries = runCatching { CredentialVaultRules.hintsUnderDomain(vault.loginHints(), domain).map(::lockedEntry) }
+            result.complete(entries.getOrDefault(emptyList()).toTypedArray())
+        }
+        return result
     }
 
     @UiThread

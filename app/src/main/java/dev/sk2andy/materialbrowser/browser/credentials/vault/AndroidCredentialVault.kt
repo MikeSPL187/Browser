@@ -15,6 +15,7 @@ import java.io.InputStream
 import java.security.GeneralSecurityException
 import java.security.KeyStore
 import java.security.ProviderException
+import java.util.concurrent.Executors
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
@@ -40,6 +41,8 @@ internal object AndroidCredentialVault {
             LocalCredentialVault(
                 storage = AtomicFileVaultStorage(File(directory, FILE_NAME)),
                 index = LoginIndex(AtomicFileVaultStorage(File(directory, INDEX_FILE_NAME)), KeystoreLoginIndexKey()),
+                // One thread keeps index writes in order; its Keystore key must never hold up an unlock.
+                indexWriter = Executors.newSingleThreadExecutor { task -> Thread(task, "vola-login-index").apply { isDaemon = true } },
             )
         }.also { instance = it }
     }

@@ -4,6 +4,9 @@ import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLoginDraft
 import dev.sk2andy.materialbrowser.shared.credentials.VaultSaveResult
 import java.security.SecureRandom
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -121,7 +124,60 @@ class LocalCredentialVaultTest {
         assertEquals(VaultOpenResult.Opened, vault.unlock(recovery()))
     }
 
+    @Test
+    fun `reads never wait for a slow unlock or a queued index write`() {
+        val storage = MemoryStorage()
+        val device = FakeDeviceWrapper()
+        LocalCredentialVault(storage, random).apply {
+            create(listOf(device))
+            save(draft("hunter2"), 1)
+        }
+        val queued = ArrayList<Runnable>()
+        val index = LoginIndex(MemoryStorage(), PlainIndexKey())
+        val vault = LocalCredentialVault(storage, random, index = index, indexWriter = { queued += it })
+        // The Keystore unwrap hangs, as StrongBox does for seconds on some phones.
+        val unwrapping = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val slow = object : VaultKeyWrapper by device {
+            override fun unwrap(payload: ByteArray): VaultKeyOutcome<ByteArray> {
+                unwrapping.countDown()
+                release.await()
+                return device.unwrap(payload)
+            }
+        }
+        val opening = thread { vault.unlock(slow) }
+        assertTrue(unwrapping.await(5, TimeUnit.SECONDS))
+
+        // The main thread's questions answer at once while the unwrap holds on.
+        val asked = thread {
+            vault.isUnlocked
+            vault.allLogins()
+            vault.loginHints()
+        }
+        asked.join(2_000)
+        assertFalse("a read waited for the unlock", asked.isAlive)
+        assertFalse(vault.isUnlocked)
+
+        release.countDown()
+        opening.join(5_000)
+        assertTrue(vault.isUnlocked)
+        assertEquals(listOf("hunter2"), vault.allLogins().map(VaultLogin::password))
+        // The index is written later, on its own executor, never inside the unlock.
+        assertEquals(1, queued.size)
+        queued.single().run()
+        assertEquals(listOf("alice"), index.hints().map { it.username })
+    }
+
     private fun recovery() = RecoveryPhraseKeyWrapper(phrase, random, iterations = 1_000)
+
+    /** An index key that seals nothing: enough to see what the index holds. */
+    private class PlainIndexKey : LoginIndexKey {
+        override fun seal(plaintext: ByteArray) = plaintext.copyOf()
+
+        override fun open(sealed: ByteArray) = sealed.copyOf()
+
+        override fun delete() = Unit
+    }
 
     private fun draft(password: String) = VaultLoginDraft(ORIGIN, null, null, "alice", password)
 

@@ -40,6 +40,9 @@ object V5Motion {
     /** Long press on a link: the card lifts out of the touch point. */
     val glance = V5Spring(0.75f, 400f)
 
+    /** The vault opens: the passwords rise out of the lock screen and settle without a bounce. */
+    val vaultUnlock = V5Spring(Spring.DampingRatioNoBouncy, 380f)
+
     /** Pull to refresh springs back. */
     val pullRefreshReturn = V5Spring(Spring.DampingRatioNoBouncy, 400f)
 
@@ -67,6 +70,9 @@ object V5Motion {
     /** Past the last tab, the rubber band stretched to this share of its reach opens a new tab. */
     const val TAB_SWIPE_NEW_TAB_EDGE_FRACTION = 0.9f
     const val OVERVIEW_CARD_START_SCALE = 0.92f
+    /** The opened vault's list grows in from this scale; the lock screen grows past 1 by as much as it fades. */
+    const val VAULT_UNLOCK_START_SCALE = 0.94f
+    const val VAULT_UNLOCK_LOCK_SCALE = 1.04f
     /** Another profile's grid comes in from this share of its width on the side it was paged from. */
     const val PROFILE_SWITCH_SLIDE_FRACTION = 0.3f
     /** A card swiped sideways in the overview closes past 40 % of its width or 1000 dp/s. */
