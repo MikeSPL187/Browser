@@ -9,7 +9,7 @@ import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
 
 /* The password manager under v5 (canvas «ц4», «Passwords»): locked, the list, a login, editing. Preview text is not localized. */
 
-private fun previewLogin(id: String, site: String, user: String, totp: String? = null) = VaultLogin(
+private fun previewLogin(id: String, site: String, user: String, totp: String? = null, note: String? = null) = VaultLogin(
     id = id,
     origin = "https://$site",
     formActionOrigin = null,
@@ -17,14 +17,24 @@ private fun previewLogin(id: String, site: String, user: String, totp: String? =
     username = user,
     password = "correct-horse-battery",
     createdAtMillis = 0L,
-    updatedAtMillis = 0L,
+    updatedAtMillis = PREVIEW_EDITED_MILLIS,
     lastUsedAtMillis = null,
     timesUsed = 3,
     totp = totp,
+    note = note,
 )
 
+/** 12 October 2026, for the «Edited» line. */
+private const val PREVIEW_EDITED_MILLIS = 1_791_800_000_000L
+
 private val previewLogins = listOf(
-    previewLogin("1", "north-guide.example", "anna@example.com", totp = "otpauth://totp/north?secret=JBSWY3DPEHPK3PXP"),
+    previewLogin(
+        "1",
+        "north-guide.example",
+        "anna@example.com",
+        totp = "otpauth://totp/north?secret=JBSWY3DPEHPK3PXP",
+        note = "Security question: first school — Lyceum 2",
+    ),
     previewLogin("2", "mail.example", "anna"),
     previewLogin("3", "shop.example", "anna.k"),
     previewLogin("4", "aurora-tours.example", "anna"),
@@ -103,7 +113,7 @@ private fun PasswordDetailV5DarkPreview() = PreviewScheme(dark = true) {
 @Preview(name = "Passwords v5 · edit", heightDp = 640)
 @Composable
 private fun PasswordEditV5Preview() = PreviewScheme(dark = false) {
-    PasswordEditV5(initial = previewLogins[1], error = null, busy = false, onSave = { _, _, _ -> }, onBack = {})
+    PasswordEditV5(initial = previewLogins[1], error = null, busy = false, onSave = { _, _, _, _ -> }, onBack = {})
 }
 
 @Preview(name = "Passwords v5 · first visit", heightDp = 720)

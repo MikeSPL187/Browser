@@ -19,9 +19,12 @@ data class VaultLogin(
     val timesUsed: Int,
     /** The two-factor key as a canonical `otpauth://` link ([TotpRules.canonical]); null without one. */
     val totp: String? = null,
+    /** The user's own note on this login (Safari's and Chrome's «Notes»); null without one. */
+    val note: String? = null,
 ) {
     override fun toString(): String =
-        "VaultLogin(id=$id, origin=$origin, username=<redacted>, password=<redacted>, totp=${if (totp == null) "none" else "<redacted>"})"
+        "VaultLogin(id=$id, origin=$origin, username=<redacted>, password=<redacted>, " +
+            "totp=${if (totp == null) "none" else "<redacted>"}, note=${if (note == null) "none" else "<redacted>"})"
 }
 
 /**
@@ -141,6 +144,12 @@ interface CredentialVault {
      * ([TotpRules.canonical]); false when it is not, the login is unknown, or the vault is locked.
      */
     fun setTotp(id: String, totp: String?, nowMillis: Long): Boolean
+
+    /**
+     * Keeps [note] for the login with [id], or removes it with null; false when the note is not one
+     * the vault keeps ([CredentialVaultRules.acceptsNote]), the login is unknown, or the vault is locked.
+     */
+    fun setNote(id: String, note: String?, nowMillis: Long): Boolean = false
 
     /**
      * Adds [logins] from another manager's export in one write. A login the vault already has keeps

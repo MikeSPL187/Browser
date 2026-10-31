@@ -2,7 +2,8 @@ package dev.sk2andy.materialbrowser.shared.credentials
 
 /**
  * «Export passwords»: every login as the CSV that Chrome writes (`name,url,username,password,note`),
- * which Chrome, Firefox, Bitwarden, 1Password, Proton Pass and Vola's own import read. Three more
+ * which Chrome, Firefox, Bitwarden, 1Password, Proton Pass and Vola's own import read; the note goes
+ * in Chrome's `note` column. Three more
  * columns keep what Vola has and Chrome's file lacks: the 2FA key and the HTTP realm and form action
  * that tell two logins of one site apart. Every cell is quoted, so commas, quotes and line breaks in
  * a password come back as they were; nothing is changed in a value.
@@ -23,7 +24,7 @@ object PasswordExportRules {
                     login.origin,
                     login.username,
                     login.password,
-                    "",
+                    login.note.orEmpty(),
                     login.totp.orEmpty(),
                     login.httpRealm.orEmpty(),
                     login.formActionOrigin.orEmpty(),

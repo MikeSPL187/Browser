@@ -223,6 +223,14 @@ internal class LocalCredentialVault(
     }
 
     @Synchronized
+    override fun setNote(id: String, note: String?, nowMillis: Long): Boolean {
+        val current = open ?: return false
+        val changed = CredentialVaultRules.setNote(current.logins, id, note, nowMillis) ?: return false
+        if (changed === current.logins) return true
+        return commit(current, changed, reindex = false)
+    }
+
+    @Synchronized
     override fun importLogins(logins: List<ImportedLogin>, nowMillis: Long): VaultImportResult {
         val current = open ?: return VaultImportResult.Locked
         val (changed, summary) = CredentialVaultRules.import(current.logins, logins, nowMillis, newId)

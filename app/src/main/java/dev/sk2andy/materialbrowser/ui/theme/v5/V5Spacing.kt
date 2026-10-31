@@ -88,6 +88,8 @@ object V5Sizes {
     const val PINNED_MAX = 12
     val tabGridGap: Dp = 12.dp
     const val TAB_COLUMNS_PHONE = 2
+    /** A note field ([dev.sk2andy.materialbrowser.ui.v5.V5NameField] with `multiline`) shows this many lines at least. */
+    const val NOTE_FIELD_MIN_LINES = 3
     /** Wider windows fit more tab cards a row, none narrower than this (a tablet, a phone on its side). */
     val tabCardMinWidth: Dp = 180.dp
 

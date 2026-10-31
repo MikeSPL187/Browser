@@ -74,6 +74,7 @@ import dev.sk2andy.materialbrowser.browser.credentials.PasswordCheck
 import dev.sk2andy.materialbrowser.browser.credentials.ChangePasswordPage
 import dev.sk2andy.materialbrowser.browser.credentials.LeakAnswers
 import dev.sk2andy.materialbrowser.browser.credentials.PwnedPasswordCheck
+import dev.sk2andy.materialbrowser.shared.credentials.CredentialVaultRules
 import dev.sk2andy.materialbrowser.shared.credentials.PasswordExportRules
 import dev.sk2andy.materialbrowser.shared.credentials.PasswordHealthRules
 import dev.sk2andy.materialbrowser.shared.credentials.TotpRules
@@ -420,7 +421,7 @@ class PasswordsActivity : FragmentActivity() {
                         initial = route.id?.let { id -> logins.firstOrNull { it.id == id } },
                         error = route.error,
                         busy = model.busy,
-                        onSave = { site, username, password -> save(route, site, username, password) },
+                        onSave = { site, username, password, note -> save(route, site, username, password, note) },
                         onBack = { back(route) },
                     )
                 }
@@ -892,7 +893,7 @@ class PasswordsActivity : FragmentActivity() {
         }
     }
 
-    private fun save(route: PasswordsRoute.Edit, site: String, username: String, password: String) = use {
+    private fun save(route: PasswordsRoute.Edit, site: String, username: String, password: String, note: String) = use {
         val origin = PasswordsRules.manualOrigin(site)
         when {
             origin == null -> model.route = route.copy(error = PasswordEditError.SiteInvalid)
@@ -908,8 +909,17 @@ class PasswordsActivity : FragmentActivity() {
                 }
                 runBusy {
                     val now = System.currentTimeMillis()
+                    val cleanNote = CredentialVaultRules.cleanNote(note)
                     val result = withContext(Dispatchers.IO) {
-                        if (route.id == null) vault.save(draft, now) else vault.update(route.id, draft, now)
+                        val saved = if (route.id == null) vault.save(draft, now) else vault.update(route.id, draft, now)
+                        // The note is the user's, not the page's: it is kept apart from what a site may save.
+                        val id = when (saved) {
+                            is VaultSaveResult.Added -> saved.login.id
+                            is VaultSaveResult.Updated -> saved.login.id
+                            is VaultSaveResult.Unchanged -> saved.login.id
+                            else -> null
+                        }
+                        if (id != null && !vault.setNote(id, cleanNote, now)) VaultSaveResult.Failed else saved
                     }
                     model.route = when (result) {
                         is VaultSaveResult.Added -> PasswordsRoute.Detail(result.login.id)

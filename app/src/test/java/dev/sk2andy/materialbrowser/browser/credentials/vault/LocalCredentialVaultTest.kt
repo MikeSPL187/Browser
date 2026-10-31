@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -122,6 +123,25 @@ class LocalCredentialVaultTest {
         assertEquals(VaultOpenResult.Opened, vault.unlock(newDevice))
         assertEquals(VaultOpenResult.Refused, vault.unlock(FakeDeviceWrapper()))
         assertEquals(VaultOpenResult.Opened, vault.unlock(recovery()))
+    }
+
+    @Test
+    fun `a note is kept, trimmed by the screen, and removed with null`() {
+        val storage = MemoryStorage()
+        val vault = LocalCredentialVault(storage, random)
+        vault.create(listOf(recovery()))
+        val login = (vault.save(draft("hunter2"), 1) as VaultSaveResult.Added).login
+
+        assertTrue(vault.setNote(login.id, "Security question: Lyceum 2", 2))
+        assertFalse("the note is in the file in the clear", storage.bytes!!.containsText("Lyceum"))
+        vault.lock()
+        vault.unlock(recovery())
+        assertEquals("Security question: Lyceum 2", vault.allLogins().single().note)
+
+        assertFalse(vault.setNote(login.id, "x".repeat(dev.sk2andy.materialbrowser.shared.credentials.CredentialVaultRules.MAX_NOTE_LENGTH + 1), 3))
+        assertFalse(vault.setNote("missing", "note", 3))
+        assertTrue(vault.setNote(login.id, null, 4))
+        assertNull(vault.allLogins().single().note)
     }
 
     @Test

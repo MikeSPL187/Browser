@@ -10,6 +10,8 @@ internal object PasswordsTestTags {
     const val Unlock = "passwords_unlock"
     const val Export = "passwords_export"
     const val OpenSite = "passwords_open_site"
+    const val Note = "passwords_note"
+    const val NoteField = "passwords_note_field"
     const val Recover = "passwords_recover"
     const val RecoverField = "passwords_recover_field"
     const val RecoverOpen = "passwords_recover_open"

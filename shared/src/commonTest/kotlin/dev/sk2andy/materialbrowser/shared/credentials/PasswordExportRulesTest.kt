@@ -13,7 +13,7 @@ class PasswordExportRulesTest {
     fun exportedFileComesBackAsTheSameLogins() {
         val totp = TotpRules.canonical(TotpRules.parse("JBSWY3DPEHPK3PXP")!!)
         val logins = listOf(
-            login("1", "https://example.com", "anna", "pa,ss\"word\nnext line", totp = totp),
+            login("1", "https://example.com", "anna", "pa,ss\"word\nnext line", totp = totp).copy(note = "Question: \"school\", answer\nLyceum"),
             login("2", "https://example.com", "bob", " spaced ", realm = "Admin area"),
             login("3", "https://shop.example.org", "", "only-a-password", formAction = "https://pay.example.org"),
         )
@@ -28,6 +28,7 @@ class PasswordExportRulesTest {
             read.logins.map(ImportedLogin::draft),
         )
         assertEquals(listOf(totp, null, null), read.logins.map(ImportedLogin::totp))
+        assertEquals(listOf("Question: \"school\", answer\nLyceum", null, null), read.logins.map(ImportedLogin::note))
     }
 
     @Test

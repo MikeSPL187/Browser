@@ -67,6 +67,9 @@ import dev.sk2andy.materialbrowser.ui.v5.V5SearchField
 import dev.sk2andy.materialbrowser.ui.v5.V5StateAction
 import dev.sk2andy.materialbrowser.ui.v5.V5StatePage
 import kotlinx.coroutines.delay
+import android.text.format.DateUtils
+import androidx.compose.ui.platform.LocalContext
+import dev.sk2andy.materialbrowser.shared.credentials.CredentialVaultRules
 
 /*
  * The passwords under v5 (canvas «ц4»–«ц7», approved 17.10): closed, the list, one password, a new
@@ -284,6 +287,12 @@ internal fun PasswordDetailV5(
     var confirmRemoveTotp by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     val site = PasswordsRules.displaySite(login.origin)
+    // «Edited 12 Oct 2026» under the last group, as Safari dates a password.
+    val context = LocalContext.current
+    val edited = stringResource(
+        R.string.passwords_edited,
+        DateUtils.formatDateTime(context, login.updatedAtMillis, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_YEAR),
+    ).takeIf { login.updatedAtMillis > 0 }
     V5PromptTheme {
         val colors = V5Theme.colors
         Column(Modifier.fillMaxSize().background(colors.background).statusBarsPadding().navigationBarsPadding()) {
@@ -328,7 +337,26 @@ internal fun PasswordDetailV5(
                         modifier = Modifier.testTag(PasswordsTestTags.OpenSite),
                     )
                 }
-                V5ListGroup(dividerInset = V5ListDefaults.dividerInsetText) {
+                // Safari's and Chrome's «Notes»: the user's own words, edited with the rest of the login.
+                val note = login.note
+                if (note != null) {
+                    V5ListGroup(header = stringResource(R.string.passwords_note), footer = edited) {
+                        Text(
+                            note,
+                            style = V5Theme.type.body,
+                            color = colors.label,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(onClick = onEdit)
+                                .padding(horizontal = V5Spacing.space4, vertical = V5Spacing.space3)
+                                .testTag(PasswordsTestTags.Note),
+                        )
+                    }
+                }
+                V5ListGroup(
+                    dividerInset = V5ListDefaults.dividerInsetText,
+                    footer = edited.takeIf { login.note == null },
+                ) {
                     if (login.totp != null) {
                         V5ListRow(
                             title = stringResource(R.string.passwords_totp_remove),
@@ -382,14 +410,15 @@ internal fun PasswordEditV5(
     initial: VaultLogin?,
     error: PasswordEditError?,
     busy: Boolean,
-    onSave: (site: String, username: String, password: String) -> Unit,
+    onSave: (site: String, username: String, password: String, note: String) -> Unit,
     onBack: () -> Unit,
 ) {
     var generating by remember { mutableStateOf(false) }
+    var note by remember(initial?.id) { mutableStateOf(initial?.note.orEmpty()) }
     var site by remember(initial?.id) { mutableStateOf(initial?.let { PasswordsRules.displaySite(it.origin) }.orEmpty()) }
     var username by remember(initial?.id) { mutableStateOf(initial?.username.orEmpty()) }
     var password by remember(initial?.id) { mutableStateOf(initial?.password.orEmpty()) }
-    val save = { if (!busy) onSave(site, username, password) }
+    val save = { if (!busy) onSave(site, username, password, note) }
     V5PromptTheme {
         val colors = V5Theme.colors
         Column(
@@ -445,6 +474,15 @@ internal fun PasswordEditV5(
                         modifier = Modifier.testTag(PasswordsTestTags.Generate),
                     )
                 }
+                V5NameField(
+                    value = note,
+                    placeholder = stringResource(R.string.passwords_note_hint),
+                    onValueChange = { note = it },
+                    onDone = {},
+                    maxLength = CredentialVaultRules.MAX_NOTE_LENGTH,
+                    multiline = true,
+                    modifier = Modifier.testTag(PasswordsTestTags.NoteField),
+                )
                 if (error != null) {
                     Text(
                         stringResource(error.messageRes()),
