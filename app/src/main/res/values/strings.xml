@@ -699,6 +699,7 @@
     <string name="settings_download_one_dm_session_summary">Shares cookies, user agent, and referrer with 1DM so signed-in downloads can work. The app may use them to access your session. Session data is never shared in private browsing.</string>
     <string name="settings_section_tabs">Tabs</string>
     <string name="settings_tabs_group_overview">Tab overview</string>
+    <string name="settings_tabs_group_open">Open tabs</string>
     <string name="settings_tab_overview_mode">Tab overview layout</string>
     <string name="settings_tab_stack_folder_mode">Stack folder layout</string>
     <string name="tab_overview_mode_hero">Cover flow</string>
@@ -749,8 +750,9 @@
     <string name="settings_history_suggestions_title">Show browsing history suggestions</string>
     <string name="settings_history_suggestions_summary">Pages from this profile’s history and page memory, as you type.</string>
     <string name="settings_search_suggestions">Search suggestions</string>
+    <string name="settings_search_group_suggestions">Suggestions</string>
     <string name="settings_search_suggestions_summary">After three characters, typed search text is sent to this provider. Disabled in private tabs.</string>
-    <string name="settings_search_suggestions_none_summary">Suggestions stay local. No typed text is sent to a suggestion provider.</string>
+    <string name="settings_search_suggestions_none_summary">No suggestion service: what you type stays on the phone. History and tab suggestions still work.</string>
     <string name="search_suggestion_provider_none">None</string>
     <string name="settings_searxng_instance_url">SearXNG instance URL</string>
     <string name="settings_searxng_instance_url_summary">Base URL, including an optional path. HTTPS is recommended.</string>

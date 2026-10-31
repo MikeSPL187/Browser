@@ -725,6 +725,7 @@
     <string name="settings_download_one_dm_session_summary">Передаёт в 1DM cookie, user agent и referrer, чтобы работали загрузки, требующие входа. Приложение может использовать их для доступа к вашему сеансу. В частном режиме данные сеанса не передаются.</string>
     <string name="settings_section_tabs">Вкладки</string>
     <string name="settings_tabs_group_overview">Обзор вкладок</string>
+    <string name="settings_tabs_group_open">Открытые вкладки</string>
     <string name="settings_tab_overview_mode">Вид обзора вкладок</string>
     <string name="settings_tab_stack_folder_mode">Вид вкладок внутри стопки</string>
     <string name="tab_overview_mode_hero">Карусель</string>
@@ -781,8 +782,9 @@
     <string name="settings_history_suggestions_title">Подсказки из истории</string>
     <string name="settings_history_suggestions_summary">Страницы из истории профиля и «Памяти страниц» — по мере ввода.</string>
     <string name="settings_search_suggestions">Поисковые подсказки</string>
+    <string name="settings_search_group_suggestions">Подсказки</string>
     <string name="settings_search_suggestions_summary">После трёх символов вводимый текст отправляется этому сервису. В частных вкладках отключено.</string>
-    <string name="settings_search_suggestions_none_summary">Подсказки только локальные. Вводимый текст никуда не отправляется.</string>
+    <string name="settings_search_suggestions_none_summary">Без сервиса подсказок: вводимый текст остаётся на телефоне. Подсказки из истории и вкладок работают.</string>
     <string name="search_suggestion_provider_none">Нет</string>
     <string name="settings_searxng_instance_url">Адрес сервера SearXNG</string>
     <string name="settings_searxng_instance_url_summary">Базовый адрес, при необходимости с путём. Рекомендуется HTTPS.</string>

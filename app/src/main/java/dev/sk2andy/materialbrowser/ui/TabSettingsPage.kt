@@ -330,8 +330,9 @@ internal fun TabsAndGesturesSettingsPage(
                 profilesRow,
             ),
         )
+        // The page is «Tabs» already: its first card says which tabs it is about.
         SettingsLayer.Main -> listOf(
-            R.string.settings_section_tabs to listOfNotNull(
+            R.string.settings_tabs_group_open to listOfNotNull(
                 autoCloseRow,
                 archiveRow,
                 sortingRow,
@@ -342,7 +343,7 @@ internal fun TabsAndGesturesSettingsPage(
         // The current menu and docking are v4 (V28, B4 and B7): a phone with v5 has neither, so v5
         // offers no setting for them.
         SettingsLayer.More -> listOf(
-            R.string.settings_section_tabs to listOf(residentLimitRow, profilesRow),
+            R.string.settings_tabs_group_open to listOf(residentLimitRow, profilesRow),
         )
     }
     SettingsPage(
