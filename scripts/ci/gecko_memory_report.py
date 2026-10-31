@@ -34,7 +34,7 @@ import time
 from collections import defaultdict
 from pathlib import Path
 
-REPORT_TIMEOUT_SECONDS = 90
+REPORT_TIMEOUT_SECONDS = 180
 FIFO_NAME = "debug_info_trigger"
 POLL_SECONDS = 3
 BYTES = 0  # nsIMemoryReporter.UNITS_BYTES
@@ -83,7 +83,10 @@ def trigger_fifo(package: str) -> str | None:
 
 
 def reports_on_device(package: str) -> set[str]:
-    found = shell(f"find /data/data/{package} /data/local/tmp -name 'memory-report-*.json.gz' 2>/dev/null", check=False)
+    # On Android Gecko writes its reports to DOWNLOADS_DIRECTORY first (world-readable), else to its
+    # temporary directory, each in a memory-reports folder.
+    places = f"/data/data/{package} /data/local/tmp /sdcard/Download /sdcard/Android/data/{package}"
+    found = shell(f"find {places} -name 'memory-report-*.json.gz' 2>/dev/null", check=False)
     return {line.strip() for line in found.splitlines() if line.strip()}
 
 
@@ -123,6 +126,11 @@ def capture(package: str, out: Path) -> int:
             print(f"Gecko memory report: {trigger}, {done[-1]} -> {out}")
             return 0
     print(f"Gecko memory report: {trigger} used, no report within {REPORT_TIMEOUT_SECONDS} s.")
+    # What Gecko said about it, to see where the report went or why it was not written.
+    said = adb("logcat", "-d", "-v", "brief", check=False)
+    for line in said.splitlines():
+        if re.search(r"memory.?report|MemoryInfoDumper|debug_info_trigger|FifoWatcher", line, re.IGNORECASE):
+            print(f"  logcat: {line}")
     return 0
 
 
