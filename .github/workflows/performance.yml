@@ -156,13 +156,28 @@ jobs:
             echo "::group::${build}, round ${round}"
             adb uninstall "$APP_PACKAGE" > /dev/null 2>&1 || true
             adb install "perf/${build}.apk"
-            adb shell rm -rf "$device_output"
-            adb shell mkdir -p "$device_output"
-            adb shell am instrument -w -r \
-              -e class "$BENCHMARKS" \
-              -e androidx.benchmark.suppressErrors EMULATOR \
-              -e additionalTestOutputDir "$device_output" \
-              "${test_package}/${runner}" | tee "perf/${build}-${round}.log"
+            # A round whose instrumentation ends without a result (adb lost the emulator for a
+            # moment: exit 255 and no INSTRUMENTATION_CODE, PR #622) is run once more instead of
+            # ending the whole job.
+            for attempt in 1 2; do
+              adb wait-for-device
+              adb shell rm -rf "$device_output"
+              adb shell mkdir -p "$device_output"
+              adb shell am instrument -w -r \
+                -e class "$BENCHMARKS" \
+                -e androidx.benchmark.suppressErrors EMULATOR \
+                -e additionalTestOutputDir "$device_output" \
+                "${test_package}/${runner}" | tee "perf/${build}-${round}.log" || true
+              if grep -q "INSTRUMENTATION_CODE" "perf/${build}-${round}.log"; then break; fi
+              if [[ "$attempt" == 2 ]]; then
+                echo "::error title=Performance budget::${build} round ${round} ended twice without a result"
+                exit 1
+              fi
+              echo "::warning title=Performance budget::${build} round ${round} ended without a result; running it again"
+              timeout 120 adb wait-for-device || true
+              adb uninstall "$APP_PACKAGE" > /dev/null 2>&1 || true
+              adb install "perf/${build}.apk"
+            done
             if grep -qE "FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed" "perf/${build}-${round}.log"; then
               echo "::warning title=Performance budget::${build} round ${round} had a failing benchmark (see its log group)"
             fi
