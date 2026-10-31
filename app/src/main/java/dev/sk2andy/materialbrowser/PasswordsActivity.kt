@@ -933,7 +933,12 @@ class PasswordsActivity : FragmentActivity() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) = onSuccess()
 
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    PasswordsRules.authenticationError(errorCode)?.let { model.message = it }
+                    val text = PasswordsRules.authenticationError(errorCode) ?: return
+                    // The lock and intro pages show the line; on the others (export, say) a toast does.
+                    when (model.route) {
+                        PasswordsRoute.Locked, PasswordsRoute.Intro -> model.message = text
+                        else -> Toast.makeText(this@PasswordsActivity, text, Toast.LENGTH_LONG).show()
+                    }
                 }
             },
         )
