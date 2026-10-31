@@ -526,7 +526,7 @@
     <string name="action_open_link_foreground_tab">Open link in new foreground tab</string>
     <string name="action_open_link_private_background_tab">Open link in new private background tab</string>
     <string name="action_open_link_private_foreground_tab">Open link in new private foreground tab</string>
-    <string name="link_peek_title">Link Peek</string>
+    <string name="link_peek_title">Quick preview</string>
     <string name="glance_close">Close preview</string>
     <string name="glance_not_in_history">Not added to history until you open it</string>
     <string name="glance_private_note">Private preview: nothing from it is saved</string>
@@ -603,7 +603,7 @@
     <string name="appearance_mode_light">Light</string>
     <string name="appearance_mode_dark">Dark</string>
     <string name="settings_animations">Animations</string>
-    <string name="settings_animations_summary">Show animations in Vola and supported websites. Turn off to skip motion.</string>
+    <string name="settings_animations_summary">Motion in Vola and on sites that support it.</string>
     <string name="settings_force_dark_websites">Force dark mode on websites</string>
     <string name="settings_force_dark_websites_summary">With a dark browser appearance, automatically darkens websites without their own dark theme. Can cause display issues.</string>
     <string name="settings_force_dark_websites_system_webview_only">Available only with the System WebView engine.</string>
@@ -652,7 +652,7 @@
     <string name="address_bar_style_segmented">Segmented</string>
     <string name="settings_home_search_summary">Search engine and suggestions</string>
     <string name="settings_tabs_gestures_title">Tabs &amp; gestures</string>
-    <string name="settings_home_tabs_gestures_summary">Tab layout, lifetime, workspaces, and controls</string>
+    <string name="settings_home_tabs_gestures_summary">Layout, closing old tabs and gestures</string>
     <string name="settings_home_browser_summary">Startup, favorites, web pages, links, and default browser</string>
     <string name="settings_downloads_title">Downloads</string>
     <string name="settings_home_capsules_summary">Manage saved Site Capsules and shortcuts</string>
@@ -745,9 +745,9 @@
     <string name="search_engine_searxng_summary">Your own server</string>
     <string name="search_engine_searxng_server_summary">%1$s · %2$s</string>
     <string name="settings_ai_mode_toggle_title">Show AI Mode logo</string>
-    <string name="settings_ai_mode_toggle_subtitle">Tap the logo in the address bar to switch the current query between Google Search and AI Mode.</string>
+    <string name="settings_ai_mode_toggle_subtitle">Tap the logo in the address bar to switch between Search and AI Mode.</string>
     <string name="settings_history_suggestions_title">Show browsing history suggestions</string>
-    <string name="settings_history_suggestions_summary">Include matching pages from this workspace’s saved history and automatic Recall results in the address bar. Open tabs and favorite address completion stay available.</string>
+    <string name="settings_history_suggestions_summary">Pages from this profile’s history and page memory, as you type.</string>
     <string name="settings_search_suggestions">Search suggestions</string>
     <string name="settings_search_suggestions_summary">After three characters, typed search text is sent to this provider. Disabled in private tabs.</string>
     <string name="settings_search_suggestions_none_summary">Suggestions stay local. No typed text is sent to a suggestion provider.</string>
@@ -856,7 +856,7 @@
     <string name="settings_link_long_press_action">Long-press link action</string>
     <string name="settings_address_bar_long_press_title">Long-press address bar action</string>
     <string name="settings_address_bar_long_press_summary">Choose what happens when you touch and hold the address bar</string>
-    <string name="settings_link_peek_actions_title">Link Peek buttons</string>
+    <string name="settings_link_peek_actions_title">Quick preview buttons</string>
     <string name="settings_link_peek_actions_summary">Choose and arrange up to three quick actions</string>
     <string name="settings_link_peek_actions_instructions">Long-press and drag actions into empty slots. Drag one back to Available actions to leave its slot empty. The pulsing + always stays in the third slot and opens a background tab.</string>
     <string name="settings_link_peek_actions_available">Available actions</string>
@@ -2339,7 +2339,7 @@
     <string name="v5_downloads_folder_note">Files are kept in the phone’s shared Downloads folder — other apps can see them too.</string>
     <string name="v5_favorites_new_folder">New folder</string>
     <string name="v5_history_clear">Clear…</string>
-    <string name="v5_history_empty_title">Nothing here yet</string>
+    <string name="v5_history_empty_title">No history yet</string>
     <string name="v5_history_empty_profile">Sites you open in the “%1$s” profile will show up here. Private tabs never do.</string>
     <string name="v5_history_clear_title">Clear history</string>
     <string name="v5_history_clear_subtitle">Only in this profile</string>
@@ -2370,11 +2370,11 @@
     <string name="v5_web_prompt_answer">Answer</string>
     <string name="v5_first_run_gestures_title">Two gestures</string>
     <string name="v5_first_run_gesture_tabs_title">Swipe along the bar</string>
-    <string name="v5_first_run_gesture_tabs_caption">Left and right go to the next tabs</string>
+    <string name="v5_first_run_gesture_tabs_caption">Left or right for the tab next door</string>
     <string name="v5_first_run_gesture_overview_title">Swipe up from the bar</string>
-    <string name="v5_first_run_gesture_overview_caption">All tabs and groups</string>
+    <string name="v5_first_run_gesture_overview_caption">Every tab and group at a glance</string>
     <string name="v5_first_run_gestures_done">Got it</string>
-    <string name="v5_first_run_gestures_buttons">Without gestures: the tabs button and the “⋮” menu do the same.</string>
+    <string name="v5_first_run_gestures_buttons">Prefer buttons? The tabs button and the “⋮” menu do the same.</string>
     <string name="filter_v5_on">On</string>
     <string name="filter_v5_off">Off</string>
     <string name="filter_v5_active">Enabled</string>

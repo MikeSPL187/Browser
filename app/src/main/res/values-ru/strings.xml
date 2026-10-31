@@ -629,7 +629,7 @@
     <string name="appearance_mode_light">Светлая</string>
     <string name="appearance_mode_dark">Тёмная</string>
     <string name="settings_animations">Анимации</string>
-    <string name="settings_animations_summary">Показывать анимации в Vola и на поддерживаемых сайтах. Выключите, чтобы убрать движение.</string>
+    <string name="settings_animations_summary">Движение в Vola и на сайтах, которые это поддерживают.</string>
     <string name="settings_force_dark_websites">Тёмная тема для сайтов</string>
     <string name="settings_force_dark_websites_summary">При тёмной теме браузера автоматически затемняет сайты без собственной тёмной темы. Возможны ошибки отображения.</string>
     <string name="settings_force_dark_websites_system_webview_only">Доступно только с движком System WebView.</string>
@@ -678,7 +678,7 @@
     <string name="address_bar_style_segmented">Сегментированный</string>
     <string name="settings_home_search_summary">Поисковая система и подсказки</string>
     <string name="settings_tabs_gestures_title">Вкладки и жесты</string>
-    <string name="settings_home_tabs_gestures_summary">Раскладка вкладок, срок жизни, пространства и управление</string>
+    <string name="settings_home_tabs_gestures_summary">Раскладка, закрытие старых вкладок и жесты</string>
     <string name="settings_home_browser_summary">Запуск, избранное, веб-страницы, ссылки и браузер по умолчанию</string>
     <string name="settings_downloads_title">Загрузки</string>
     <string name="settings_home_capsules_summary">Сохранённые капсулы сайтов и ярлыки</string>
@@ -777,9 +777,9 @@
     <string name="search_engine_searxng_summary">Свой сервер</string>
     <string name="search_engine_searxng_server_summary">%1$s · %2$s</string>
     <string name="settings_ai_mode_toggle_title">Показывать логотип режима ИИ</string>
-    <string name="settings_ai_mode_toggle_subtitle">Нажмите на логотип в адресной строке, чтобы переключить запрос между поиском Google и режимом ИИ.</string>
+    <string name="settings_ai_mode_toggle_subtitle">Логотип в адресной строке переключает поиск и режим ИИ.</string>
     <string name="settings_history_suggestions_title">Подсказки из истории</string>
-    <string name="settings_history_suggestions_summary">Показывать в адресной строке подходящие страницы из сохранённой истории пространства и результаты «Памяти страниц». Открытые вкладки и автодополнение избранного работают всегда.</string>
+    <string name="settings_history_suggestions_summary">Страницы из истории профиля и «Памяти страниц» — по мере ввода.</string>
     <string name="settings_search_suggestions">Поисковые подсказки</string>
     <string name="settings_search_suggestions_summary">После трёх символов вводимый текст отправляется этому сервису. В частных вкладках отключено.</string>
     <string name="settings_search_suggestions_none_summary">Подсказки только локальные. Вводимый текст никуда не отправляется.</string>
@@ -2427,7 +2427,7 @@
     <string name="v5_library_up">Назад в папку выше</string>
     <string name="v5_library_read_later">Читать позже</string>
     <string name="v5_library_search_read_later">Поиск в «Читать позже»</string>
-    <string name="v5_read_later_empty_title">Пока пусто</string>
+    <string name="v5_read_later_empty_title">Пока ничего не отложено</string>
     <string name="v5_read_later_empty_message">Сохраните статью в режиме чтения кнопкой «Сохранить офлайн» — она появится здесь.</string>
     <string name="v5_read_later_no_results">Ничего не найдено</string>
     <string name="v5_read_later_progress">Прочитано %1$d %%</string>
@@ -2441,7 +2441,7 @@
     <string name="v5_downloads_folder_note">Файлы лежат в общей папке «Загрузки» телефона — их видят и другие приложения.</string>
     <string name="v5_favorites_new_folder">Новая папка</string>
     <string name="v5_history_clear">Очистить…</string>
-    <string name="v5_history_empty_title">Пока пусто</string>
+    <string name="v5_history_empty_title">Истории пока нет</string>
     <string name="v5_history_empty_profile">Здесь появятся сайты, которые вы откроете в профиле «%1$s». Частные вкладки сюда не попадают.</string>
     <string name="v5_history_clear_title">Очистить историю</string>
     <string name="v5_history_clear_subtitle">Только в этом профиле</string>
