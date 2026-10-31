@@ -44,6 +44,9 @@ internal enum class VaultOpenResult {
     /** The file is not a vault this version can read. */
     Unreadable,
 
+    /** The vault was locked or erased while this opening ran; it stays as that left it. */
+    Superseded,
+
     /** The vault could not be written. */
     Failed,
 }
@@ -75,6 +78,12 @@ internal class LocalCredentialVault(
     @Volatile
     private var open: Open? = null
 
+    /**
+     * Counts every change of the open state and of the file, under the lock. An unlock compares it
+     * before it publishes: what it read must still be what the vault is.
+     */
+    private var generation = 0L
+
     val exists: Boolean get() = storage.exists()
 
     override val isUnlocked: Boolean get() = open != null
@@ -101,11 +110,14 @@ internal class LocalCredentialVault(
     }
 
     /**
-     * Opens the vault with [way]. The slow part (reading the file, the Keystore unwrap, decryption)
-     * runs before the lock is taken; only the switch to the open state holds it.
+     * Opens the vault with [way]. Only the Keystore unwrap and the decryption run outside the lock;
+     * the file is read under it, because an atomic file read in the middle of a write drops that
+     * write. Before the result is shown the lock checks that nothing changed meanwhile: another
+     * opening, a save, a lock or an erase each win over this older read.
      */
     fun unlock(way: VaultKeyWrapper): VaultOpenResult {
-        val envelope = (storage.read() ?: return VaultOpenResult.Missing)
+        val (readAt, bytes) = synchronized(this) { generation to storage.read() }
+        val envelope = (bytes ?: return VaultOpenResult.Missing)
             .let(VaultEnvelope::decode) ?: return VaultOpenResult.Unreadable
         val slot = envelope.slots.firstOrNull { it.type == way.slotType } ?: return VaultOpenResult.NoSlot
         val openedKey = when (val unwrapped = way.unwrap(slot.payload)) {
@@ -127,8 +139,19 @@ internal class LocalCredentialVault(
             openedKey.fill(0)
             return VaultOpenResult.Unreadable
         }
-        synchronized(this) { publish(Open(openedKey, envelope.slots, opened)) }
-        return VaultOpenResult.Opened
+        synchronized(this) {
+            if (generation == readAt) {
+                publish(Open(openedKey, envelope.slots, opened))
+                return VaultOpenResult.Opened
+            }
+            openedKey.fill(0)
+            return when {
+                // Another opening came first, and maybe a save after it: what is open now is newer.
+                open != null -> VaultOpenResult.Opened
+                !storage.exists() -> VaultOpenResult.Missing
+                else -> VaultOpenResult.Superseded
+            }
+        }
     }
 
     override fun loginsFor(origin: String): List<VaultLogin> =
@@ -176,10 +199,12 @@ internal class LocalCredentialVault(
         val newSlots = current.slots.filterNot { it.type == way.slotType } + VaultSlot(way.slotType, payload)
         if (!persist(current.key, newSlots, current.logins)) return VaultOpenResult.Failed
         open = Open(current.key, newSlots, current.logins)
+        generation++
         return VaultOpenResult.Opened
     }
 
     /** Which ways in the vault file offers, or empty when there is none or it cannot be read. */
+    @Synchronized
     fun slotTypes(): Set<Int> =
         storage.read()?.let(VaultEnvelope::decode)?.slots?.mapTo(mutableSetOf(), VaultSlot::type).orEmpty()
 
@@ -223,6 +248,7 @@ internal class LocalCredentialVault(
     override fun lock() {
         val current = open ?: return
         open = null
+        generation++
         current.key.fill(0)
     }
 
@@ -230,6 +256,7 @@ internal class LocalCredentialVault(
     @Synchronized
     fun destroy(): Boolean {
         lock()
+        generation++
         // After any index write still queued, so an erased vault leaves no user names behind.
         index?.let { indexWriter.execute(it::clear) }
         return storage.delete()
@@ -239,6 +266,7 @@ internal class LocalCredentialVault(
     private fun publish(next: Open) {
         val previous = open
         open = next
+        generation++
         if (previous != null && previous.key !== next.key) previous.key.fill(0)
         syncIndex(next.logins)
     }
@@ -247,6 +275,7 @@ internal class LocalCredentialVault(
     private fun commit(current: Open, logins: List<VaultLogin>, reindex: Boolean = true): Boolean {
         if (!persist(current.key, current.slots, logins)) return false
         open = Open(current.key, current.slots, logins)
+        generation++
         if (reindex) syncIndex(logins)
         return true
     }

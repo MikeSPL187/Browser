@@ -572,6 +572,8 @@ class PasswordsActivity : FragmentActivity() {
                         model.message = R.string.passwords_device_key_lost
                     }
                     VaultOpenResult.Missing -> model.route = PasswordsRoute.Intro
+                    // Locked or erased while it opened: the screen already shows that.
+                    VaultOpenResult.Superseded -> Unit
                     else -> model.message = R.string.passwords_failed
                 }
             }
@@ -593,6 +595,7 @@ class PasswordsActivity : FragmentActivity() {
                     if (model.deviceKeyLost) rebindDevice()
                 }
                 VaultOpenResult.Refused -> model.route = PasswordsRoute.Recover(wrong = true)
+                VaultOpenResult.Superseded -> Unit
                 else -> model.message = R.string.passwords_failed
             }
         }

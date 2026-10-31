@@ -168,6 +168,66 @@ class LocalCredentialVaultTest {
         assertEquals(listOf("alice"), index.hints().map { it.username })
     }
 
+    @Test
+    fun `a slow unlock never shows an older read than what happened meanwhile`() {
+        val storage = MemoryStorage()
+        val device = FakeDeviceWrapper()
+        val vault = LocalCredentialVault(storage, random)
+        vault.create(listOf(device))
+        vault.save(draft("first"), 1)
+        vault.lock()
+
+        // An opening elsewhere and a save land while this unlock waits on the Keystore.
+        val stale = vault.slowUnlock(device) {
+            assertEquals(VaultOpenResult.Opened, vault.unlock(device))
+            vault.save(VaultLoginDraft(ORIGIN, null, null, "bob", "second"), 2)
+        }
+        assertEquals(VaultOpenResult.Opened, stale)
+        assertEquals(listOf("alice", "bob"), vault.allLogins().map(VaultLogin::username).sorted())
+
+        // A lock while it waits wins: the vault stays locked.
+        assertEquals(VaultOpenResult.Superseded, vault.slowUnlock(device) { vault.lock() })
+        assertFalse(vault.isUnlocked)
+
+        // An erase while it waits wins too.
+        assertEquals(VaultOpenResult.Missing, vault.slowUnlock(device) { vault.destroy() })
+        assertFalse(vault.isUnlocked)
+    }
+
+    @Test
+    fun `the file is never read while it is being written`() {
+        val storage = MemoryStorage()
+        val device = FakeDeviceWrapper()
+        val vault = LocalCredentialVault(storage, random)
+        vault.create(listOf(device))
+        storage.checkOverlap = true
+        val writer = thread { repeat(200) { index -> vault.save(draft("pw-$index"), index.toLong()) } }
+        val reader = thread { repeat(200) { vault.unlock(device) } }
+        writer.join(10_000)
+        reader.join(10_000)
+        assertFalse("a read overlapped a write", storage.overlapped)
+    }
+
+    /** Unlocks with [device] while [meanwhile] runs during its Keystore unwrap. */
+    private fun LocalCredentialVault.slowUnlock(device: VaultKeyWrapper, meanwhile: () -> Unit): VaultOpenResult {
+        val unwrapping = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val slow = object : VaultKeyWrapper by device {
+            override fun unwrap(payload: ByteArray): VaultKeyOutcome<ByteArray> {
+                unwrapping.countDown()
+                release.await()
+                return device.unwrap(payload)
+            }
+        }
+        var result: VaultOpenResult? = null
+        val opening = thread { result = unlock(slow) }
+        assertTrue(unwrapping.await(5, TimeUnit.SECONDS))
+        meanwhile()
+        release.countDown()
+        opening.join(5_000)
+        return result!!
+    }
+
     private fun recovery() = RecoveryPhraseKeyWrapper(phrase, random, iterations = 1_000)
 
     /** An index key that seals nothing: enough to see what the index holds. */
@@ -185,18 +245,32 @@ class LocalCredentialVaultTest {
         toString(Charsets.ISO_8859_1).contains(text) || toString(Charsets.UTF_8).contains(text)
 
     private class MemoryStorage : VaultStorage {
-        var bytes: ByteArray? = null
+        @Volatile var bytes: ByteArray? = null
         var writes = 0
         var failWrites = false
 
+        /** Records a read that comes while a write is under way, as an atomic file would lose it. */
+        var checkOverlap = false
+        @Volatile var overlapped = false
+        @Volatile private var writing = false
+
         override fun exists() = bytes != null
 
-        override fun read() = bytes?.copyOf()
+        override fun read(): ByteArray? {
+            if (checkOverlap && writing) overlapped = true
+            return bytes?.copyOf()
+        }
 
         override fun write(bytes: ByteArray): Boolean {
             if (failWrites) return false
-            writes++
-            this.bytes = bytes.copyOf()
+            writing = true
+            try {
+                if (checkOverlap) Thread.sleep(1)
+                writes++
+                this.bytes = bytes.copyOf()
+            } finally {
+                writing = false
+            }
             return true
         }
 

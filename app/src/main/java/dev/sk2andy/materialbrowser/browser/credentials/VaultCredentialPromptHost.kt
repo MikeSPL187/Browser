@@ -295,7 +295,7 @@ internal class VaultCredentialPromptHost(
                         } else {
                             // The Passwords screen says the same; here the sheet is gone, so a toast says it.
                             when (outcome) {
-                                VaultOpenResult.Opened -> Unit
+                                VaultOpenResult.Opened, VaultOpenResult.Superseded -> Unit
                                 VaultOpenResult.Refused, VaultOpenResult.NoSlot -> tell(R.string.passwords_device_key_lost)
                                 else -> tell(R.string.passwords_failed)
                             }
