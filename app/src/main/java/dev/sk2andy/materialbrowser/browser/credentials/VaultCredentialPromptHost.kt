@@ -18,6 +18,7 @@ import dev.sk2andy.materialbrowser.browser.integration.PasswordsActivityContract
 import dev.sk2andy.materialbrowser.shared.credentials.CredentialVaultRules
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLoginHint
+import dev.sk2andy.materialbrowser.ui.passwords.PasswordsRules
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -304,7 +305,10 @@ internal class VaultCredentialPromptHost(
                 }
 
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    if (finished.compareAndSet(false, true)) onFailed()
+                    if (!finished.compareAndSet(false, true)) return
+                    // A lockout closes the prompt at once: say why the sign-in did nothing.
+                    PasswordsRules.authenticationError(errorCode)?.let(::tell)
+                    onFailed()
                 }
             },
         )

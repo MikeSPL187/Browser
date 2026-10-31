@@ -884,6 +884,10 @@ class PasswordsActivity : FragmentActivity() {
             ContextCompat.getMainExecutor(this),
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) = onSuccess()
+
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    PasswordsRules.authenticationError(errorCode)?.let { model.message = it }
+                }
             },
         )
         prompt.authenticate(

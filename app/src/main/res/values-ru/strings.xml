@@ -1866,6 +1866,7 @@
     <string name="passwords_prompt_title">Пароли Vola</string>
     <string name="passwords_prompt_subtitle">Подтвердите, что это вы</string>
     <string name="passwords_failed">Что-то пошло не так. Попробуйте ещё раз.</string>
+    <string name="passwords_auth_lockout">Слишком много попыток. Разблокируйте телефон PIN-кодом и попробуйте снова.</string>
     <string name="passwords_search">Сайт или логин</string>
     <string name="passwords_clear_search">Очистить поиск</string>
     <string name="passwords_all_count">Все · %1$d</string>

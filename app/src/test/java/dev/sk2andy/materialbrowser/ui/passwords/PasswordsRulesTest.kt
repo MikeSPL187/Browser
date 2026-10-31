@@ -1,5 +1,7 @@
 package dev.sk2andy.materialbrowser.ui.passwords
 
+import androidx.biometric.BiometricPrompt
+import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
 import java.security.SecureRandom
 import org.junit.Assert.assertEquals
@@ -9,6 +11,17 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PasswordsRulesTest {
+    @Test
+    fun `a closed prompt says why, except when the user closed it`() {
+        assertEquals(R.string.passwords_auth_lockout, PasswordsRules.authenticationError(BiometricPrompt.ERROR_LOCKOUT))
+        assertEquals(R.string.passwords_auth_lockout, PasswordsRules.authenticationError(BiometricPrompt.ERROR_LOCKOUT_PERMANENT))
+        assertEquals(R.string.passwords_no_screen_lock, PasswordsRules.authenticationError(BiometricPrompt.ERROR_NO_DEVICE_CREDENTIAL))
+        assertEquals(R.string.passwords_failed, PasswordsRules.authenticationError(BiometricPrompt.ERROR_HW_UNAVAILABLE))
+        assertNull(PasswordsRules.authenticationError(BiometricPrompt.ERROR_USER_CANCELED))
+        assertNull(PasswordsRules.authenticationError(BiometricPrompt.ERROR_NEGATIVE_BUTTON))
+        assertNull(PasswordsRules.authenticationError(BiometricPrompt.ERROR_CANCELED))
+    }
+
     @Test
     fun `the vault locks five minutes after the last use and when the clock goes back`() {
         val lock = VaultAutoLock()
