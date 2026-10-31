@@ -22,6 +22,8 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
 import kotlin.math.roundToInt
+import androidx.compose.foundation.border
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 
 /** The pure part of the v5 slider: where the fill ends and which stop the value is on. */
 object V5SliderRules {
@@ -90,7 +92,10 @@ private fun V5SliderThumb(enabled: Boolean) {
                 ambientColor = V5ControlColors.toggleThumbShadow,
                 spotColor = V5ControlColors.toggleThumbShadow,
             )
-            .background(V5ControlColors.toggleThumb, V5Theme.shapes.full),
+            .background(V5ControlColors.toggleThumb, V5Theme.shapes.full)
+            // A white thumb on a white card in the light theme: the hairline keeps it visible where the
+            // shadow is faint, as iOS outlines its own.
+            .border(V5Spacing.hairline, V5Theme.colors.edge, V5Theme.shapes.full),
     )
 }
 

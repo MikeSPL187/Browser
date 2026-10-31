@@ -18,6 +18,8 @@ import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 import dev.sk2andy.materialbrowser.ui.v5.V5FindInPage
 import dev.sk2andy.materialbrowser.ui.v5.V5FindInPageLabels
+import androidx.compose.foundation.background
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 
 /**
  * Find in page in the bar's place, above the keyboard: under v5 on a phone the capsule of canvas
@@ -62,7 +64,12 @@ internal fun BrowserFindInPage(
             onPrevious = { controller.findNextInPage(forward = false) },
             onNext = { controller.findNextInPage(forward = true) },
             onDone = controller::closeFindInPage,
-            modifier = placement.padding(vertical = VolaSpacing.x2).zIndex(FIND_Z_INDEX),
+            // On the bar's own plate, as the address bar it replaces: over the page it floated bare,
+            // with the page's text between the capsules and a white capsule lost on a white page.
+            modifier = placement
+                .zIndex(FIND_Z_INDEX)
+                .background(V5Theme.colors.background)
+                .padding(vertical = VolaSpacing.x2),
         )
     }
 }

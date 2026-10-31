@@ -338,9 +338,8 @@ internal fun BrowserViewport(
     val webContentTopBarState = controller.selectedWebContentTopBarState
     val webContentStatusBarAppearance = webContentTopBarState?.statusBarAppearance
         ?: controller.selectedWebContentStatusBarBackdrop
-    val defaultStatusBarUsesDarkIcons = !controller.appearanceSettings.usesDarkColors(
-        isSystemInDarkTheme(),
-    )
+    val defaultStatusBarUsesDarkIcons = !controller.appearanceSettings.usesDarkColors(isSystemInDarkTheme()) &&
+        !(tabOverviewVisible && V5OverviewSurface.showsPrivate)
     val pageErrorFeedbackHolder = remember(selectedTab.id) {
         pageErrorFeedbackByTab.getOrPut(selectedTab.id) {
             mutableStateOf(initialPageErrorFeedback)
