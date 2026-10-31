@@ -130,6 +130,7 @@ COMPOSE_ICONS = [
     ("Delete", "delete", False, False),
     ("DeleteSweep", "delete_sweep", False, False),
     ("Download", "download", False, False),
+    ("QrCodeScanner", "qr_code_scanner", False, False),
     ("DragHandle", "drag_handle", False, False),
     ("Edit", "edit", False, False),
     ("Error", "error", False, False),
