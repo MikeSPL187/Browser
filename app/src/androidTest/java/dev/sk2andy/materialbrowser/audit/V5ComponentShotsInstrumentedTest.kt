@@ -1,6 +1,7 @@
 package dev.sk2andy.materialbrowser.audit
 
 import android.content.res.Configuration
+import android.os.SystemClock
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -93,6 +94,9 @@ class V5ComponentShotsInstrumentedTest {
                 look = currentLook
                 screen = currentScreen
                 composeRule.waitForIdle()
+                // Idle means composed, not yet on the display: screencap took the previous screen.
+                SystemClock.sleep(FRAME_SETTLE_MILLIS)
+                composeRule.waitForIdle()
                 ScreenShots.capture("passwords-${currentLook.name}", currentScreen.first)
             }
         }
@@ -129,5 +133,8 @@ class V5ComponentShotsInstrumentedTest {
     private companion object {
         /** 12 October 2026, for the «Edited» line. */
         const val EDITED = 1_791_800_000_000L
+
+        /** Long enough for the composed frame to reach the display on the CI emulator. */
+        const val FRAME_SETTLE_MILLIS = 600L
     }
 }

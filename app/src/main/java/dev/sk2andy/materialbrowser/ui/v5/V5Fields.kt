@@ -177,7 +177,8 @@ internal fun V5NameField(
             verticalAlignment = if (multiline) Alignment.Top else Alignment.CenterVertically,
         ) {
             Box(Modifier.weight(1f), contentAlignment = if (multiline) Alignment.TopStart else Alignment.CenterStart) {
-                if (value.isEmpty()) {
+                // A placeholder that only repeats the label above it is not drawn twice («Login» over «Login»).
+                if (value.isEmpty() && placeholder != label) {
                     // The field carries the name for TalkBack; this is only what the eye reads (СС-1).
                     Text(placeholder, style = V5Theme.type.body, color = colors.labelTertiary, modifier = Modifier.clearAndSetSemantics {})
                 }
