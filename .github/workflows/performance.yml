@@ -19,6 +19,7 @@ on:
       - ".github/workflows/performance.yml"
       - "scripts/ci/perf_gate.py"
       - "scripts/ci/memory_budget.py"
+      - "scripts/ci/gecko_memory_report.py"
       - "scripts/ci/pages/**"
   workflow_dispatch:
 
@@ -184,6 +185,31 @@ jobs:
               --url "http://localhost:${PAGE_PORT}/scroll.html" \
               --out "perf/memory/${build}-${round}.json" ||
               echo "::warning title=Memory budget::${build} round ${round} was not measured"
+            echo "::endgroup::"
+          done
+
+      # What Gecko's own memory is made of (about:memory), base and this pull request: dumpsys sees
+      # most of the main process as «Unknown». Information only; it never fails the job.
+      - name: Gecko memory report
+        run: |
+          for build in base head; do
+            adb uninstall "$APP_PACKAGE" > /dev/null 2>&1 || true
+            adb install "perf/${build}.apk" > /dev/null
+            adb shell am start -W -a android.intent.action.VIEW \
+              -d "http://localhost:${PAGE_PORT}/scroll.html?tab=0" -p "$APP_PACKAGE" > /dev/null
+            sleep 20
+            python3 scripts/ci/gecko_memory_report.py capture --package "$APP_PACKAGE" \
+              --out "perf/memory/gecko-${build}.json.gz" || true
+            {
+              echo "#### ${build}"
+              python3 scripts/ci/gecko_memory_report.py summarize "perf/memory/gecko-${build}.json.gz" || true
+              echo
+            } >> "$GITHUB_STEP_SUMMARY"
+          done
+          # The full table in the log too: Actions summaries are not readable through the API.
+          for build in base head; do
+            echo "::group::Gecko memory report, ${build}"
+            python3 scripts/ci/gecko_memory_report.py summarize "perf/memory/gecko-${build}.json.gz" --top 30 || true
             echo "::endgroup::"
           done
 
