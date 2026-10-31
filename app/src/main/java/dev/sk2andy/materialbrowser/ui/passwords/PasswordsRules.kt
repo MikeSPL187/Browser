@@ -101,7 +101,7 @@ internal object PasswordsRules {
     private const val OTHER_LETTER = "#"
 
     /**
-     * Logins whose site or user name contains [query], ignoring case; all of them for a blank query.
+     * Logins whose site, user name or note contains [query], ignoring case; all of them for a blank query.
      * A site shown in punycode is also found by its own spelling («пример» finds `xn--e1afmkfd.xn--p1ai`).
      */
     fun filter(logins: List<VaultLogin>, query: String): List<VaultLogin> {
@@ -111,7 +111,8 @@ internal object PasswordsRules {
             val site = displaySite(login.origin)
             site.contains(needle) ||
                 (PUNYCODE in site && unicodeSite(site).contains(needle)) ||
-                login.username.lowercase(Locale.ROOT).contains(needle)
+                login.username.lowercase(Locale.ROOT).contains(needle) ||
+                login.note?.lowercase(Locale.ROOT)?.contains(needle) == true
         }
     }
 

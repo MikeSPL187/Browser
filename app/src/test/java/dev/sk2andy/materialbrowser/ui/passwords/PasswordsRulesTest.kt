@@ -62,7 +62,7 @@ class PasswordsRulesTest {
     }
 
     @Test
-    fun `search matches the site or the user name`() {
+    fun `search matches the site, the user name or the note`() {
         val logins = listOf(login("1", "https://mail.example.com", "anna@example.com"), login("2", "https://bank.example.ru", "anna.k"))
         assertEquals(listOf("2"), PasswordsRules.filter(logins, "BANK").map(VaultLogin::id))
         assertEquals(listOf("1", "2"), PasswordsRules.filter(logins, "anna").map(VaultLogin::id))
@@ -70,6 +70,8 @@ class PasswordsRulesTest {
         val international = login("3", "https://xn--e1afmkfd.xn--p1ai", "boris")
         assertEquals(listOf("3"), PasswordsRules.filter(logins + international, "Пример").map(VaultLogin::id))
         assertEquals("bank.example.ru", PasswordsRules.displaySite("https://bank.example.ru"))
+        val noted = login("4", "https://shop.example", "c").copy(note = "Контрольный вопрос: лицей")
+        assertEquals(listOf("4"), PasswordsRules.filter(logins + noted, "КОНТРОЛЬНЫЙ").map(VaultLogin::id))
     }
 
     private fun login(id: String, origin: String, username: String) = VaultLogin(
