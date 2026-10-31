@@ -1827,7 +1827,7 @@
     <string name="passwords_password">Password</string>
     <string name="passwords_site">Site</string>
     <string name="passwords_note">Notes</string>
-    <string name="passwords_note_hint">Notes</string>
+    <string name="passwords_note_hint">Security questions, PIN hints…</string>
     <string name="passwords_edited">Edited %1$s</string>
     <string name="passwords_no_username">No login</string>
     <string name="passwords_show">Show password</string>

@@ -1881,7 +1881,7 @@
     <string name="passwords_password">Пароль</string>
     <string name="passwords_site">Сайт</string>
     <string name="passwords_note">Заметки</string>
-    <string name="passwords_note_hint">Заметки</string>
+    <string name="passwords_note_hint">Контрольные вопросы, подсказки к PIN…</string>
     <string name="passwords_edited">Изменено %1$s</string>
     <string name="passwords_no_username">Без логина</string>
     <string name="passwords_show">Показать пароль</string>

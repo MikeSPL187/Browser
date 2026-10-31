@@ -443,6 +443,7 @@ internal fun PasswordEditV5(
                 V5NameField(
                     value = site,
                     placeholder = stringResource(R.string.passwords_site_hint),
+                    label = stringResource(R.string.passwords_site),
                     onValueChange = { site = it },
                     onDone = {},
                     maxLength = MAX_SITE_LENGTH,
@@ -452,6 +453,7 @@ internal fun PasswordEditV5(
                 V5NameField(
                     value = username,
                     placeholder = stringResource(R.string.passwords_username),
+                    label = stringResource(R.string.passwords_username),
                     onValueChange = { username = it },
                     onDone = {},
                     maxLength = MAX_USERNAME_LENGTH,
@@ -461,6 +463,7 @@ internal fun PasswordEditV5(
                 V5NameField(
                     value = password,
                     placeholder = stringResource(R.string.passwords_password),
+                    label = stringResource(R.string.passwords_password),
                     onValueChange = { password = it },
                     onDone = save,
                     maxLength = MAX_PASSWORD_LENGTH,
@@ -477,6 +480,7 @@ internal fun PasswordEditV5(
                 V5NameField(
                     value = note,
                     placeholder = stringResource(R.string.passwords_note_hint),
+                    label = stringResource(R.string.passwords_note),
                     onValueChange = { note = it },
                     onDone = {},
                     maxLength = CredentialVaultRules.MAX_NOTE_LENGTH,

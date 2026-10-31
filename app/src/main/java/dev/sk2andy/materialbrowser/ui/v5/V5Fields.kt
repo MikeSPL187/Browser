@@ -143,6 +143,11 @@ internal fun V5NameField(
     enabled: Boolean = true,
     /** A note: several lines, Enter starts a new one, the text starts at the top. */
     multiline: Boolean = false,
+    /**
+     * The field's name above it, for a form whose fields stay told apart once filled (Safari's edit
+     * page). Only for the eye: the field itself carries its name for TalkBack (СС-1).
+     */
+    label: String? = null,
 ) {
     val colors = V5Theme.colors
     val focusManager = LocalFocusManager.current
@@ -151,6 +156,16 @@ internal fun V5NameField(
     // Pasted text over the limit loses its end: the field says so instead of failing later (ЯС-4).
     var truncated by remember { mutableStateOf(false) }
     Column(Modifier.padding(horizontal = sideMargin).fillMaxWidth()) {
+        if (label != null) {
+            Text(
+                label,
+                style = V5Theme.type.footnote,
+                color = colors.labelSecondary,
+                modifier = Modifier
+                    .padding(start = V5Spacing.space4, bottom = V5Spacing.space1)
+                    .clearAndSetSemantics {},
+            )
+        }
         Row(
             Modifier
                 .fillMaxWidth()
