@@ -86,6 +86,24 @@ class InstrumentedSummaryTest(unittest.TestCase):
         self.assertEqual("[SystemBars] screen 39", lines[40])
         self.assertEqual("\tat dev.sk2andy.Frame.call0(Frame.kt:0)", lines[41])
 
+    def test_the_causes_of_a_failure_are_shown_with_their_first_frames(self):
+        frames = [f"\tat androidx.test.espresso.Espresso.onIdle(Espresso.java:{index})" for index in range(30)]
+        recursion = [f"\tat dev.sk2andy.Loop.again(Loop.kt:{index % 2})" for index in range(40)]
+        details = "\n".join([
+            "java.lang.RuntimeException: java.util.concurrent.ExecutionException: java.lang.StackOverflowError",
+            *frames,
+            "Caused by: java.util.concurrent.ExecutionException: java.lang.StackOverflowError",
+            *frames[:3],
+            "Caused by: java.lang.StackOverflowError: stack size 8188KB",
+            *recursion,
+        ])
+
+        lines = failure_lines(details)
+
+        self.assertEqual(1 + STACK_LINES + 1 + 3 + 1 + STACK_LINES, len(lines))
+        self.assertIn("Caused by: java.lang.StackOverflowError: stack size 8188KB", lines)
+        self.assertEqual("\tat dev.sk2andy.Loop.again(Loop.kt:1)", lines[-1])
+
     def test_baseline_entries_by_method_or_class_are_known_failures(self):
         baseline_file = self.root / "baseline.txt"
         baseline_file.write_text(
