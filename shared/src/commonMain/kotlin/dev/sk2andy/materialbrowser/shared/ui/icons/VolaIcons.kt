@@ -151,6 +151,17 @@ object VolaIcons {
         )
     }
 
+    /** A QR code inside a scanner's corners: «Scan code» (it borrowed the download arrow). */
+    val QrCodeScanner: ImageVector by lazy {
+        materialSymbol(
+            name = "QrCodeScanner",
+            pathData = "M120 120 h240 v80 H200 v160 h-80 Z M600 120 h240 v240 h-80 V200 H600 Z " +
+                "M120 600 h80 v160 h160 v80 H120 Z M760 600 h80 v240 H600 v-80 h160 Z " +
+                "M300 300 h140 v140 H300 Z M520 300 h140 v140 H520 Z M300 520 h140 v140 H300 Z " +
+                "M520 520 h60 v60 h-60 Z M600 600 h60 v60 h-60 Z",
+        )
+    }
+
     val Download: ImageVector by lazy {
         materialSymbol(
             name = "Download",

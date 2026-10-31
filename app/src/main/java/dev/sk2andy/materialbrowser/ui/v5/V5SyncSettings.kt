@@ -95,7 +95,7 @@ fun V5SyncSettings(
                 )
                 V5ListRow(
                     title = stringResource(R.string.v5_sync_scan_title),
-                    icon = V5RowIcon(VolaIcons.Download, V5Tile.Green),
+                    icon = V5RowIcon(VolaIcons.QrCodeScanner, V5Tile.Green),
                     trailing = V5RowTrailing.Chevron,
                     onClick = onScanCode,
                     modifier = Modifier.testTag(V5SyncSettingsTestTags.ScanCode),
