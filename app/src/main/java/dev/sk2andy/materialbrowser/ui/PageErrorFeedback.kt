@@ -75,7 +75,8 @@ internal fun PageErrorFeedback(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(V5Theme.colors.background)
+                // Outside V5PromptTheme V5Theme is the light default: a dark shell got a light page.
+                .background(v5PromptBackground())
                 .testTag(PageErrorFeedbackTestTags.Page),
         ) {
             AnimatedContent(
@@ -350,5 +351,5 @@ private fun V5OfflineChecksPreview() {
 @Composable
 internal fun errorAwareStatusBarTint(pageErrorFeedback: PageErrorFeedbackState): Int = when (pageErrorFeedback) {
     is PageErrorFeedbackState.Hidden -> MaterialTheme.colorScheme.surface.toArgb()
-    else -> V5Theme.colors.background.toArgb()
+    else -> v5PromptBackground().toArgb()
 }

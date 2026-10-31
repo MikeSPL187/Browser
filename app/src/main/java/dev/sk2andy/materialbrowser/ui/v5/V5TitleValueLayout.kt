@@ -50,4 +50,4 @@ internal fun V5TitleValueLayout(
 }
 
 /** The widest a value may be and still stand beside its title. */
-private const val VALUE_SHARE = 0.45f
+private const val VALUE_SHARE = 0.35f
