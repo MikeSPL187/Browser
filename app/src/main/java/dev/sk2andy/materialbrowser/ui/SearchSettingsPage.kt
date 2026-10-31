@@ -146,7 +146,7 @@ internal fun SearchSettingsPage(
                     onSearxngSettingsChanged = onSearxngSettingsChanged,
                 )
             }
-            SettingsCardHeader(stringResource(R.string.settings_search_suggestions))
+            SettingsCardHeader(stringResource(R.string.settings_search_group_suggestions))
             SettingsCard(containerColor = cardColor) {
                 SuggestionProviderRow(
                     title = stringResource(R.string.settings_search_suggestions),

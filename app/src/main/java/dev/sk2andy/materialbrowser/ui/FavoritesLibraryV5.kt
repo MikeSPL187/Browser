@@ -136,9 +136,11 @@ internal fun FavoritesLibraryV5(
             when {
                 searching -> R.string.favorites_no_matches
                 folderId != null -> R.string.favorites_folder_empty
-                else -> R.string.favorites_empty
+                else -> R.string.favorites_empty_message
             },
         ),
+        // One empty state across the library: a title, then what to do (screenshot review, 31.10).
+        emptyTitle = stringResource(R.string.favorites_empty).takeIf { !searching && folderId == null },
         actions = if (searching) {
             V5LibraryActions()
         } else {

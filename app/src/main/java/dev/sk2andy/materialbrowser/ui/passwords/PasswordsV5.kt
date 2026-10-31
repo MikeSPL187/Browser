@@ -67,9 +67,10 @@ import dev.sk2andy.materialbrowser.ui.v5.V5SearchField
 import dev.sk2andy.materialbrowser.ui.v5.V5StateAction
 import dev.sk2andy.materialbrowser.ui.v5.V5StatePage
 import kotlinx.coroutines.delay
-import android.text.format.DateUtils
-import androidx.compose.ui.platform.LocalContext
 import dev.sk2andy.materialbrowser.shared.credentials.CredentialVaultRules
+import androidx.compose.ui.platform.LocalConfiguration
+import java.text.DateFormat
+import java.util.Date
 
 /*
  * The passwords under v5 (canvas «ц4»–«ц7», approved 17.10): closed, the list, one password, a new
@@ -287,11 +288,14 @@ internal fun PasswordDetailV5(
     var confirmRemoveTotp by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     val site = PasswordsRules.displaySite(login.origin)
-    // «Edited 12 Oct 2026» under the last group, as Safari dates a password.
-    val context = LocalContext.current
+    // «Edited 12 October 2026» under the last group, as Safari dates a password; in the interface's
+    // language, which may differ from the phone's (DateUtils follows the process default instead).
+    val locale = LocalConfiguration.current.locales[0]
     val edited = stringResource(
         R.string.passwords_edited,
-        DateUtils.formatDateTime(context, login.updatedAtMillis, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_YEAR),
+        remember(login.updatedAtMillis, locale) {
+            DateFormat.getDateInstance(DateFormat.LONG, locale).format(Date(login.updatedAtMillis))
+        },
     ).takeIf { login.updatedAtMillis > 0 }
     V5PromptTheme {
         val colors = V5Theme.colors

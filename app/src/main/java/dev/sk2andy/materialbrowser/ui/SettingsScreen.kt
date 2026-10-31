@@ -415,7 +415,7 @@ internal fun SettingsScreen(
                     layer = SettingsLayerRules.layer(currentDestination),
                     onOpenMore = { onDestinationChanged(SettingsDestination.BrowserMore) },
                     browserEngineKind = browserEngineKind,
-                    pageTranslationProvider = pageTranslationProvider,
+                    pageTranslationProvider = pageTranslationProvider.takeIf { translationSettings == null },
                     isExternalLinkPreviewEnabled = isExternalLinkPreviewEnabled,
                     externalAppLinkHandling = externalAppLinkHandling,
                     isFullImmersiveModeEnabled = isFullImmersiveModeEnabled,

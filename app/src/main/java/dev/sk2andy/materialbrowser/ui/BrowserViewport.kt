@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -338,9 +339,8 @@ internal fun BrowserViewport(
     val webContentTopBarState = controller.selectedWebContentTopBarState
     val webContentStatusBarAppearance = webContentTopBarState?.statusBarAppearance
         ?: controller.selectedWebContentStatusBarBackdrop
-    val defaultStatusBarUsesDarkIcons = !controller.appearanceSettings.usesDarkColors(
-        isSystemInDarkTheme(),
-    )
+    val defaultStatusBarUsesDarkIcons = !controller.appearanceSettings.usesDarkColors(isSystemInDarkTheme()) &&
+        !(tabOverviewVisible && V5OverviewSurface.showsPrivate)
     val pageErrorFeedbackHolder = remember(selectedTab.id) {
         pageErrorFeedbackByTab.getOrPut(selectedTab.id) {
             mutableStateOf(initialPageErrorFeedback)
@@ -458,11 +458,14 @@ internal fun BrowserViewport(
                     !videoOnlyPresentation &&
                     !tabOverviewVisible &&
                     controller.selectedFirefoxExtensionOptionsTitle == null,
+                // Over the error page the bar takes the page's own colour, not the last site's.
                 statusBarTint = webContentStatusBarAppearance?.colorArgb
-                    ?: MaterialTheme.colorScheme.surface.toArgb(),
+                    ?.takeIf { pageErrorFeedback is PageErrorFeedbackState.Hidden }
+                    ?: errorAwareStatusBarTint(pageErrorFeedback),
                 solidStatusBarOverlay = webContentTopBarState != null ||
                     controller.selectedWebContentStatusBarBackdrop != null,
-                statusBarUsesDarkIcons = webContentStatusBarAppearance?.useDarkIcons,
+                statusBarUsesDarkIcons = webContentStatusBarAppearance?.useDarkIcons
+                    ?.takeIf { pageErrorFeedback is PageErrorFeedbackState.Hidden },
                 defaultStatusBarUsesDarkIcons = defaultStatusBarUsesDarkIcons,
                 refreshIndicatorBelowStatusBar = !contentFramed,
                 onRefresh = controller::reload,
@@ -569,17 +572,17 @@ internal fun BrowserViewport(
             }
         }
 
+        // Above the bar, and never under the system's navigation bar: without a bar in the way the
+        // error page's «Retry» sat under it at 200 % font (nightly walk, 31.10).
+        val navigationBarPx = WindowInsets.navigationBars.getBottom(density).toFloat()
         val pageOverlayModifier = Modifier
             .fillMaxSize()
             .then(if (contentFramed) Modifier else Modifier.statusBarsPadding())
             .padding(
                 bottom = with(density) {
                     val bottomBarTop = bottomBarTopPx.floatValue
-                    if (bottomBarTop > 0f && bottomBarTop < rootHeightPx) {
-                        (rootHeightPx - bottomBarTop).toDp()
-                    } else {
-                        0.dp
-                    }
+                    val barHeight = if (bottomBarTop > 0f && bottomBarTop < rootHeightPx) rootHeightPx - bottomBarTop else 0f
+                    maxOf(barHeight, navigationBarPx).toDp()
                 },
             )
         key(selectedTab.id, selectedTab.url) {
@@ -1165,3 +1168,4 @@ internal fun BlankTabPreview(
         }
     }
 }
+

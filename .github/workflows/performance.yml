@@ -19,6 +19,7 @@ on:
       - ".github/workflows/performance.yml"
       - "scripts/ci/perf_gate.py"
       - "scripts/ci/memory_budget.py"
+      - "scripts/ci/gecko_memory_report.py"
       - "scripts/ci/pages/**"
   workflow_dispatch:
 
@@ -114,6 +115,19 @@ jobs:
             :app:assembleFullBenchmark
           cp app/build/outputs/apk/full/benchmark/app-full-benchmark.apk "$GITHUB_WORKSPACE/perf/base.apk"
 
+      # The emulator died mid-benchmark on PR #622 (base and head alike, no trace in its log):
+      # the builds' Kotlin and Gradle daemons stay alive and hold gigabytes. They go before the
+      # emulator starts, and swap gives headroom, as in instrumented.yml.
+      - name: Free memory for the emulator
+        run: |
+          pkill -f KotlinCompileDaemon || true
+          pkill -f GradleDaemon || true
+          sudo fallocate -l 8G /vola-swap
+          sudo chmod 600 /vola-swap
+          sudo mkswap /vola-swap > /dev/null
+          sudo swapon /vola-swap
+          free -m
+
       - name: Start emulator
         run: |
           nohup "$ANDROID_HOME/emulator/emulator" \
@@ -155,13 +169,41 @@ jobs:
             echo "::group::${build}, round ${round}"
             adb uninstall "$APP_PACKAGE" > /dev/null 2>&1 || true
             adb install "perf/${build}.apk"
-            adb shell rm -rf "$device_output"
-            adb shell mkdir -p "$device_output"
-            adb shell am instrument -w -r \
-              -e class "$BENCHMARKS" \
-              -e androidx.benchmark.suppressErrors EMULATOR \
-              -e additionalTestOutputDir "$device_output" \
-              "${test_package}/${runner}" | tee "perf/${build}-${round}.log"
+            # A round whose instrumentation ends without a result (adb lost the emulator for a
+            # moment: exit 255 and no INSTRUMENTATION_CODE, PR #622) is run once more instead of
+            # ending the whole job.
+            for attempt in 1 2; do
+              adb wait-for-device
+              adb shell rm -rf "$device_output"
+              adb shell mkdir -p "$device_output"
+              adb shell am instrument -w -r \
+                -e class "$BENCHMARKS" \
+                -e androidx.benchmark.suppressErrors EMULATOR \
+                -e additionalTestOutputDir "$device_output" \
+                "${test_package}/${runner}" | tee "perf/${build}-${round}.log" || true
+              if grep -q "INSTRUMENTATION_CODE" "perf/${build}-${round}.log"; then break; fi
+              if [[ "$attempt" == 2 ]]; then
+                echo "::error title=Performance budget::${build} round ${round} ended twice without a result"
+                exit 1
+              fi
+              echo "::warning title=Performance budget::${build} round ${round} ended without a result; running it again"
+              free -m
+              if ! timeout 60 adb wait-for-device; then
+                # The emulator itself is gone: start it again, cold, as the step above did.
+                nohup "$ANDROID_HOME/emulator/emulator" -avd vola_ci -port 5554 -no-window -noaudio \
+                  -no-boot-anim -gpu swiftshader_indirect >> "$RUNNER_TEMP/emulator.log" 2>&1 &
+                timeout 300 adb wait-for-device
+                # shellcheck disable=SC2016 # expanded by the inner shell
+                timeout 300 bash -c '
+                  until [[ "$(adb shell getprop sys.boot_completed | tr -d "\r")" == "1" ]]; do sleep 2; done
+                '
+                adb shell settings put global hide_error_dialogs 1
+                adb reverse "tcp:$PAGE_PORT" "tcp:$PAGE_PORT"
+                adb install -r -t perf/benchmarks.apk
+              fi
+              adb uninstall "$APP_PACKAGE" > /dev/null 2>&1 || true
+              adb install "perf/${build}.apk"
+            done
             if grep -qE "FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed" "perf/${build}-${round}.log"; then
               echo "::warning title=Performance budget::${build} round ${round} had a failing benchmark (see its log group)"
             fi
@@ -184,6 +226,31 @@ jobs:
               --url "http://localhost:${PAGE_PORT}/scroll.html" \
               --out "perf/memory/${build}-${round}.json" ||
               echo "::warning title=Memory budget::${build} round ${round} was not measured"
+            echo "::endgroup::"
+          done
+
+      # What Gecko's own memory is made of (about:memory), base and this pull request: dumpsys sees
+      # most of the main process as «Unknown». Information only; it never fails the job.
+      - name: Gecko memory report
+        run: |
+          for build in base head; do
+            adb uninstall "$APP_PACKAGE" > /dev/null 2>&1 || true
+            adb install "perf/${build}.apk" > /dev/null
+            adb shell am start -W -a android.intent.action.VIEW \
+              -d "http://localhost:${PAGE_PORT}/scroll.html?tab=0" -p "$APP_PACKAGE" > /dev/null
+            sleep 20
+            python3 scripts/ci/gecko_memory_report.py capture --package "$APP_PACKAGE" \
+              --out "perf/memory/gecko-${build}.json.gz" || true
+            {
+              echo "#### ${build}"
+              python3 scripts/ci/gecko_memory_report.py summarize "perf/memory/gecko-${build}.json.gz" || true
+              echo
+            } >> "$GITHUB_STEP_SUMMARY"
+          done
+          # The full table in the log too: Actions summaries are not readable through the API.
+          for build in base head; do
+            echo "::group::Gecko memory report, ${build}"
+            python3 scripts/ci/gecko_memory_report.py summarize "perf/memory/gecko-${build}.json.gz" --top 30 || true
             echo "::endgroup::"
           done
 

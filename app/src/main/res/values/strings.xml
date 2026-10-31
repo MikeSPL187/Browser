@@ -36,7 +36,7 @@
 
     <!-- Navigation -->
     <string name="address_search_google_or_url">Search Google or enter a URL</string>
-    <string name="address_empty_hint">Search or enter an address</string>
+    <string name="address_empty_hint">Search or address</string>
     <string name="search_or_enter_url">Search or enter a URL</string>
     <string name="cd_open_search">Open search</string>
     <string name="cd_close_address_input">Close address input</string>
@@ -319,7 +319,7 @@
     <string name="history_clear_on_exit_summary">Delete saved history when the whole app leaves the screen</string>
     <string name="recall_from_history">From your history</string>
     <string name="recall_settings_title">Recall</string>
-    <string name="recall_settings_summary">Store readable text from regular pages locally so you can search it. Private tabs and Link Peek are never included.</string>
+    <string name="recall_settings_summary">Store readable text from regular pages locally so you can search it. Private tabs and link previews are never included.</string>
     <string name="recall_excerpt_content_description">Matching page text: %1$s</string>
     <string name="action_clear_browsing_data">Clear browsing data</string>
     <string name="clear_data_title">Clear browsing data?</string>
@@ -459,7 +459,7 @@
     <string name="private_tab_fact_shared">Shared cookies</string>
     <string name="private_tab_fact_shared_caption">This WebView has no separate profile: sites can see your regular sign-ins</string>
     <string name="private_tab_fact_protection">Same protection</string>
-    <string name="private_tab_fact_protection_caption">Trackers are blocked as in regular tabs, but not counted in the weekly report</string>
+    <string name="private_tab_fact_protection_caption">Trackers are blocked as in regular tabs, but not counted in the privacy report</string>
     <string name="private_tab_fact_downloads">Downloads stay</string>
     <string name="private_tab_fact_downloads_caption">Downloaded files are saved to Downloads</string>
     <plurals name="private_tab_close_all">
@@ -526,7 +526,7 @@
     <string name="action_open_link_foreground_tab">Open link in new foreground tab</string>
     <string name="action_open_link_private_background_tab">Open link in new private background tab</string>
     <string name="action_open_link_private_foreground_tab">Open link in new private foreground tab</string>
-    <string name="link_peek_title">Link Peek</string>
+    <string name="link_peek_title">Quick preview</string>
     <string name="glance_close">Close preview</string>
     <string name="glance_not_in_history">Not added to history until you open it</string>
     <string name="glance_private_note">Private preview: nothing from it is saved</string>
@@ -558,13 +558,13 @@
     <string name="settings_search_clear">Clear</string>
     <string name="settings_search_prompt">Find a setting by its name or description</string>
     <string name="settings_search_empty">Nothing found for «%1$s»</string>
-    <string name="settings_home_default_title">Make Vola your default</string>
+    <string name="settings_home_default_title">Make Vola default</string>
     <string name="settings_home_default_summary">Open links in Vola</string>
     <string name="settings_home_default_action">Make default</string>
     <string name="settings_home_appearance_live">%1$s · %2$s</string>
-    <string name="settings_home_theme_auto">auto theme</string>
-    <string name="settings_home_theme_light">light theme</string>
-    <string name="settings_home_theme_dark">dark theme</string>
+    <string name="settings_home_theme_auto">Auto</string>
+    <string name="settings_home_theme_light">Light</string>
+    <string name="settings_home_theme_dark">Dark</string>
     <string name="settings_home_protection_trackers_https">Blocks trackers · HTTPS only</string>
     <string name="settings_home_protection_trackers">Blocks trackers</string>
     <string name="settings_home_protection_https">HTTPS only</string>
@@ -603,7 +603,7 @@
     <string name="appearance_mode_light">Light</string>
     <string name="appearance_mode_dark">Dark</string>
     <string name="settings_animations">Animations</string>
-    <string name="settings_animations_summary">Show animations in Vola and supported websites. Turn off to skip motion.</string>
+    <string name="settings_animations_summary">Motion in Vola and on sites that support it.</string>
     <string name="settings_force_dark_websites">Force dark mode on websites</string>
     <string name="settings_force_dark_websites_summary">With a dark browser appearance, automatically darkens websites without their own dark theme. Can cause display issues.</string>
     <string name="settings_force_dark_websites_system_webview_only">Available only with the System WebView engine.</string>
@@ -652,7 +652,7 @@
     <string name="address_bar_style_segmented">Segmented</string>
     <string name="settings_home_search_summary">Search engine and suggestions</string>
     <string name="settings_tabs_gestures_title">Tabs &amp; gestures</string>
-    <string name="settings_home_tabs_gestures_summary">Tab layout, lifetime, workspaces, and controls</string>
+    <string name="settings_home_tabs_gestures_summary">Layout, closing old tabs and gestures</string>
     <string name="settings_home_browser_summary">Startup, favorites, web pages, links, and default browser</string>
     <string name="settings_downloads_title">Downloads</string>
     <string name="settings_home_capsules_summary">Manage saved Site Capsules and shortcuts</string>
@@ -699,6 +699,7 @@
     <string name="settings_download_one_dm_session_summary">Shares cookies, user agent, and referrer with 1DM so signed-in downloads can work. The app may use them to access your session. Session data is never shared in private browsing.</string>
     <string name="settings_section_tabs">Tabs</string>
     <string name="settings_tabs_group_overview">Tab overview</string>
+    <string name="settings_tabs_group_open">Open tabs</string>
     <string name="settings_tab_overview_mode">Tab overview layout</string>
     <string name="settings_tab_stack_folder_mode">Stack folder layout</string>
     <string name="tab_overview_mode_hero">Cover flow</string>
@@ -745,12 +746,13 @@
     <string name="search_engine_searxng_summary">Your own server</string>
     <string name="search_engine_searxng_server_summary">%1$s · %2$s</string>
     <string name="settings_ai_mode_toggle_title">Show AI Mode logo</string>
-    <string name="settings_ai_mode_toggle_subtitle">Tap the logo in the address bar to switch the current query between Google Search and AI Mode.</string>
+    <string name="settings_ai_mode_toggle_subtitle">Tap the logo in the address bar to switch between Search and AI Mode.</string>
     <string name="settings_history_suggestions_title">Show browsing history suggestions</string>
-    <string name="settings_history_suggestions_summary">Include matching pages from this workspace’s saved history and automatic Recall results in the address bar. Open tabs and favorite address completion stay available.</string>
+    <string name="settings_history_suggestions_summary">Pages from this profile’s history and page memory, as you type.</string>
     <string name="settings_search_suggestions">Search suggestions</string>
+    <string name="settings_search_group_suggestions">Suggestions</string>
     <string name="settings_search_suggestions_summary">After three characters, typed search text is sent to this provider. Disabled in private tabs.</string>
-    <string name="settings_search_suggestions_none_summary">Suggestions stay local. No typed text is sent to a suggestion provider.</string>
+    <string name="settings_search_suggestions_none_summary">No suggestion service: what you type stays on the phone. History and tab suggestions still work.</string>
     <string name="search_suggestion_provider_none">None</string>
     <string name="settings_searxng_instance_url">SearXNG instance URL</string>
     <string name="settings_searxng_instance_url_summary">Base URL, including an optional path. HTTPS is recommended.</string>
@@ -763,8 +765,8 @@
     <string name="settings_browser_engine_title">Web engine</string>
     <string name="settings_browser_engine_gecko">Extensions · GeckoView</string>
     <string name="settings_browser_engine_system">Memory saver · Android System WebView</string>
-    <string name="settings_browser_engine_gecko_summary">Toppings plus Firefox extensions such as Dark Reader. Uses more memory.</string>
-    <string name="settings_browser_engine_system_summary">Uses less memory and supports Toppings, but not Firefox extensions. Vola protection remains available.</string>
+    <string name="settings_browser_engine_gecko_summary">Scripts plus Firefox extensions such as Dark Reader. Uses more memory.</string>
+    <string name="settings_browser_engine_system_summary">Uses less memory and supports scripts, but not Firefox extensions. Vola protection remains available.</string>
     <string name="settings_browser_engine_restart_warning">Changing the engine restarts Vola. Logins, cookies and page history stay separate for each engine.</string>
     <string name="settings_browser_engine_change_blocked_by_downloads">Finish or cancel the active downloads before changing the engine. The restart would interrupt them.</string>
     <string name="settings_browser_engine_change_save_failed">Couldn\'t save your tabs, so the engine wasn\'t changed. Try again.</string>
@@ -856,7 +858,7 @@
     <string name="settings_link_long_press_action">Long-press link action</string>
     <string name="settings_address_bar_long_press_title">Long-press address bar action</string>
     <string name="settings_address_bar_long_press_summary">Choose what happens when you touch and hold the address bar</string>
-    <string name="settings_link_peek_actions_title">Link Peek buttons</string>
+    <string name="settings_link_peek_actions_title">Quick preview buttons</string>
     <string name="settings_link_peek_actions_summary">Choose and arrange up to three quick actions</string>
     <string name="settings_link_peek_actions_instructions">Long-press and drag actions into empty slots. Drag one back to Available actions to leave its slot empty. The pulsing + always stays in the third slot and opens a background tab.</string>
     <string name="settings_link_peek_actions_available">Available actions</string>
@@ -880,11 +882,11 @@
         <item quantity="other">%1$d requests blocked on this tab</item>
     </plurals>
     <string name="settings_block_ads_title">Block ads &amp; trackers</string>
-    <string name="settings_block_ads_subtitle">Local domain list, including service workers</string>
+    <string name="settings_block_ads_subtitle">Local domain list, sites’ background scripts included</string>
     <string name="settings_hide_cookie_banners_title">Hide cookie banners</string>
     <string name="settings_hide_cookie_banners_subtitle">Known consent overlays are removed</string>
     <string name="settings_block_ads_extension_summary">Vola blocks ads itself now. If uBlock Origin from an earlier version is still installed, you can remove it here.</string>
-    <string name="settings_hide_cookie_banners_extension_summary">Known consent overlays are removed. The I still don\'t care about cookies extension covers more sites; manage it in Firefox extensions.</string>
+    <string name="settings_hide_cookie_banners_extension_summary">Known consent overlays are removed. The “I still don\'t care about cookies” extension covers more sites; manage it in Firefox extensions.</string>
     <string name="settings_block_third_party_cookies_title">Block third-party cookies</string>
     <string name="settings_block_third_party_cookies_subtitle">First-party cookies remain enabled for sign-ins</string>
     <string name="settings_do_not_track_title">Do Not Track</string>
@@ -1712,7 +1714,7 @@
     <string name="settings_menu_location_tab">Tab menu</string>
     <string name="settings_menu_location_tab_switcher">Tab switcher menu</string>
     <string name="settings_menu_location_both">Both menus</string>
-    <string name="settings_menu_entry_topping_commands">Topping commands</string>
+    <string name="settings_menu_entry_topping_commands">Script commands</string>
     <string name="settings_menu_entry_firefox_page_actions">Firefox page actions</string>
     <!-- Address editor (Q4, board Editing) -->
     <string name="address_editor_new_tab_in_workspace">New tab in “%1$s”</string>
@@ -2033,7 +2035,7 @@
     </plurals>
     <string name="developer_options_ui_v5_specimen">v5 design specimen</string>
     <string name="developer_options_ui_v5_specimen_summary">Colors, the Inter font, shapes and settings tiles of v5 in the light, dark and private themes.</string>
-    <string name="settings_protection_more_summary">Encrypted DNS, WebRTC, Filter Studio, Recall, import and export</string>
+    <string name="settings_protection_more_summary">Encrypted DNS, WebRTC, filters, page memory, import and export</string>
     <string name="settings_browser_more_summary">Engine, startup, immersive mode, scroll bar, media player, import</string>
     <string name="settings_tabs_more_summary">Tabs in memory, profiles, the All actions menu</string>
     <string name="settings_value_percent">%1$d %%</string>
@@ -2339,7 +2341,7 @@
     <string name="v5_downloads_folder_note">Files are kept in the phone’s shared Downloads folder — other apps can see them too.</string>
     <string name="v5_favorites_new_folder">New folder</string>
     <string name="v5_history_clear">Clear…</string>
-    <string name="v5_history_empty_title">Nothing here yet</string>
+    <string name="v5_history_empty_title">No history yet</string>
     <string name="v5_history_empty_profile">Sites you open in the “%1$s” profile will show up here. Private tabs never do.</string>
     <string name="v5_history_clear_title">Clear history</string>
     <string name="v5_history_clear_subtitle">Only in this profile</string>
@@ -2370,11 +2372,11 @@
     <string name="v5_web_prompt_answer">Answer</string>
     <string name="v5_first_run_gestures_title">Two gestures</string>
     <string name="v5_first_run_gesture_tabs_title">Swipe along the bar</string>
-    <string name="v5_first_run_gesture_tabs_caption">Left and right go to the next tabs</string>
+    <string name="v5_first_run_gesture_tabs_caption">Left or right for the tab next door</string>
     <string name="v5_first_run_gesture_overview_title">Swipe up from the bar</string>
-    <string name="v5_first_run_gesture_overview_caption">All tabs and groups</string>
+    <string name="v5_first_run_gesture_overview_caption">Every tab and group at a glance</string>
     <string name="v5_first_run_gestures_done">Got it</string>
-    <string name="v5_first_run_gestures_buttons">Without gestures: the tabs button and the “•••” menu do the same.</string>
+    <string name="v5_first_run_gestures_buttons">Prefer buttons? The tabs button and the “⋮” menu do the same.</string>
     <string name="filter_v5_on">On</string>
     <string name="filter_v5_off">Off</string>
     <string name="filter_v5_active">Enabled</string>

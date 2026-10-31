@@ -724,7 +724,18 @@ class AppScreenWalkInstrumentedTest(
 
     private fun audit(screen: String) {
         findings += timed("audit $screen") { auditor.audit(screen, config.name) }
+        shoot(screen)
     }
+
+    /** The screen as a picture for the Screenshots workflow, in walk order ([ScreenShots]). */
+    private fun shoot(screen: String) {
+        if (!ScreenShots.enabled) return
+        val theme = if (config.dark) "dark" else "light"
+        val prefix = "${config.languageTag}-$theme-%02d".format(shotOrder(group))
+        ScreenShots.capture(prefix, "%02d %s".format(shots++, screen))
+    }
+
+    private var shots = 0
 
     /** Audits the screen, then scrolls it a page at a time to the end and audits again. */
     private fun auditScrolling(screen: String) {
@@ -758,6 +769,7 @@ class AppScreenWalkInstrumentedTest(
                 ?.invoke()
             if (after == null || after == before) return
             findings += timed("audit $screen ↓${page + 1}") { auditor.audit("$screen ↓${page + 1}", config.name) }
+            shoot("$screen ${page + 1}")
         }
     }
 
@@ -986,9 +998,41 @@ class AppScreenWalkInstrumentedTest(
 
         private fun v5SettingsGroups() = v5SettingsSlices().indices.map { slice -> V5_SETTINGS_GROUP_BASE - slice }
 
+        /** Where a walk group's pictures go in the gallery: in the order a user meets the screens. */
+        private fun shotOrder(group: Int): Int = when (group) {
+            V5_FIRST_RUN_GROUP -> 1
+            V5_BROWSER_GROUP -> 2
+            V5_PAGE_GROUP -> 3
+            V5_PAGE_STATES_GROUP -> 4
+            V5_LIBRARY_GROUP -> 5
+            V5_DEEPER_GROUP -> 6
+            else -> SETTINGS_SHOT_ORDER + (V5_SETTINGS_GROUP_BASE - group)
+        }
+
+        private const val SETTINGS_SHOT_ORDER = 10
+
+        /**
+         * The Screenshots workflow's walk: every group once in each configuration [ScreenShots.configs]
+         * names, upright phone only. The screen checks still run and still fail a walk.
+         */
+        private fun screenshotWalks(): List<Array<Any>> {
+            val configs = ScreenShots.configs(
+                mapOf(
+                    "EnglishLight" to AuditConfig.EnglishLight,
+                    "RussianDark" to AuditConfig.RussianDark,
+                    "EnglishDarkLargeFont" to AuditConfig.EnglishDarkLargeFont,
+                    "RussianLightLargeFont" to AuditConfig.RussianLightLargeFont,
+                ),
+            )
+            val groups = listOf(V5_FIRST_RUN_GROUP) + V5_GROUPS.sortedDescending() +
+                listOf(V5_PAGE_STATES_GROUP, V5_LIBRARY_GROUP, V5_DEEPER_GROUP) + v5SettingsGroups()
+            return configs.flatMap { config -> groups.map { group -> arrayOf<Any>(group, config) } }
+        }
+
         @JvmStatic
         @Parameterized.Parameters(name = "{index}")
         fun parameters(): List<Array<Any>> {
+            if (ScreenShots.enabled) return screenshotWalks()
             val v5Configs = AuditConfig.All.filter { config -> config.layout == AuditLayout.PhonePortrait }
             val v5Walks = V5_GROUPS.sortedDescending().flatMap { group ->
                 v5Configs.map { config -> arrayOf<Any>(group, config) }

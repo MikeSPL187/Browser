@@ -1,7 +1,10 @@
-# Visual check on a real Android emulator: builds Vola, tours the key screens in light, dark and
-# Russian, and publishes the screenshots to the "screenshots" branch under <branch>/<sha>/.
+# Visual check on a real Android emulator: the v5 screen walk (AppScreenWalkInstrumentedTest) takes a
+# picture of every screen it visits, the component shots (V5ComponentShotsInstrumentedTest) draw the
+# screens the emulator cannot reach (the passwords, which need a screen lock), and the pictures go
+# to the "screenshots" branch under <branch>/<sha>/ (see audit/ScreenShots.kt).
 #
-# Runs for pull requests labelled "screenshots" and on manual dispatch.
+# Runs for pull requests labelled "screenshots" and on manual dispatch; the dispatch can name the
+# walk configurations (AuditConfig field names, comma-separated).
 
 name: Screenshots
 
@@ -9,6 +12,13 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, labeled]
   workflow_dispatch:
+    inputs:
+      configs:
+        description: >-
+          Walk configurations, comma-separated: RussianDark, EnglishLight, EnglishDarkLargeFont,
+          RussianLightLargeFont. Empty takes RussianDark and EnglishLight.
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -32,9 +42,8 @@ jobs:
       ${{ github.event_name == 'workflow_dispatch' ||
       contains(github.event.pull_request.labels.*.name, 'screenshots') }}
     runs-on: ubuntu-latest
-    # The tour walks every screen in four passes; with the Q16c settings, Q18 library and
-    # #123 page probe steps it takes about 70 minutes on a busy runner.
-    timeout-minutes: 85
+    # Every walk group in two configurations, then the component shots: about 90 minutes.
+    timeout-minutes: 150
 
     steps:
       - name: Check out source
@@ -82,6 +91,14 @@ jobs:
           sudo chmod 666 /dev/kvm
           echo "$ANDROID_HOME/emulator" >> "$GITHUB_PATH"
 
+      # Headroom if memory runs out: without swap the kernel kills the runner (instrumented.yml).
+      - name: Add swap
+        run: |
+          sudo fallocate -l 8G /vola-swap
+          sudo chmod 600 /vola-swap
+          sudo mkswap /vola-swap > /dev/null
+          sudo swapon /vola-swap
+
       - name: Start emulator
         run: |
           nohup "$ANDROID_HOME/emulator/emulator" \
@@ -90,11 +107,15 @@ jobs:
             -no-window \
             -noaudio \
             -no-boot-anim \
+            -no-snapshot \
             -gpu swiftshader_indirect \
             > "$RUNNER_TEMP/emulator.log" 2>&1 &
 
-      - name: Build debug APK
-        run: ./gradlew --no-daemon --stacktrace assembleFullDebug
+      # Compiles while the emulator boots.
+      - name: Build app and test APKs
+        run: |
+          ./gradlew --no-daemon --stacktrace assembleFullDebug assembleFullDebugAndroidTest
+          pkill -f KotlinCompileDaemon || true
 
       - name: Wait for emulator
         run: |
@@ -111,26 +132,35 @@ jobs:
           adb shell settings put global animator_duration_scale 0
           adb shell input keyevent 82
 
-      - name: Capture screenshots
+      # The walk's own screen checks still run; a finding fails its test but not the pictures, which
+      # are published whatever the tests say.
+      - name: Walk the screens and take pictures
+        env:
+          CONFIGS: ${{ github.event.inputs.configs }}
         run: |
-          adb install -r app/build/outputs/apk/full/debug/app-full-debug.apk
-          python3 scripts/ci/capture_screenshots.py "$PACKAGE" "$RUNNER_TEMP/shots"
-
-      # Vola's own controls on every screenshot: 48 dp touch targets and a label for TalkBack.
-      # Only findings missing from scripts/ci/a11y-baseline.txt fail the job.
-      - name: Accessibility audit
-        run: |
-          status=0
-          python3 scripts/ci/a11y_audit.py "$RUNNER_TEMP/ui-dumps" "$PACKAGE" \
-            --baseline scripts/ci/a11y-baseline.txt \
-            --report "$RUNNER_TEMP/shots/a11y-report.txt" || status=$?
+          adb shell rm -rf /data/local/tmp/vola-shots
+          # An empty argument would reach «am instrument» as an empty value: named configs only.
+          configs=()
+          if [[ -n "${CONFIGS// /}" ]]; then
+            configs=(-Pandroid.testInstrumentationRunnerArguments.walkConfigs="${CONFIGS// /}")
+          fi
+          ./gradlew --no-daemon connectedFullDebugAndroidTest \
+            -Pandroid.testInstrumentationRunnerArguments.package=dev.sk2andy.materialbrowser.audit \
+            -Pandroid.testInstrumentationRunnerArguments.walkScreenshots=true \
+            "${configs[@]}" \
+            -Pandroid.testInstrumentationRunnerArguments.clearPackageData=true \
+            -Pandroid.testInstrumentationRunnerArguments.timeout_msec=1500000 \
+            < /dev/null || echo "::warning::Some walks failed; their pictures up to the failure are kept."
+          mkdir -p "$RUNNER_TEMP/shots"
+          adb pull /data/local/tmp/vola-shots/. "$RUNNER_TEMP/shots/" > /dev/null || true
+          count=$(find "$RUNNER_TEMP/shots" -name '*.png' | wc -l)
+          echo "Pictures: $count"
           {
-            echo "### Accessibility"
-            cat "$RUNNER_TEMP/shots/a11y-report.txt" 2>/dev/null || echo "No report."
-            echo "### Cold start"
-            cat "$RUNNER_TEMP/shots/startup.txt" 2>/dev/null || echo "Not measured."
+            echo "### Screenshots"
+            echo "$count pictures."
+            find app/build/outputs/androidTest-results -name '*.xml' -exec grep -ho 'tests="[0-9]*" failures="[0-9]*"' {} + 2>/dev/null \
+              | sort | uniq -c || true
           } >> "$GITHUB_STEP_SUMMARY"
-          exit "$status"
 
       - name: Publish screenshots
         if: ${{ always() }}

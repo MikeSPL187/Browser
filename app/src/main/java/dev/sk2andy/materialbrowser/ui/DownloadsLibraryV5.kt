@@ -153,6 +153,7 @@ internal fun DownloadsLibraryV5(
                 else -> R.string.downloads_empty_message
             },
         ),
+        emptyTitle = stringResource(R.string.downloads_empty).takeIf { query.isBlank() && filter == V5DownloadFilter.All },
         // Where the files are kept, under the list: other apps see that folder too.
         note = stringResource(R.string.v5_downloads_folder_note).takeIf { visible.isNotEmpty() },
         actions = V5LibraryActions(

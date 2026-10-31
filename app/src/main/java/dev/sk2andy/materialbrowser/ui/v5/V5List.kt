@@ -36,6 +36,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
@@ -270,12 +271,16 @@ fun V5ListRow(
             }
         }
         if (value != null) {
+            // Weighted too, so a long value («Desktop site, apps, duplicate», a site's address) ends in
+            // «…» within its half instead of taking the whole row and squeezing the title out of it.
             Text(
                 value,
                 style = V5Theme.type.body,
                 color = colors.labelSecondary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.End,
+                modifier = Modifier.weight(1f, fill = false),
             )
         }
         when (trailing) {
