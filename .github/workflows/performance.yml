@@ -115,6 +115,19 @@ jobs:
             :app:assembleFullBenchmark
           cp app/build/outputs/apk/full/benchmark/app-full-benchmark.apk "$GITHUB_WORKSPACE/perf/base.apk"
 
+      # The emulator died mid-benchmark on PR #622 (base and head alike, no trace in its log):
+      # the builds' Kotlin and Gradle daemons stay alive and hold gigabytes. They go before the
+      # emulator starts, and swap gives headroom, as in instrumented.yml.
+      - name: Free memory for the emulator
+        run: |
+          pkill -f KotlinCompileDaemon || true
+          pkill -f GradleDaemon || true
+          sudo fallocate -l 8G /vola-swap
+          sudo chmod 600 /vola-swap
+          sudo mkswap /vola-swap > /dev/null
+          sudo swapon /vola-swap
+          free -m
+
       - name: Start emulator
         run: |
           nohup "$ANDROID_HOME/emulator/emulator" \
@@ -174,7 +187,20 @@ jobs:
                 exit 1
               fi
               echo "::warning title=Performance budget::${build} round ${round} ended without a result; running it again"
-              timeout 120 adb wait-for-device || true
+              free -m
+              if ! timeout 60 adb wait-for-device; then
+                # The emulator itself is gone: start it again, cold, as the step above did.
+                nohup "$ANDROID_HOME/emulator/emulator" -avd vola_ci -port 5554 -no-window -noaudio \
+                  -no-boot-anim -gpu swiftshader_indirect >> "$RUNNER_TEMP/emulator.log" 2>&1 &
+                timeout 300 adb wait-for-device
+                # shellcheck disable=SC2016 # expanded by the inner shell
+                timeout 300 bash -c '
+                  until [[ "$(adb shell getprop sys.boot_completed | tr -d "\r")" == "1" ]]; do sleep 2; done
+                '
+                adb shell settings put global hide_error_dialogs 1
+                adb reverse "tcp:$PAGE_PORT" "tcp:$PAGE_PORT"
+                adb install -r -t perf/benchmarks.apk
+              fi
               adb uninstall "$APP_PACKAGE" > /dev/null 2>&1 || true
               adb install "perf/${build}.apk"
             done
