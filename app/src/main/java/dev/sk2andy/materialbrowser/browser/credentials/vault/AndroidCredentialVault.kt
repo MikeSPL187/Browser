@@ -38,11 +38,16 @@ internal object AndroidCredentialVault {
     fun get(context: Context): LocalCredentialVault = instance ?: synchronized(this) {
         instance ?: run {
             val directory = context.applicationContext.noBackupFilesDir
+            val index = LoginIndex(AtomicFileVaultStorage(File(directory, INDEX_FILE_NAME)), KeystoreLoginIndexKey())
+            // One thread keeps index writes in order; its Keystore key must never hold up an unlock.
+            val indexWriter = Executors.newSingleThreadExecutor { task -> Thread(task, "vola-login-index").apply { isDaemon = true } }
+            // The first read opens the index with its Keystore key: done here, off the main thread, so
+            // the sign-in sheet's hints (asked on the main thread) come from memory.
+            indexWriter.execute { index.hints() }
             LocalCredentialVault(
                 storage = AtomicFileVaultStorage(File(directory, FILE_NAME)),
-                index = LoginIndex(AtomicFileVaultStorage(File(directory, INDEX_FILE_NAME)), KeystoreLoginIndexKey()),
-                // One thread keeps index writes in order; its Keystore key must never hold up an unlock.
-                indexWriter = Executors.newSingleThreadExecutor { task -> Thread(task, "vola-login-index").apply { isDaemon = true } },
+                index = index,
+                indexWriter = indexWriter,
             )
         }.also { instance = it }
     }
