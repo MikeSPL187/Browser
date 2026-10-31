@@ -3,12 +3,15 @@ package dev.sk2andy.materialbrowser.ui.v5
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
@@ -31,63 +34,63 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import dev.sk2andy.materialbrowser.ui.theme.v5.V5SiteTint
-import androidx.compose.ui.graphics.compositeOver
-import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.ui.unit.lerp
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.boundsInRoot
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.lerp
 import dev.sk2andy.materialbrowser.R
-import dev.sk2andy.materialbrowser.ui.theme.v5.V5Type.tabular
-import dev.sk2andy.materialbrowser.ui.theme.v5.SmoothCornerShape
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.foundation.border
-import dev.sk2andy.materialbrowser.browser.safety.IdnDisplayRules
 import dev.sk2andy.materialbrowser.browser.SiteConnectionKind
+import dev.sk2andy.materialbrowser.browser.safety.IdnDisplayRules
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.AddressBarControlRules
 import dev.sk2andy.materialbrowser.ui.AddressBarTestTags
 import dev.sk2andy.materialbrowser.ui.addressBarVerticalGesture
+import dev.sk2andy.materialbrowser.ui.theme.v5.SmoothCornerShape
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5SiteTint
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Type
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Type.tabular
 import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 
 /*
  * The v5 bottom bar (plan-v5.md V7, system-v5.md section 5.1): a 64 dp strip that runs on under
@@ -533,25 +536,33 @@ private fun TabsButton(tabCount: Int, onClick: () -> Unit) {
     }
 }
 
-/** The 2 dp loading line along the top edge of the strip. */
+/**
+ * The 2 dp loading line along the top edge of the strip, as Safari draws it: a new load starts from
+ * its own beginning instead of running the last page's full line backwards, and a finished one
+ * runs to the end before it fades, rather than fading half way.
+ */
 @Composable
 private fun LoadingLine(visible: Boolean, progress: Float) {
-    val shown by animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        animationSpec = V5Motion.effectsFast.spec(),
-        label = "v5 loading line",
-    )
-    val value by animateFloatAsState(
-        targetValue = progress.coerceIn(0f, 1f),
-        animationSpec = V5Motion.effects.spec(),
-        label = "v5 loading progress",
-    )
+    val width = remember { Animatable(0f) }
+    val shown = remember { Animatable(0f) }
+    val target = progress.coerceIn(0f, 1f)
+    LaunchedEffect(visible, target) {
+        if (visible) {
+            if (target < width.value) width.snapTo(target)
+            launch { shown.animateTo(1f, V5Motion.effectsFast.spec()) }
+            width.animateTo(target, V5Motion.effects.spec())
+        } else if (shown.value > 0f) {
+            width.animateTo(1f, V5Motion.effectsFast.spec())
+            shown.animateTo(0f, V5Motion.effects.spec())
+            width.snapTo(0f)
+        }
+    }
     Box(Modifier.fillMaxWidth().height(V5Sizes.barProgress)) {
         Box(
             Modifier
-                .fillMaxWidth(value)
+                .fillMaxWidth(width.value)
                 .height(V5Sizes.barProgress)
-                .graphicsLayer { alpha = shown }
+                .graphicsLayer { alpha = shown.value }
                 .background(LocalV5BarColors.current.onTint),
         )
     }

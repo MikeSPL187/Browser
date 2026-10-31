@@ -84,13 +84,16 @@ internal class VaultEnvelope(val slots: List<VaultSlot>, val body: ByteArray) {
  * the two-factor key (Q21c); version 1 files still open, with no keys.
  */
 internal object VaultDocumentCodec {
+    /** Adds the note. Written only while some login has one, so a Vola without notes still opens the file. */
+    private const val VERSION_WITH_NOTES = 3
     private const val VERSION = 2
     private const val VERSION_WITHOUT_TOTP = 1
 
     fun encode(logins: List<VaultLogin>): ByteArray {
         val bytes = ByteArrayOutputStream()
+        val version = if (logins.any { it.note != null }) VERSION_WITH_NOTES else VERSION
         DataOutputStream(bytes).use { output ->
-            output.writeInt(VERSION)
+            output.writeInt(version)
             output.writeInt(logins.size)
             logins.forEach { login ->
                 output.writeUTF(login.id)
@@ -104,6 +107,7 @@ internal object VaultDocumentCodec {
                 output.writeLong(login.lastUsedAtMillis ?: NEVER)
                 output.writeInt(login.timesUsed)
                 output.writeOptional(login.totp)
+                if (version == VERSION_WITH_NOTES) output.writeOptional(login.note)
             }
         }
         return bytes.toByteArray()
@@ -117,7 +121,7 @@ internal object VaultDocumentCodec {
 
     private fun read(input: DataInputStream): List<VaultLogin>? {
         val version = input.readInt()
-        if (version != VERSION && version != VERSION_WITHOUT_TOTP) return null
+        if (version != VERSION_WITH_NOTES && version != VERSION && version != VERSION_WITHOUT_TOTP) return null
         val count = input.readInt()
         if (count !in 0..CredentialVaultRules.MAX_LOGINS) return null
         val logins = List(count) {
@@ -132,11 +136,12 @@ internal object VaultDocumentCodec {
                 updatedAtMillis = input.readLong(),
                 lastUsedAtMillis = input.readLong().takeIf { it != NEVER },
                 timesUsed = input.readInt(),
-                totp = if (version == VERSION) input.readOptional() else null,
+                totp = if (version >= VERSION) input.readOptional() else null,
+                note = if (version == VERSION_WITH_NOTES) input.readOptional() else null,
             )
             val draft = VaultLoginDraft(login.origin, login.formActionOrigin, login.httpRealm, login.username, login.password)
             if (login.id.isBlank() || login.timesUsed < 0 || !CredentialVaultRules.accepts(draft)) return null
-            if (!CredentialVaultRules.acceptsTotp(login.totp)) return null
+            if (!CredentialVaultRules.acceptsTotp(login.totp) || !CredentialVaultRules.acceptsNote(login.note)) return null
             login
         }
         return if (input.read() != -1 || logins.map(VaultLogin::id).distinct().size != logins.size) null else logins

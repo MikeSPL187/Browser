@@ -1,5 +1,9 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -20,6 +25,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -36,6 +45,7 @@ import androidx.compose.ui.text.style.TextAlign
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Elevation
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
@@ -58,6 +68,38 @@ internal object V5OverviewPrivateLockTestTags {
  * shapes, not the tabs: nothing of a locked tab (title, address, picture) is drawn, even blurred.
  * Blur needs Android 12; before it the plates stay sharp and faded, which shows no more.
  */
+/**
+ * [V5OverviewPrivateLockLayer] while [lock] is set. When the tabs are unlocked the card grows and
+ * fades over the cards rising in under it, as the passwords open ([V5Motion.vaultUnlock]); when the
+ * user only switches segment it just fades. Without system animations both are the short fade.
+ */
+@Composable
+internal fun V5OverviewPrivateLockOverlay(
+    lock: V5OverviewPrivateLock?,
+    unlocked: Boolean,
+    onUnlock: () -> Unit,
+    onCloseAll: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    // The last lock stays drawn while it leaves; nothing of the tabs is in it.
+    var shown by remember { mutableStateOf(lock) }
+    if (lock != null) shown = lock
+    val animated = V5Motion.animationsEnabled
+    AnimatedVisibility(
+        visible = lock != null,
+        modifier = modifier,
+        enter = if (animated) fadeIn(V5Motion.effects.spec()) else fadeIn(V5Motion.reducedFade()),
+        exit = when {
+            !animated -> fadeOut(V5Motion.reducedFade())
+            unlocked -> fadeOut(V5Motion.effectsFast.spec()) +
+                scaleOut(V5Motion.vaultUnlock.spec(), V5Motion.VAULT_UNLOCK_LOCK_SCALE)
+            else -> fadeOut(V5Motion.effectsFast.spec())
+        },
+    ) {
+        shown?.let { V5OverviewPrivateLockLayer(it, onUnlock, onCloseAll, Modifier.fillMaxSize()) }
+    }
+}
+
 @Composable
 internal fun V5OverviewPrivateLockLayer(
     lock: V5OverviewPrivateLock,

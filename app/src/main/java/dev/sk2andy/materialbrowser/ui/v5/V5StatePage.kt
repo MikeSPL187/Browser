@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,6 +30,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -51,6 +53,12 @@ data class V5StateAction(
     val enabled: Boolean = true,
     val testTag: String? = null,
     val destructive: Boolean = false,
+    /**
+     * The action runs now (the vault opening after the fingerprint): the main button keeps its
+     * colour, shows a spinner in place of its icon and takes no second tap; TalkBack hears [busyLabel].
+     */
+    val busy: Boolean = false,
+    val busyLabel: String? = null,
 )
 
 /**
@@ -179,15 +187,25 @@ internal fun V5StatePrimaryAction(action: V5StateAction, modifier: Modifier = Mo
             .heightIn(min = V5Sizes.touchTarget)
             .clip(V5Theme.shapes.full)
             .background(colors.accentFill)
-            .alpha(if (action.enabled) 1f else DISABLED_ALPHA)
-            .clickable(enabled = action.enabled, role = Role.Button, onClick = action.onClick)
+            .alpha(if (action.enabled || action.busy) 1f else DISABLED_ALPHA)
+            .clickable(enabled = action.enabled && !action.busy, role = Role.Button, onClick = action.onClick)
             .then(if (action.testTag != null) Modifier.testTag(action.testTag) else Modifier)
             .padding(horizontal = V5Spacing.space4, vertical = V5Spacing.space3),
         horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        action.icon?.let { icon ->
-            Icon(icon, contentDescription = null, tint = colors.onAccentFill, modifier = Modifier.size(V5Sizes.iconSmall))
+        if (action.busy) {
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .size(V5Sizes.iconSmall)
+                    .semantics { action.busyLabel?.let { contentDescription = it } },
+                color = colors.onAccentFill,
+                strokeWidth = V5Sizes.downloadRing,
+            )
+        } else {
+            action.icon?.let { icon ->
+                Icon(icon, contentDescription = null, tint = colors.onAccentFill, modifier = Modifier.size(V5Sizes.iconSmall))
+            }
         }
         Text(
             action.label,

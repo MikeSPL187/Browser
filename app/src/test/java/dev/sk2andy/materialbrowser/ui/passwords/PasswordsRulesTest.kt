@@ -1,5 +1,7 @@
 package dev.sk2andy.materialbrowser.ui.passwords
 
+import androidx.biometric.BiometricPrompt
+import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
 import java.security.SecureRandom
 import org.junit.Assert.assertEquals
@@ -9,6 +11,17 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PasswordsRulesTest {
+    @Test
+    fun `a closed prompt says why, except when the user closed it`() {
+        assertEquals(R.string.passwords_auth_lockout, PasswordsRules.authenticationError(BiometricPrompt.ERROR_LOCKOUT))
+        assertEquals(R.string.passwords_auth_lockout, PasswordsRules.authenticationError(BiometricPrompt.ERROR_LOCKOUT_PERMANENT))
+        assertEquals(R.string.passwords_no_screen_lock, PasswordsRules.authenticationError(BiometricPrompt.ERROR_NO_DEVICE_CREDENTIAL))
+        assertEquals(R.string.passwords_failed, PasswordsRules.authenticationError(BiometricPrompt.ERROR_HW_UNAVAILABLE))
+        assertNull(PasswordsRules.authenticationError(BiometricPrompt.ERROR_USER_CANCELED))
+        assertNull(PasswordsRules.authenticationError(BiometricPrompt.ERROR_NEGATIVE_BUTTON))
+        assertNull(PasswordsRules.authenticationError(BiometricPrompt.ERROR_CANCELED))
+    }
+
     @Test
     fun `the vault locks five minutes after the last use and when the clock goes back`() {
         val lock = VaultAutoLock()
@@ -49,7 +62,7 @@ class PasswordsRulesTest {
     }
 
     @Test
-    fun `search matches the site or the user name`() {
+    fun `search matches the site, the user name or the note`() {
         val logins = listOf(login("1", "https://mail.example.com", "anna@example.com"), login("2", "https://bank.example.ru", "anna.k"))
         assertEquals(listOf("2"), PasswordsRules.filter(logins, "BANK").map(VaultLogin::id))
         assertEquals(listOf("1", "2"), PasswordsRules.filter(logins, "anna").map(VaultLogin::id))
@@ -57,6 +70,8 @@ class PasswordsRulesTest {
         val international = login("3", "https://xn--e1afmkfd.xn--p1ai", "boris")
         assertEquals(listOf("3"), PasswordsRules.filter(logins + international, "Пример").map(VaultLogin::id))
         assertEquals("bank.example.ru", PasswordsRules.displaySite("https://bank.example.ru"))
+        val noted = login("4", "https://shop.example", "c").copy(note = "Контрольный вопрос: лицей")
+        assertEquals(listOf("4"), PasswordsRules.filter(logins + noted, "КОНТРОЛЬНЫЙ").map(VaultLogin::id))
     }
 
     private fun login(id: String, origin: String, username: String) = VaultLogin(

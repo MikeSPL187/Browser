@@ -52,8 +52,16 @@ internal class BrowsingHistoryRepository private constructor(
     /** A visit waits to be saved: the next background write saves the history as it is then. */
     private var saveScheduled = false
 
+    /**
+     * The background write is replacing the file now, outside this object's lock: a page that
+     * records a visit or a title meanwhile must not wait for the disk. The file's stamp changes under
+     * it, so the cache is trusted until the write ends; every other write waits for it first
+     * ([awaitBackgroundWrite]), so a clear is never undone by the older copy landing after it.
+     */
+    private var backgroundWriting = false
+
     private fun current(): List<HistoryEntry> {
-        cache?.takeIf { store.historyStamp() == cacheStamp }?.let { return it }
+        cache?.takeIf { backgroundWriting || store.historyStamp() == cacheStamp }?.let { return it }
         // Changed from outside: what is saved wins over a visit still waiting to be saved.
         saveScheduled = false
         return store.loadHistory().also { loaded ->
@@ -115,15 +123,42 @@ internal class BrowsingHistoryRepository private constructor(
     }
 
     /**
-     * Writes the history as it is at this moment, under the same lock as every change, so a clear
-     * that came first is never undone by an older copy.
+     * Writes the history as it is at this moment. The copy is taken under the lock, the file is
+     * written outside it, and writes that change the history wait for this one first, so a clear
+     * that comes later is never undone by this older copy.
      */
-    @Synchronized
     private fun saveNow() {
-        if (!saveScheduled) return
-        saveScheduled = false
-        val history = cache ?: return
-        committed(history, store.commitHistory(history))
+        val history = synchronized(this) {
+            if (!saveScheduled) return
+            saveScheduled = false
+            val snapshot = cache ?: return
+            backgroundWriting = true
+            snapshot
+        }
+        var saved = false
+        try {
+            saved = store.commitHistory(history)
+        } finally {
+            synchronized(this) {
+                backgroundWriting = false
+                // A visit that came meanwhile is in the cache and has its own save scheduled; after a
+                // failed write the cache stays ahead of the file, as before, until the next save.
+                if (saved) cacheStamp = store.historyStamp()
+                lock.notifyAll()
+            }
+        }
+    }
+
+    @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+    private val lock: Object get() = this as Object
+
+    /**
+     * Lets a background write finish before another write replaces the file. Called under the lock
+     * first thing in every change that writes, before it reads the history: the wait releases the
+     * lock, and a visit recorded meanwhile must be part of what that change writes.
+     */
+    private fun awaitBackgroundWrite() {
+        while (backgroundWriting) lock.wait()
     }
 
     /**
@@ -133,6 +168,7 @@ internal class BrowsingHistoryRepository private constructor(
      */
     @Synchronized
     fun flush(): Boolean {
+        awaitBackgroundWrite()
         if (!saveScheduled) return true
         saveScheduled = false
         val history = cache ?: return true
@@ -141,6 +177,7 @@ internal class BrowsingHistoryRepository private constructor(
 
     @Synchronized
     fun remove(entries: Collection<HistoryEntry>): HistoryMutationResult {
+        awaitBackgroundWrite()
         val current = current()
         if (!recallRepository.deleteEntries(entries)) {
             return HistoryMutationResult(history = current, committed = false)
@@ -156,6 +193,7 @@ internal class BrowsingHistoryRepository private constructor(
         trailTabIds: Set<String> = emptySet(),
         recallAlreadyDeleted: Boolean = false,
     ): HistoryMutationResult {
+        awaitBackgroundWrite()
         if (!recallAlreadyDeleted && !recallRepository.deleteProfiles(profileIds)) {
             return HistoryMutationResult(history = current(), committed = false)
         }
@@ -169,6 +207,7 @@ internal class BrowsingHistoryRepository private constructor(
         request: HistoryClearRequest,
         trailTabIds: Set<String> = emptySet(),
     ): HistoryMutationResult {
+        awaitBackgroundWrite()
         if (!recallRepository.deleteRange(request)) {
             return HistoryMutationResult(history = current(), committed = false)
         }
@@ -183,6 +222,7 @@ internal class BrowsingHistoryRepository private constructor(
 
     @Synchronized
     fun clear(): HistoryMutationResult {
+        awaitBackgroundWrite()
         val current = current()
         if (!recallRepository.clear()) {
             return HistoryMutationResult(history = current, committed = false)
@@ -202,6 +242,7 @@ internal class BrowsingHistoryRepository private constructor(
 
     @Synchronized
     fun beginSession() {
+        awaitBackgroundWrite()
         val clearsOnExit = recordingMode() == HistoryRecordingMode.ClearOnExit
         if (clearsOnExit && store.loadHistorySessionActive()) {
             saveClearedHistoryWithTrailRedaction(
@@ -243,6 +284,7 @@ internal class BrowsingHistoryRepository private constructor(
         }
         if (!recallCleared) return false
         return synchronized(this) {
+            awaitBackgroundWrite()
             val sessionStillCurrent = isSessionCurrent()
             val retainedHistory = if (sessionStillCurrent) {
                 emptyList()

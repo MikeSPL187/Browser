@@ -36,11 +36,15 @@ internal class LoginIndex(
     private val storage: VaultStorage,
     private val key: LoginIndexKey,
 ) {
+    /** What the file holds, once read or written; read without the lock so a page never waits on a write. */
+    @Volatile
     private var cache: List<VaultLoginHint>? = null
 
     /** The saved hints; empty when there is no index or the device key refuses (screen locked). */
+    fun hints(): List<VaultLoginHint> = cache ?: readHints()
+
     @Synchronized
-    fun hints(): List<VaultLoginHint> {
+    private fun readHints(): List<VaultLoginHint> {
         cache?.let { return it }
         if (!storage.exists()) return emptyList<VaultLoginHint>().also { cache = it }
         val sealed = storage.read() ?: return emptyList()

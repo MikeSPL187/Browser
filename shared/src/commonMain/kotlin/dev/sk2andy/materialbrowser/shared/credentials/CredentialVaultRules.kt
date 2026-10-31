@@ -16,6 +16,8 @@ object CredentialVaultRules {
     const val MAX_PASSWORD_LENGTH = 4_096
     const val MAX_REALM_LENGTH = 512
     const val MAX_ID_LENGTH = 128
+    /** A note far longer than any sign-in needs, and short enough for one field of the sealed file. */
+    const val MAX_NOTE_LENGTH = 4_000
     private const val MAX_HOST_LENGTH = 253
     private const val MAX_LABEL_LENGTH = 63
     private const val HTTPS_PREFIX = "https://"
@@ -165,6 +167,20 @@ object CredentialVaultRules {
         return VaultChange(logins.map { if (it.id == id) stamped else it }, VaultSaveResult.Updated(stamped))
     }
 
+    /** Whether [note] is one the vault keeps: none, or text of at most [MAX_NOTE_LENGTH] without NUL. */
+    fun acceptsNote(note: String?): Boolean =
+        note == null || (note.isNotBlank() && note.length <= MAX_NOTE_LENGTH && '\u0000' !in note)
+
+    /** A note as the vault keeps it: trimmed, and null when nothing is left. */
+    fun cleanNote(note: String?): String? = note?.trim()?.takeIf(String::isNotEmpty)?.take(MAX_NOTE_LENGTH)
+
+    /** [logins] with [note] on the login [id]; null when the note is refused or the login is unknown. */
+    fun setNote(logins: List<VaultLogin>, id: String, note: String?, nowMillis: Long): List<VaultLogin>? {
+        if (!acceptsNote(note) || logins.none { it.id == id }) return null
+        if (logins.first { it.id == id }.note == note) return logins
+        return logins.map { login -> if (login.id == id) login.copy(note = note, updatedAtMillis = nowMillis) else login }
+    }
+
     /** Whether [totp] is a key the vault keeps: a canonical link, or none. */
     fun acceptsTotp(totp: String?): Boolean =
         totp == null || TotpRules.parse(totp)?.let(TotpRules::canonical) == totp
@@ -194,6 +210,7 @@ object CredentialVaultRules {
         for (item in imported) {
             val draft = item.draft
             val totp = item.totp?.takeIf(::acceptsTotp)
+            val note = cleanNote(item.note)?.takeIf(::acceptsNote)
             if (!accepts(draft)) {
                 rejected++
                 continue
@@ -207,8 +224,12 @@ object CredentialVaultRules {
                     conflicts[existing.id] = ImportConflict(existing.id, draft.password)
                 }
                 if (existing.totp == null && totp != null) {
-                    result[position] = existing.copy(totp = totp, updatedAtMillis = nowMillis)
+                    result[position] = result[position].copy(totp = totp, updatedAtMillis = nowMillis)
                     withTotp++
+                }
+                // A note fills an empty one, never replaces what the user wrote here.
+                if (existing.note == null && note != null) {
+                    result[position] = result[position].copy(note = note, updatedAtMillis = nowMillis)
                 }
                 continue
             }
@@ -228,6 +249,7 @@ object CredentialVaultRules {
                 lastUsedAtMillis = null,
                 timesUsed = 0,
                 totp = totp,
+                note = note,
             )
             positions[key] = result.size
             result += added

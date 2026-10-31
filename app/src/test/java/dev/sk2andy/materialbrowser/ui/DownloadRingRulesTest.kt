@@ -82,6 +82,18 @@ class DownloadRingRulesTest {
     }
 
     @Test
+    fun `an older download of the same file never lends the new one its result`() {
+        val yesterday = entry(9, DownloadStatus.Failed, bytes = 5, total = 10).copy(name = "report.pdf", lastModified = 1)
+        val transfer = entry(-7, DownloadStatus.Running, bytes = 5, total = 10).copy(name = "report.pdf")
+        val saved = entry(42, DownloadStatus.Successful, bytes = 10, total = 10).copy(name = "report.pdf", lastModified = 5)
+
+        // Still saving: the old failure is not this transfer's end.
+        assertEquals(emptyList<DownloadEntry>(), DownloadRingRules.ended(listOf(yesterday, transfer), listOf(yesterday)))
+        // Saved: the new entry is the match, not the old one listed first.
+        assertEquals(listOf(saved), DownloadRingRules.ended(listOf(yesterday, transfer), listOf(yesterday, saved)))
+    }
+
+    @Test
     fun `a failure is told before a finish`() {
         val done = entry(1, DownloadStatus.Successful, bytes = 10, total = 10)
         val failed = entry(2, DownloadStatus.Failed, bytes = 5, total = 10)

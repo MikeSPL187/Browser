@@ -210,12 +210,7 @@ fun V5TabOverview(
             // Another profile's tabs come in from the side they were paged from.
             Box(Modifier.weight(1f).fillMaxWidth().v5ProfileSlide(state.profileDots?.active)) {
                 if (lock != null) {
-                    V5OverviewPrivateLockLayer(
-                        lock = lock,
-                        onUnlock = onUnlockPrivate,
-                        onCloseAll = onCloseAllPrivate,
-                        modifier = Modifier.fillMaxSize(),
-                    )
+                    // Nothing of a locked tab is composed; the lock itself is the overlay below.
                 } else if (state.cards.isEmpty()) {
                     Empty(
                         empty = V5TabOverviewRules.empty(state.query, state.privateSegment, state.canOpenPrivate),
@@ -307,6 +302,13 @@ fun V5TabOverview(
                         }
                     }
                 }
+                V5OverviewPrivateLockOverlay(
+                    lock = lock,
+                    unlocked = state.privateSegment && state.privateLock == null,
+                    onUnlock = onUnlockPrivate,
+                    onCloseAll = onCloseAllPrivate,
+                    modifier = Modifier.fillMaxSize(),
+                )
             }
             Toolbar(
                 state.profileLabel,

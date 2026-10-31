@@ -8542,18 +8542,18 @@ class BrowserController(
     fun updateProfilesEnabled(enabled: Boolean) {
         if (profilesEnabled == enabled) return
         dismissClosedTabUndo()
-        if (!enabled) {
-            val firstProfileId = profiles.first().id
-            if (activeProfileId != firstProfileId && !selectProfile(firstProfileId)) return
-        }
+        val first = profiles.first().id
+        // Off goes back to the first profile; a locked one opens with the fingerprint first (V-05).
+        if (!enabled && activeProfileId != first && first in lockedProfileIds) {
+            requestProfileSelection(first) { selected -> if (selected && profilesEnabled) applyProfilesEnabled(false) }
+        } else if (enabled || activeProfileId == first || selectProfile(first)) applyProfilesEnabled(enabled)
+    }
+
+    private fun applyProfilesEnabled(enabled: Boolean) {
         profilesEnabled = enabled
         store.saveProfilesEnabled(enabled)
-        if (!enabled) {
-            externalLinkPreviewState
-                ?.takeIf { it.targetProfileId != profiles.first().id }
-                ?.copy(targetProfileId = profiles.first().id)
-                ?.let(::recreateExternalLinkPreviewRuntime)
-        }
+        externalLinkPreviewState?.takeIf { !enabled && it.targetProfileId != profiles.first().id }
+            ?.copy(targetProfileId = profiles.first().id)?.let(::recreateExternalLinkPreviewRuntime)
     }
 
     fun prepareTabOverview(onReady: () -> Unit = {}) {

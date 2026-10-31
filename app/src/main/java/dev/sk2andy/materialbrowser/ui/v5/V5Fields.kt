@@ -141,6 +141,13 @@ internal fun V5NameField(
     /** [ImeAction.Next] on a form's field that has another after it: the keyboard moves on to it. */
     imeAction: ImeAction = ImeAction.Done,
     enabled: Boolean = true,
+    /** A note: several lines, Enter starts a new one, the text starts at the top. */
+    multiline: Boolean = false,
+    /**
+     * The field's name above it, for a form whose fields stay told apart once filled (Safari's edit
+     * page). Only for the eye: the field itself carries its name for TalkBack (СС-1).
+     */
+    label: String? = null,
 ) {
     val colors = V5Theme.colors
     val focusManager = LocalFocusManager.current
@@ -149,16 +156,27 @@ internal fun V5NameField(
     // Pasted text over the limit loses its end: the field says so instead of failing later (ЯС-4).
     var truncated by remember { mutableStateOf(false) }
     Column(Modifier.padding(horizontal = sideMargin).fillMaxWidth()) {
+        if (label != null) {
+            Text(
+                label,
+                style = V5Theme.type.footnote,
+                color = colors.labelSecondary,
+                modifier = Modifier
+                    .padding(start = V5Spacing.space4, bottom = V5Spacing.space1)
+                    .clearAndSetSemantics {},
+            )
+        }
         Row(
             Modifier
                 .fillMaxWidth()
                 .heightIn(min = V5Sizes.rowSingleLine)
                 .clip(V5Theme.shapes.s)
                 .background(colors.surface)
-                .padding(start = V5Spacing.space4, end = if (password) V5Spacing.space1 else V5Spacing.space4),
-            verticalAlignment = Alignment.CenterVertically,
+                .padding(start = V5Spacing.space4, end = if (password) V5Spacing.space1 else V5Spacing.space4)
+                .then(if (multiline) Modifier.padding(vertical = V5Spacing.space3) else Modifier),
+            verticalAlignment = if (multiline) Alignment.Top else Alignment.CenterVertically,
         ) {
-            Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+            Box(Modifier.weight(1f), contentAlignment = if (multiline) Alignment.TopStart else Alignment.CenterStart) {
                 if (value.isEmpty()) {
                     // The field carries the name for TalkBack; this is only what the eye reads (СС-1).
                     Text(placeholder, style = V5Theme.type.body, color = colors.labelTertiary, modifier = Modifier.clearAndSetSemantics {})
@@ -169,7 +187,8 @@ internal fun V5NameField(
                         truncated = typed.length > maxLength
                         onValueChange(typed.take(maxLength))
                     },
-                    singleLine = true,
+                    singleLine = !multiline,
+                    minLines = if (multiline) V5Sizes.NOTE_FIELD_MIN_LINES else 1,
                     enabled = enabled,
                     textStyle = V5Theme.type.body.copy(color = if (enabled) colors.label else colors.labelSecondary),
                     cursorBrush = SolidColor(colors.accent),
@@ -177,7 +196,7 @@ internal fun V5NameField(
                         capitalization = if (capitalize && !password) KeyboardCapitalization.Sentences else KeyboardCapitalization.None,
                         autoCorrectEnabled = !password && capitalize,
                         keyboardType = keyboardType ?: if (password) KeyboardType.Password else KeyboardType.Text,
-                        imeAction = imeAction,
+                        imeAction = if (multiline) ImeAction.Default else imeAction,
                     ),
                     visualTransformation = if (password && !revealed) PasswordVisualTransformation() else VisualTransformation.None,
                     // «Next» moves on to the form's next field, as the key promises (M-01).

@@ -5,12 +5,20 @@ import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 import dev.sk2andy.materialbrowser.ui.v5.V5StateAction
 import dev.sk2andy.materialbrowser.ui.v5.V5StatePage
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
@@ -26,6 +34,7 @@ import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
 internal object PrivateTabsLockTestTags {
     const val LockedScreen = "private_tabs_locked_screen"
     const val Unlock = "private_tabs_locked_unlock"
@@ -51,10 +60,40 @@ internal fun BrowserController.privateTabLockRow(): PrivateTabLock = PrivateTabL
     onCheckedChange = privateTabsLock::requestEnabled,
 )
 
-/** Whatever lock covers the selected page: its workspace's, or the private tabs'. */
+private enum class BrowserLock { Profile, PrivateTabs }
+
+/**
+ * Whatever lock covers the selected page: its workspace's, or the private tabs'. A lock appears at
+ * once, so the page never shows through a fade; once opened it grows and fades off the page on the
+ * vault-unlock spring, as the passwords open (reduced motion: the short fade).
+ */
 @Composable
 internal fun BrowserLockScreens(controller: BrowserController) {
-    if (controller.isActiveProfileLocked) {
+    val lock = when {
+        controller.isActiveProfileLocked -> BrowserLock.Profile
+        controller.isSelectedContentLocked -> BrowserLock.PrivateTabs
+        else -> null
+    }
+    // The last lock stays drawn while it leaves; it shows nothing of the tabs.
+    var shown by remember { mutableStateOf(lock) }
+    if (lock != null) shown = lock
+    val animated = V5Motion.animationsEnabled
+    AnimatedVisibility(
+        visible = lock != null,
+        enter = EnterTransition.None,
+        exit = if (animated) {
+            fadeOut(V5Motion.effectsFast.spec()) + scaleOut(V5Motion.vaultUnlock.spec(), V5Motion.VAULT_UNLOCK_LOCK_SCALE)
+        } else {
+            fadeOut(V5Motion.reducedFade())
+        },
+    ) {
+        shown?.let { BrowserLockScreen(controller, it) }
+    }
+}
+
+@Composable
+private fun BrowserLockScreen(controller: BrowserController, lock: BrowserLock) {
+    if (lock == BrowserLock.Profile) {
         ProfileLockedOverlay(
             workspace = controller.localBrowserProfiles
                 .firstOrNull { profile -> profile.id == controller.activeProfileId },
@@ -67,7 +106,7 @@ internal fun BrowserLockScreens(controller: BrowserController) {
                 Unit
             }.takeIf { !controller.isProfileProtectionSupported && !controller.canLeaveLockedProfile },
         )
-    } else if (controller.isSelectedContentLocked) {
+    } else {
         val lifecycle = LocalLifecycleOwner.current.lifecycle
         PrivateTabsLockedScreen(
             privateTabCount = controller.tabs.count(BrowserTab::isIncognito),

@@ -12,8 +12,11 @@ data class ImportedLogin(
     val draft: VaultLoginDraft,
     /** A canonical two-factor link ([TotpRules.canonical]) when the export had a usable key. */
     val totp: String? = null,
+    /** The export's note on the login, as written there. */
+    val note: String? = null,
 ) {
-    override fun toString(): String = "ImportedLogin(draft=$draft, totp=${if (totp == null) "none" else "<redacted>"})"
+    override fun toString(): String =
+        "ImportedLogin(draft=$draft, totp=${if (totp == null) "none" else "<redacted>"}, note=${if (note == null) "none" else "<redacted>"})"
 }
 
 /** What an export file turned out to be. */
@@ -49,6 +52,7 @@ object PasswordImportRules {
     private val EMAIL_COLUMNS = listOf("email", "e-mail")
     private val PASSWORD_COLUMNS = listOf("password", "login_password")
     private val TOTP_COLUMNS = listOf("totp", "login_totp", "otpauth", "one-time password", "otp", "otpsecret")
+    private val NOTE_COLUMNS = listOf("note", "notes", "extra", "comments", "comment")
     private val LOGIN_TYPES = setOf("login", "password")
     private const val BITWARDEN_LOGIN_TYPE = 1
 
@@ -74,6 +78,7 @@ object PasswordImportRules {
         val username = column(USERNAME_COLUMNS)
         val email = column(EMAIL_COLUMNS)
         val totp = column(TOTP_COLUMNS)
+        val note = column(NOTE_COLUMNS)
         val realm = column(listOf("httprealm"))
         val formAction = column(listOf("formactionorigin"))
         val type = column(listOf("type"))
@@ -92,6 +97,7 @@ object PasswordImportRules {
                     username = cell(username).ifBlank { cell(email) },
                     password = cell(password),
                     totp = cell(totp),
+                    note = cell(note),
                     realm = cell(realm),
                     formAction = cell(formAction),
                     origin = origin,
@@ -121,6 +127,7 @@ object PasswordImportRules {
                     username = login["username"].text(),
                     password = login["password"].text(),
                     totp = login["totp"].text(),
+                    note = fields["notes"].text(),
                     realm = "",
                     formAction = "",
                     origin = origin,
@@ -136,6 +143,7 @@ object PasswordImportRules {
         username: String,
         password: String,
         totp: String,
+        note: String,
         realm: String,
         formAction: String,
         origin: (String) -> String?,
@@ -153,7 +161,7 @@ object PasswordImportRules {
         if (!CredentialVaultRules.accepts(draft)) return null
         // A key the rules cannot read (a Steam code, say) is left out; the login still comes in.
         val key = totp.takeIf(String::isNotBlank)?.let(TotpRules::parse)?.let(TotpRules::canonical)
-        return ImportedLogin(draft, key)
+        return ImportedLogin(draft, key, CredentialVaultRules.cleanNote(note)?.takeIf(CredentialVaultRules::acceptsNote))
     }
 
     /**

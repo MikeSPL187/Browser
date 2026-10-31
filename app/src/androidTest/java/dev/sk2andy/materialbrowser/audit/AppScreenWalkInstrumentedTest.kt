@@ -408,9 +408,14 @@ class AppScreenWalkInstrumentedTest(
                 }
             }
             step("v5 translate") {
+                val onDevice = AtomicReference(false)
+                scenario.onActivity { activity ->
+                    onDevice.set(activity.browserControllerForTesting().browserEngineCapabilities.onDeviceTranslation)
+                }
                 openV5Menu()
                 val row = hasText(string(R.string.action_translate_page)) and hasClickAction()
-                if (exists(row)) {
+                // System WebView keeps the provider's translation: its row opens a site, not the sheet.
+                if (onDevice.get() && exists(row)) {
                     val translate = hasTestTag(V5TranslateTestTags.Sheet)
                     tapUntil(row, "the translate sheet to open") { exists(translate) }
                     auditScrolling("v5 translate")

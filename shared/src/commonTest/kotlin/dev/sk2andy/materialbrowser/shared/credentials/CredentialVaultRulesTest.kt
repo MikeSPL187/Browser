@@ -178,6 +178,29 @@ class CredentialVaultRulesTest {
         assertFalse("alice" in text)
     }
 
+    @Test
+    fun anImportedNoteFillsAnEmptyOneAndNeverReplacesTheUsers() {
+        val mine = login("1", "https://example.com").copy(note = "mine")
+        val bare = login("2", "https://example.org")
+        val (logins, summary) = CredentialVaultRules.import(
+            listOf(mine, bare),
+            listOf(
+                ImportedLogin(draft(), note = "from the file"),
+                ImportedLogin(draft(origin = "https://example.org"), note = "  filled  "),
+                ImportedLogin(draft(origin = "https://new.example"), note = "\u0000bad"),
+            ),
+            nowMillis = 5,
+        ) { "new" }
+
+        assertEquals(1, summary.addedIds.size)
+        assertEquals("mine", logins.first { it.id == "1" }.note)
+        assertEquals("filled", logins.first { it.id == "2" }.note)
+        assertNull(logins.first { it.id == "new" }.note)
+        assertNull(CredentialVaultRules.setNote(logins, "1", "", 6))
+        assertEquals("kept", CredentialVaultRules.setNote(logins, "1", "kept", 6)?.first { it.id == "1" }?.note)
+        assertFalse("mine" in mine.toString())
+    }
+
     private fun draft(
         origin: String = "https://example.com",
         username: String = "alice",

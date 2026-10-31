@@ -1866,6 +1866,8 @@
     <string name="passwords_prompt_title">Пароли Vola</string>
     <string name="passwords_prompt_subtitle">Подтвердите, что это вы</string>
     <string name="passwords_failed">Что-то пошло не так. Попробуйте ещё раз.</string>
+    <string name="passwords_auth_lockout">Слишком много попыток. Разблокируйте телефон PIN-кодом и попробуйте снова.</string>
+    <string name="passwords_unlocking">Пароли открываются…</string>
     <string name="passwords_search">Сайт или логин</string>
     <string name="passwords_clear_search">Очистить поиск</string>
     <string name="passwords_all_count">Все · %1$d</string>
@@ -1878,6 +1880,9 @@
     <string name="passwords_username">Логин</string>
     <string name="passwords_password">Пароль</string>
     <string name="passwords_site">Сайт</string>
+    <string name="passwords_note">Заметки</string>
+    <string name="passwords_note_hint">Контрольные вопросы, подсказки к PIN…</string>
+    <string name="passwords_edited">Изменено %1$s</string>
     <string name="passwords_no_username">Без логина</string>
     <string name="passwords_show">Показать пароль</string>
     <string name="passwords_hide">Скрыть пароль</string>
@@ -1948,6 +1953,17 @@
     <string name="passwords_import_file">У меня уже есть файл</string>
     <string name="passwords_import_private">Файлы разбираются на телефоне и никуда не уходят</string>
     <string name="passwords_import_entry">Перенести пароли в Vola</string>
+    <string name="passwords_export_entry">Экспорт паролей</string>
+    <string name="passwords_export_title">Экспортировать пароли?</string>
+    <string name="passwords_export_body">В файле все пароли без шифрования: их прочтёт любой, кто его откроет. Храните его, только пока переносите пароли, потом удалите.</string>
+    <string name="passwords_export_action">Экспортировать</string>
+    <string name="passwords_export_failed">Не удалось сохранить файл. Попробуйте ещё раз.</string>
+    <plurals name="passwords_exported">
+        <item quantity="one">Экспортирован %d пароль. Удалите файл, когда перенесёте его.</item>
+        <item quantity="few">Экспортировано %d пароля. Удалите файл, когда перенесёте их.</item>
+        <item quantity="many">Экспортировано %d паролей. Удалите файл, когда перенесёте их.</item>
+        <item quantity="other">Экспортировано %d пароля. Удалите файл, когда перенесёте их.</item>
+    </plurals>
     <string name="passwords_import_chrome_title">Перенос из Chrome</string>
     <string name="passwords_import_firefox_title">Перенос из Firefox</string>
     <string name="passwords_import_managers_title">Перенос из менеджера паролей</string>

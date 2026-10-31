@@ -1,5 +1,7 @@
 package dev.sk2andy.materialbrowser.ui.passwords
 
+import androidx.biometric.BiometricPrompt
+import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.credentials.CredentialPromptRules
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
 import java.net.IDN
@@ -34,6 +36,19 @@ internal class VaultAutoLock(private val timeoutMillis: Long = DEFAULT_TIMEOUT_M
 }
 
 internal object PasswordsRules {
+    /**
+     * What the screen says after the system prompt closed with [errorCode]; null when the user
+     * closed it or nothing needs saying. The prompt itself is gone by then, so a lockout must not
+     * leave «Open» doing nothing in silence.
+     */
+    fun authenticationError(errorCode: Int): Int? = when (errorCode) {
+        BiometricPrompt.ERROR_LOCKOUT, BiometricPrompt.ERROR_LOCKOUT_PERMANENT -> R.string.passwords_auth_lockout
+        BiometricPrompt.ERROR_NO_DEVICE_CREDENTIAL, BiometricPrompt.ERROR_NO_BIOMETRICS -> R.string.passwords_no_screen_lock
+        BiometricPrompt.ERROR_HW_UNAVAILABLE, BiometricPrompt.ERROR_HW_NOT_PRESENT, BiometricPrompt.ERROR_UNABLE_TO_PROCESS,
+        BiometricPrompt.ERROR_VENDOR, BiometricPrompt.ERROR_NO_SPACE -> R.string.passwords_failed
+        else -> null
+    }
+
     const val CONFIRM_WORD_COUNT = 3
 
     /** Three different word positions (0-based, in order) the user types back to prove the phrase is written down. */
@@ -86,7 +101,7 @@ internal object PasswordsRules {
     private const val OTHER_LETTER = "#"
 
     /**
-     * Logins whose site or user name contains [query], ignoring case; all of them for a blank query.
+     * Logins whose site, user name or note contains [query], ignoring case; all of them for a blank query.
      * A site shown in punycode is also found by its own spelling («пример» finds `xn--e1afmkfd.xn--p1ai`).
      */
     fun filter(logins: List<VaultLogin>, query: String): List<VaultLogin> {
@@ -96,7 +111,8 @@ internal object PasswordsRules {
             val site = displaySite(login.origin)
             site.contains(needle) ||
                 (PUNYCODE in site && unicodeSite(site).contains(needle)) ||
-                login.username.lowercase(Locale.ROOT).contains(needle)
+                login.username.lowercase(Locale.ROOT).contains(needle) ||
+                login.note?.lowercase(Locale.ROOT)?.contains(needle) == true
         }
     }
 

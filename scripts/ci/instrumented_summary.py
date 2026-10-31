@@ -38,6 +38,8 @@ from pathlib import Path
 
 MAX_LISTED_FAILURES = 200
 STACK_LINES = 12
+# «Caused by:» sections shown after the stack, each with its first STACK_LINES frames.
+MAX_CAUSES = 3
 # A failure message can be a whole list (the screen audit files one finding per line): it is
 # shown in full up to this many lines, before the stack frames.
 MAX_MESSAGE_LINES = 300
@@ -368,13 +370,27 @@ def render_failures(failures: list) -> list:
 
 
 def failure_lines(details: str) -> list:
-    """The failure's whole message, then the first STACK_LINES frames of its stack."""
+    """
+    The failure's whole message, then the first STACK_LINES frames of its stack, then each
+    «Caused by:» (up to MAX_CAUSES) with its first STACK_LINES frames. The cause is often the whole
+    story: a StackOverflowError on the main thread reaches the test as Espresso's ExecutionException,
+    and only the cause's frames show what recursed.
+    """
     lines = details.splitlines()
     first_frame = next(
         (index for index, line in enumerate(lines) if line.lstrip().startswith("at ")),
         len(lines),
     )
-    return lines[:first_frame][:MAX_MESSAGE_LINES] + lines[first_frame:first_frame + STACK_LINES]
+    shown = lines[:first_frame][:MAX_MESSAGE_LINES] + lines[first_frame:first_frame + STACK_LINES]
+    causes = [index for index, line in enumerate(lines) if line.lstrip().startswith("Caused by:")]
+    for cause in causes[:MAX_CAUSES]:
+        frames = []
+        for line in lines[cause + 1:]:
+            if not line.lstrip().startswith("at ") or len(frames) == STACK_LINES:
+                break
+            frames.append(line)
+        shown += [lines[cause], *frames]
+    return shown
 
 
 def escape_html(text: str) -> str:

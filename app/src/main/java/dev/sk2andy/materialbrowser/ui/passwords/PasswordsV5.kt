@@ -67,6 +67,9 @@ import dev.sk2andy.materialbrowser.ui.v5.V5SearchField
 import dev.sk2andy.materialbrowser.ui.v5.V5StateAction
 import dev.sk2andy.materialbrowser.ui.v5.V5StatePage
 import kotlinx.coroutines.delay
+import android.text.format.DateUtils
+import androidx.compose.ui.platform.LocalContext
+import dev.sk2andy.materialbrowser.shared.credentials.CredentialVaultRules
 
 /*
  * The passwords under v5 (canvas «ц4»–«ц7», approved 17.10): closed, the list, one password, a new
@@ -83,6 +86,8 @@ internal fun PasswordsLockedV5(
     onRecover: () -> Unit,
     onBack: () -> Unit,
     onErase: () -> Unit,
+    /** The fingerprint was accepted and the vault is opening: the button shows it. */
+    unlocking: Boolean = false,
 ) {
     var erasing by remember { mutableStateOf(false) }
     V5PromptTheme {
@@ -97,6 +102,8 @@ internal fun PasswordsLockedV5(
                     icon = VolaIcons.Fingerprint,
                     enabled = !busy,
                     testTag = PasswordsTestTags.Unlock,
+                    busy = unlocking,
+                    busyLabel = stringResource(R.string.passwords_unlocking),
                 ),
                 secondary = listOf(
                     V5StateAction(stringResource(R.string.passwords_recover), onRecover, testTag = PasswordsTestTags.Recover),
@@ -136,9 +143,12 @@ internal fun PasswordsListV5(
     onImport: () -> Unit,
     busy: Boolean,
     onTurnOff: () -> Unit,
+    /** «Export passwords» after the warning; null hides the row. */
+    onExport: (() -> Unit)? = null,
 ) {
     var query by rememberSaveable { mutableStateOf("") }
     var erasing by remember { mutableStateOf(false) }
+    var exporting by remember { mutableStateOf(false) }
     val visible = remember(logins, query) { PasswordsRules.filter(logins, query) }
     V5PromptTheme {
         val colors = V5Theme.colors
@@ -176,6 +186,16 @@ internal fun PasswordsListV5(
                             onClick = onImport,
                             modifier = Modifier.testTag(PasswordsTestTags.Import),
                         )
+                        if (onExport != null && logins.isNotEmpty()) {
+                            V5ListRow(
+                                title = stringResource(R.string.passwords_export_entry),
+                                icon = V5RowIcon(VolaIcons.Download, V5Tile.Gray),
+                                trailing = V5RowTrailing.Chevron,
+                                enabled = !busy,
+                                onClick = { exporting = true },
+                                modifier = Modifier.testTag(PasswordsTestTags.Export),
+                            )
+                        }
                     }
                 }
                 ListNotes(systemFillNote, passkeyNote)
@@ -230,6 +250,19 @@ internal fun PasswordsListV5(
             }
         }
         EraseSheet(visible = erasing && !busy, onErase = onTurnOff, onDismiss = { erasing = false })
+        // As Chrome and Safari: the file is plain text, said before anything is written.
+        V5PromptSheet(
+            visible = exporting && !busy,
+            title = stringResource(R.string.passwords_export_title),
+            message = stringResource(R.string.passwords_export_body),
+            actions = listOf(
+                V5PromptAction(stringResource(R.string.passwords_export_action), {
+                    exporting = false
+                    onExport?.invoke()
+                }, V5PromptRole.Primary),
+            ),
+            onDismiss = { exporting = false },
+        )
     }
 }
 
@@ -245,6 +278,8 @@ internal fun PasswordDetailV5(
     onCopyCode: (String) -> Unit,
     onSetTotp: (String) -> Boolean,
     onRemoveTotp: () -> Unit,
+    /** Opens the login's site in a tab, as Safari's and Chrome's password page link to it. */
+    onOpenSite: (() -> Unit)? = null,
 ) {
     // Shown only while this page is on screen: never restored after the app was in the background.
     var revealed by remember(login.id) { mutableStateOf(false) }
@@ -252,6 +287,12 @@ internal fun PasswordDetailV5(
     var confirmRemoveTotp by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     val site = PasswordsRules.displaySite(login.origin)
+    // «Edited 12 Oct 2026» under the last group, as Safari dates a password.
+    val context = LocalContext.current
+    val edited = stringResource(
+        R.string.passwords_edited,
+        DateUtils.formatDateTime(context, login.updatedAtMillis, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_YEAR),
+    ).takeIf { login.updatedAtMillis > 0 }
     V5PromptTheme {
         val colors = V5Theme.colors
         Column(Modifier.fillMaxSize().background(colors.background).statusBarsPadding().navigationBarsPadding()) {
@@ -288,9 +329,34 @@ internal fun PasswordDetailV5(
                             modifier = Modifier.testTag(PasswordsTestTags.AddTotp),
                         )
                     }
-                    V5ListRow(title = stringResource(R.string.passwords_site), value = login.origin)
+                    V5ListRow(
+                        title = stringResource(R.string.passwords_site),
+                        value = login.origin,
+                        trailing = if (onOpenSite != null) V5RowTrailing.Chevron else V5RowTrailing.None,
+                        onClick = onOpenSite,
+                        modifier = Modifier.testTag(PasswordsTestTags.OpenSite),
+                    )
                 }
-                V5ListGroup(dividerInset = V5ListDefaults.dividerInsetText) {
+                // Safari's and Chrome's «Notes»: the user's own words, edited with the rest of the login.
+                val note = login.note
+                if (note != null) {
+                    V5ListGroup(header = stringResource(R.string.passwords_note), footer = edited) {
+                        Text(
+                            note,
+                            style = V5Theme.type.body,
+                            color = colors.label,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(onClick = onEdit)
+                                .padding(horizontal = V5Spacing.space4, vertical = V5Spacing.space3)
+                                .testTag(PasswordsTestTags.Note),
+                        )
+                    }
+                }
+                V5ListGroup(
+                    dividerInset = V5ListDefaults.dividerInsetText,
+                    footer = edited.takeIf { login.note == null },
+                ) {
                     if (login.totp != null) {
                         V5ListRow(
                             title = stringResource(R.string.passwords_totp_remove),
@@ -344,14 +410,15 @@ internal fun PasswordEditV5(
     initial: VaultLogin?,
     error: PasswordEditError?,
     busy: Boolean,
-    onSave: (site: String, username: String, password: String) -> Unit,
+    onSave: (site: String, username: String, password: String, note: String) -> Unit,
     onBack: () -> Unit,
 ) {
     var generating by remember { mutableStateOf(false) }
+    var note by remember(initial?.id) { mutableStateOf(initial?.note.orEmpty()) }
     var site by remember(initial?.id) { mutableStateOf(initial?.let { PasswordsRules.displaySite(it.origin) }.orEmpty()) }
     var username by remember(initial?.id) { mutableStateOf(initial?.username.orEmpty()) }
     var password by remember(initial?.id) { mutableStateOf(initial?.password.orEmpty()) }
-    val save = { if (!busy) onSave(site, username, password) }
+    val save = { if (!busy) onSave(site, username, password, note) }
     V5PromptTheme {
         val colors = V5Theme.colors
         Column(
@@ -376,6 +443,7 @@ internal fun PasswordEditV5(
                 V5NameField(
                     value = site,
                     placeholder = stringResource(R.string.passwords_site_hint),
+                    label = stringResource(R.string.passwords_site),
                     onValueChange = { site = it },
                     onDone = {},
                     maxLength = MAX_SITE_LENGTH,
@@ -385,6 +453,7 @@ internal fun PasswordEditV5(
                 V5NameField(
                     value = username,
                     placeholder = stringResource(R.string.passwords_username),
+                    label = stringResource(R.string.passwords_username),
                     onValueChange = { username = it },
                     onDone = {},
                     maxLength = MAX_USERNAME_LENGTH,
@@ -394,6 +463,7 @@ internal fun PasswordEditV5(
                 V5NameField(
                     value = password,
                     placeholder = stringResource(R.string.passwords_password),
+                    label = stringResource(R.string.passwords_password),
                     onValueChange = { password = it },
                     onDone = save,
                     maxLength = MAX_PASSWORD_LENGTH,
@@ -407,6 +477,16 @@ internal fun PasswordEditV5(
                         modifier = Modifier.testTag(PasswordsTestTags.Generate),
                     )
                 }
+                V5NameField(
+                    value = note,
+                    placeholder = stringResource(R.string.passwords_note_hint),
+                    label = stringResource(R.string.passwords_note),
+                    onValueChange = { note = it },
+                    onDone = {},
+                    maxLength = CredentialVaultRules.MAX_NOTE_LENGTH,
+                    multiline = true,
+                    modifier = Modifier.testTag(PasswordsTestTags.NoteField),
+                )
                 if (error != null) {
                     Text(
                         stringResource(error.messageRes()),

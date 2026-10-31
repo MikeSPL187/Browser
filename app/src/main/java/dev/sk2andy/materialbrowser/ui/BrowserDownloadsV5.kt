@@ -74,14 +74,18 @@ internal object DownloadRingRules {
     /**
      * Downloads that were running in [previous] and have now finished or failed (V22b). A transfer
      * the engine held in memory comes back under a new id once saved, so its name is the second
-     * match. A cancelled one is not news.
+     * match, but only among entries that are new since [previous]: an older download of the same
+     * file must not lend this one its result (V-12). A cancelled one is not news.
      */
-    fun ended(previous: List<DownloadEntry>, current: List<DownloadEntry>): List<DownloadEntry> =
-        previous.filter { entry -> entry.status.isActive }.mapNotNull { before ->
+    fun ended(previous: List<DownloadEntry>, current: List<DownloadEntry>): List<DownloadEntry> {
+        val known = previous.mapTo(HashSet(), DownloadEntry::id)
+        return previous.filter { entry -> entry.status.isActive }.mapNotNull { before ->
             val now = current.firstOrNull { entry -> entry.id == before.id }
-                ?: current.firstOrNull { entry -> entry.name == before.name && entry.status.isTerminal }
+                ?: current.filter { entry -> entry.id !in known && entry.name == before.name && entry.status.isTerminal }
+                    .maxByOrNull(DownloadEntry::lastModified)
             now?.takeIf { entry -> entry.status == DownloadStatus.Successful || entry.status == DownloadStatus.Failed }
         }
+    }
 
     /** The line for what has just ended: a failure first, it asks for attention. */
     fun notice(ended: List<DownloadEntry>): V5DownloadNotice? {

@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.biometric.BiometricManager
@@ -73,6 +74,8 @@ import dev.sk2andy.materialbrowser.browser.credentials.PasswordCheck
 import dev.sk2andy.materialbrowser.browser.credentials.ChangePasswordPage
 import dev.sk2andy.materialbrowser.browser.credentials.LeakAnswers
 import dev.sk2andy.materialbrowser.browser.credentials.PwnedPasswordCheck
+import dev.sk2andy.materialbrowser.shared.credentials.CredentialVaultRules
+import dev.sk2andy.materialbrowser.shared.credentials.PasswordExportRules
 import dev.sk2andy.materialbrowser.shared.credentials.PasswordHealthRules
 import dev.sk2andy.materialbrowser.shared.credentials.TotpRules
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
@@ -89,6 +92,11 @@ import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportV5
 import dev.sk2andy.materialbrowser.ui.passwords.RecoveryConfirmV5
 import dev.sk2andy.materialbrowser.ui.passwords.RecoveryEntryV5
 import dev.sk2andy.materialbrowser.ui.passwords.RecoveryPhraseV5
+import dev.sk2andy.materialbrowser.ui.passwords.PasswordsTransition
+import dev.sk2andy.materialbrowser.ui.passwords.passwordsTransform
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
+import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
 import dev.sk2andy.materialbrowser.ui.v5.ProvideV5SettingsSkin
 import dev.sk2andy.materialbrowser.ui.v5.V5PasswordFindingKind
 
@@ -142,6 +150,9 @@ internal data class PendingImport(val source: PasswordImportSource, val files: L
 internal class PasswordsViewModel : ViewModel() {
     var route by mutableStateOf<PasswordsRoute?>(null)
     var busy by mutableStateOf(false)
+
+    /** The prompt said yes and the device key is opening the vault (StrongBox can take a second). */
+    var unlocking by mutableStateOf(false)
     var message by mutableStateOf<Int?>(null)
     var revision by mutableIntStateOf(0)
 
@@ -191,6 +202,11 @@ class PasswordsActivity : FragmentActivity() {
     private val exportPicker = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         importFrom(uris)
     }
+
+    /** Where «Export passwords» writes its CSV; the system asks, Vola never picks a folder itself. */
+    private val exportTarget = registerForActivityResult(
+        ActivityResultContracts.CreateDocument(PasswordExportRules.MIME_TYPE),
+    ) { uri -> uri?.let(::exportTo) }
 
     /** System WebView fills sites through Android's autofill service; the screen says so. */
     private val systemFillOnly: Boolean by lazy {
@@ -264,140 +280,160 @@ class PasswordsActivity : FragmentActivity() {
         val message = model.message?.let { stringResource(it) }
         // Canvas «ц4»–«ц7»: the vault's pages are v5.
         BackHandler { back(route) }
-        when (route) {
-            PasswordsRoute.Intro -> {
-                PasswordsIntroV5(model.busy, message, ::startSetup, ::finish)
-            }
-            is PasswordsRoute.Phrase -> {
-                val onDone = { model.route = PasswordsRoute.Confirm(route.phrase, PasswordsRules.confirmationPositions(random)) }
-                RecoveryPhraseV5(route.phrase.split(' '), onDone) { back(route) }
-            }
-            is PasswordsRoute.Confirm -> {
-                RecoveryConfirmV5(route.positions, route.wrong, model.busy, { answers -> confirm(route, answers) }) { back(route) }
-            }
-            PasswordsRoute.Locked -> {
-                PasswordsLockedV5(
-                    busy = model.busy,
-                    message = message,
-                    onUnlock = ::unlock,
-                    onRecover = { model.message = null; model.route = PasswordsRoute.Recover() },
-                    onBack = ::finish,
-                    onErase = ::eraseVault,
-                )
-            }
-            is PasswordsRoute.Recover -> {
-                RecoveryEntryV5(route.wrong, model.busy, ::recover) { back(route) }
-            }
-            PasswordsRoute.Logins -> {
-                PasswordsListV5(
-                    logins = logins,
-                    onOpen = { login -> use { model.route = PasswordsRoute.Detail(login.id) } },
-                    onAdd = { use { model.route = PasswordsRoute.Edit(null) } },
-                    onLock = ::lockNow,
-                    onBack = ::finish,
-                    systemFillNote = systemFillOnly,
-                    passkeyNote = if (systemFillOnly) null else remember { PasskeySupport.current(this@PasswordsActivity) },
-                    health = remember(logins, breaches, model.leakCheckedAt) {
-                        val report = PasswordHealthRules.report(logins, breaches)
-                        PasswordsHealthCounts(
-                            weak = report.weak.size,
-                            reused = report.reused.size,
-                            // Unknown until the leak check ran: a dash, not a reassuring zero.
-                            breached = report.breached.size.takeIf { model.leakCheckedAt != null },
-                            issues = report.attentionWithInsecure,
-                        )
-                    },
-                    onHealth = { use { model.route = PasswordsRoute.Health } },
-                    onImport = {
-                        use {
-                            model.launchedForImport = false
-                            model.route = PasswordsRoute.Import
-                        }
-                    },
-                    busy = model.busy,
-                    onTurnOff = ::eraseVault,
-                )
-            }
-            PasswordsRoute.Import -> {
-                val onSource = { source: PasswordImportSource -> model.route = PasswordsRoute.ImportGuide(source) }
-                val onPickFile = { pickExport(PasswordImportSource.File) }
-                PasswordImportV5(onSource, onPickFile) { back(route) }
-            }
-            is PasswordsRoute.ImportGuide -> {
-                PasswordImportGuideV5(route.source, route.problem, model.busy, { pickExport(route.source) }) { back(route) }
-            }
-            is PasswordsRoute.ImportDone -> {
-                val healthIssues = remember(logins, breaches, route.report) {
-                    val added = route.report.addedIds.toSet()
-                    val report = PasswordHealthRules.report(logins, breaches)
-                    // The v5 check counts plain-HTTP logins too; the count here matches the page it opens.
-                    report.attentionIds(withInsecure = true).count { it in added }
+        val animated = V5Motion.animationsEnabled
+        // One page at a time; a new page of the same kind (an error on the form) does not animate.
+        AnimatedContent(
+            targetState = route,
+            transitionSpec = { passwordsTransform(transitionBetween(initialState, targetState), animated) },
+            contentKey = { it::class },
+            label = "passwords page",
+        ) { route ->
+            when (route) {
+                PasswordsRoute.Intro -> {
+                    PasswordsIntroV5(model.busy, message, ::startSetup, ::finish)
                 }
-                val onCheck = { use { model.route = PasswordsRoute.Health } }
-                PasswordImportResultV5(
-                    report = route.report,
-                    fileState = route.fileState,
-                    healthIssues = healthIssues,
-                    onDeleteFile = { deleteExport(route) },
-                    onCheck = onCheck,
-                    onDone = { back(route) },
-                    conflictState = route.conflictState,
-                    onUseFilePasswords = { useFilePasswords(route) },
-                )
-            }
-            // V24: the v5 check runs the leak check only when asked, never on opening.
-            PasswordsRoute.Health -> {
-                PasswordHealthV5(
+                is PasswordsRoute.Phrase -> {
+                    val onDone = { model.route = PasswordsRoute.Confirm(route.phrase, PasswordsRules.confirmationPositions(random)) }
+                    RecoveryPhraseV5(route.phrase.split(' '), onDone) { back(route) }
+                }
+                is PasswordsRoute.Confirm -> {
+                    RecoveryConfirmV5(route.positions, route.wrong, model.busy, { answers -> confirm(route, answers) }) { back(route) }
+                }
+                PasswordsRoute.Locked -> {
+                    PasswordsLockedV5(
+                        busy = model.busy,
+                        message = message,
+                        onUnlock = ::unlock,
+                        onRecover = { model.message = null; model.route = PasswordsRoute.Recover() },
+                        onBack = ::finish,
+                        onErase = ::eraseVault,
+                        unlocking = model.unlocking,
+                    )
+                }
+                is PasswordsRoute.Recover -> {
+                    RecoveryEntryV5(route.wrong, model.busy, ::recover) { back(route) }
+                }
+                PasswordsRoute.Logins -> {
+                    PasswordsListV5(
+                        logins = logins,
+                        onOpen = { login -> use { model.route = PasswordsRoute.Detail(login.id) } },
+                        onAdd = { use { model.route = PasswordsRoute.Edit(null) } },
+                        onLock = ::lockNow,
+                        onBack = ::finish,
+                        systemFillNote = systemFillOnly,
+                        passkeyNote = if (systemFillOnly) null else remember { PasskeySupport.current(this@PasswordsActivity) },
+                        health = remember(logins, breaches, model.leakCheckedAt) {
+                            val report = PasswordHealthRules.report(logins, breaches)
+                            PasswordsHealthCounts(
+                                weak = report.weak.size,
+                                reused = report.reused.size,
+                                // Unknown until the leak check ran: a dash, not a reassuring zero.
+                                breached = report.breached.size.takeIf { model.leakCheckedAt != null },
+                                issues = report.attentionWithInsecure,
+                            )
+                        },
+                        onHealth = { use { model.route = PasswordsRoute.Health } },
+                        onImport = {
+                            use {
+                                model.launchedForImport = false
+                                model.route = PasswordsRoute.Import
+                            }
+                        },
+                        busy = model.busy,
+                        onTurnOff = ::eraseVault,
+                        onExport = ::startExport,
+                    )
+                }
+                PasswordsRoute.Import -> {
+                    val onSource = { source: PasswordImportSource -> model.route = PasswordsRoute.ImportGuide(source) }
+                    val onPickFile = { pickExport(PasswordImportSource.File) }
+                    PasswordImportV5(onSource, onPickFile) { back(route) }
+                }
+                is PasswordsRoute.ImportGuide -> {
+                    PasswordImportGuideV5(route.source, route.problem, model.busy, { pickExport(route.source) }) { back(route) }
+                }
+                is PasswordsRoute.ImportDone -> {
+                    val healthIssues = remember(logins, breaches, route.report) {
+                        val added = route.report.addedIds.toSet()
+                        val report = PasswordHealthRules.report(logins, breaches)
+                        // The v5 check counts plain-HTTP logins too; the count here matches the page it opens.
+                        report.attentionIds(withInsecure = true).count { it in added }
+                    }
+                    val onCheck = { use { model.route = PasswordsRoute.Health } }
+                    PasswordImportResultV5(
+                        report = route.report,
+                        fileState = route.fileState,
+                        healthIssues = healthIssues,
+                        onDeleteFile = { deleteExport(route) },
+                        onCheck = onCheck,
+                        onDone = { back(route) },
+                        conflictState = route.conflictState,
+                        onUseFilePasswords = { useFilePasswords(route) },
+                    )
+                }
+                // V24: the v5 check runs the leak check only when asked, never on opening.
+                PasswordsRoute.Health -> {
+                    PasswordHealthV5(
+                        logins = logins,
+                        breaches = breaches,
+                        unchecked = remember(logins, model.leakAnswers) { LeakAnswers.unchecked(logins, model.leakAnswers) },
+                        leakCheck = model.leakStatus,
+                        leakProgress = model.leakProgress,
+                        checkedAt = model.leakCheckedAt,
+                        onCheckLeaks = { checkLeaks(logins) },
+                        onStopLeakCheck = ::stopLeakCheck,
+                        onFinding = { finding -> use { model.route = PasswordsRoute.HealthFinding(finding.loginId, finding.kind) } },
+                        onBack = { back(route) },
+                    )
+                }
+                is PasswordsRoute.HealthFinding -> PasswordFindingV5(
                     logins = logins,
                     breaches = breaches,
-                    unchecked = remember(logins, model.leakAnswers) { LeakAnswers.unchecked(logins, model.leakAnswers) },
-                    leakCheck = model.leakStatus,
-                    leakProgress = model.leakProgress,
-                    checkedAt = model.leakCheckedAt,
-                    onCheckLeaks = { checkLeaks(logins) },
-                    onStopLeakCheck = ::stopLeakCheck,
-                    onFinding = { finding -> use { model.route = PasswordsRoute.HealthFinding(finding.loginId, finding.kind) } },
+                    loginId = route.id,
+                    kind = route.kind,
+                    onChange = { login -> use { openChangePassword(login.origin) } },
+                    onOpenLogin = { login -> use { model.route = PasswordsRoute.Detail(login.id) } },
                     onBack = { back(route) },
+                    // A page on its way out (the vault just locked) has no logins: it must not steer.
+                    onGone = { if (model.route == route) model.route = PasswordsRoute.Health },
                 )
-            }
-            is PasswordsRoute.HealthFinding -> PasswordFindingV5(
-                logins = logins,
-                breaches = breaches,
-                loginId = route.id,
-                kind = route.kind,
-                onChange = { login -> use { openChangePassword(login.origin) } },
-                onOpenLogin = { login -> use { model.route = PasswordsRoute.Detail(login.id) } },
-                onBack = { back(route) },
-                onGone = { model.route = PasswordsRoute.Health },
-            )
-            is PasswordsRoute.Detail -> {
-                val login = logins.firstOrNull { it.id == route.id }
-                if (login == null) {
-                    LaunchedEffect(route) { model.route = PasswordsRoute.Logins }
-                } else {
-                    PasswordDetailV5(
-                        login = login,
-                        onCopyUsername = { use { copy(login.username) } },
-                        onCopyPassword = { use { copy(login.password) } },
-                        onEdit = { use { model.route = PasswordsRoute.Edit(login.id) } },
-                        onDelete = { delete(login.id) },
+                is PasswordsRoute.Detail -> {
+                    val login = logins.firstOrNull { it.id == route.id }
+                    if (login == null) {
+                        LaunchedEffect(route) { if (model.route == route) model.route = PasswordsRoute.Logins }
+                    } else {
+                        PasswordDetailV5(
+                            login = login,
+                            onCopyUsername = { use { copy(login.username) } },
+                            onCopyPassword = { use { copy(login.password) } },
+                            onEdit = { use { model.route = PasswordsRoute.Edit(login.id) } },
+                            onDelete = { delete(login.id) },
+                            onBack = { back(route) },
+                            onCopyCode = { code -> use { copy(code) } },
+                            onSetTotp = { input -> setTotp(login.id, input) },
+                            onRemoveTotp = { writeTotp(login.id, null) },
+                            onOpenSite = { use { openSite(login.origin) } },
+                        )
+                    }
+                }
+                is PasswordsRoute.Edit -> {
+                    PasswordEditV5(
+                        initial = route.id?.let { id -> logins.firstOrNull { it.id == id } },
+                        error = route.error,
+                        busy = model.busy,
+                        onSave = { site, username, password, note -> save(route, site, username, password, note) },
                         onBack = { back(route) },
-                        onCopyCode = { code -> use { copy(code) } },
-                        onSetTotp = { input -> setTotp(login.id, input) },
-                        onRemoveTotp = { writeTotp(login.id, null) },
                     )
                 }
             }
-            is PasswordsRoute.Edit -> {
-                PasswordEditV5(
-                    initial = route.id?.let { id -> logins.firstOrNull { it.id == id } },
-                    error = route.error,
-                    busy = model.busy,
-                    onSave = { site, username, password -> save(route, site, username, password) },
-                    onBack = { back(route) },
-                )
-            }
         }
+    }
+
+    /** The vault opening or closing gets its own moment; every other step cross-fades. */
+    private fun transitionBetween(from: PasswordsRoute, to: PasswordsRoute): PasswordsTransition = when {
+        !from.needsOpenVault && to.needsOpenVault -> PasswordsTransition.Unlock
+        from.needsOpenVault && to == PasswordsRoute.Locked -> PasswordsTransition.Lock
+        else -> PasswordsTransition.Step
     }
 
     private fun back(route: PasswordsRoute) {
@@ -481,6 +517,12 @@ class PasswordsActivity : FragmentActivity() {
         }
     }
 
+    /** The login's site in a Vola tab; the passwords stay where they are behind it. */
+    private fun openSite(origin: String) {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(origin)).setPackage(packageName)
+        runCatching { startActivity(intent) }
+    }
+
     /** Runs a screen action on the open vault and keeps it open for another five minutes. */
     private inline fun use(action: () -> Unit) {
         if (!vault.isUnlocked) {
@@ -535,13 +577,21 @@ class PasswordsActivity : FragmentActivity() {
         }
         authenticate {
             runBusy {
-                when (withContext(Dispatchers.IO) { vault.unlock(KeystoreVaultKeyWrapper()) }) {
+                model.unlocking = true
+                val result = try {
+                    withContext(Dispatchers.IO) { vault.unlock(KeystoreVaultKeyWrapper()) }
+                } finally {
+                    model.unlocking = false
+                }
+                when (result) {
                     VaultOpenResult.Opened -> opened()
                     VaultOpenResult.Refused, VaultOpenResult.NoSlot -> {
                         model.deviceKeyLost = true
                         model.message = R.string.passwords_device_key_lost
                     }
                     VaultOpenResult.Missing -> model.route = PasswordsRoute.Intro
+                    // Locked or erased while it opened: the screen already shows that.
+                    VaultOpenResult.Superseded -> Unit
                     else -> model.message = R.string.passwords_failed
                 }
             }
@@ -563,6 +613,7 @@ class PasswordsActivity : FragmentActivity() {
                     if (model.deviceKeyLost) rebindDevice()
                 }
                 VaultOpenResult.Refused -> model.route = PasswordsRoute.Recover(wrong = true)
+                VaultOpenResult.Superseded -> Unit
                 else -> model.message = R.string.passwords_failed
             }
         }
@@ -585,6 +636,7 @@ class PasswordsActivity : FragmentActivity() {
 
     private fun opened() {
         CredentialVaultSession.touch(vault)
+        window.decorView.performV5Haptic(V5Haptic.Confirm)
         model.message = null
         model.revision++
         val pending = model.pendingImport
@@ -763,6 +815,43 @@ class PasswordsActivity : FragmentActivity() {
         }
     }
 
+    /**
+     * «Export passwords»: the owner of the screen lock confirms first, as Chrome and Safari ask,
+     * then the system file picker names the file.
+     */
+    private fun startExport() = use {
+        if (model.busy) return@use
+        val pick = { runCatching { exportTarget.launch(PasswordExportRules.FILE_NAME) } }
+        if (canAuthenticate()) authenticate { pick() } else pick()
+    }
+
+    private fun exportTo(target: Uri) {
+        // The picker may outlast the five minutes: a vault that locked meanwhile writes nothing.
+        if (!vault.isUnlocked) {
+            model.route = PasswordsRoute.Locked
+            return
+        }
+        CredentialVaultSession.touch(vault)
+        val logins = vault.allLogins()
+        runBusy {
+            val written = withContext(Dispatchers.IO) {
+                runCatching {
+                    val csv = PasswordExportRules.csv(logins) { login -> PasswordsRules.displaySite(login.origin) }
+                    contentResolver.openOutputStream(target, "wt")?.use { output ->
+                        output.write(csv.toByteArray(Charsets.UTF_8))
+                        true
+                    } ?: false
+                }.getOrDefault(false)
+            }
+            val text = if (written) {
+                resources.getQuantityString(R.plurals.passwords_exported, logins.size, logins.size)
+            } else {
+                getString(R.string.passwords_export_failed)
+            }
+            Toast.makeText(this@PasswordsActivity, text, Toast.LENGTH_LONG).show()
+        }
+    }
+
     private fun lockNow() {
         CredentialVaultSession.lockNow()
         model.route = PasswordsRoute.Locked
@@ -804,7 +893,7 @@ class PasswordsActivity : FragmentActivity() {
         }
     }
 
-    private fun save(route: PasswordsRoute.Edit, site: String, username: String, password: String) = use {
+    private fun save(route: PasswordsRoute.Edit, site: String, username: String, password: String, note: String) = use {
         val origin = PasswordsRules.manualOrigin(site)
         when {
             origin == null -> model.route = route.copy(error = PasswordEditError.SiteInvalid)
@@ -820,8 +909,17 @@ class PasswordsActivity : FragmentActivity() {
                 }
                 runBusy {
                     val now = System.currentTimeMillis()
+                    val cleanNote = CredentialVaultRules.cleanNote(note)
                     val result = withContext(Dispatchers.IO) {
-                        if (route.id == null) vault.save(draft, now) else vault.update(route.id, draft, now)
+                        val saved = if (route.id == null) vault.save(draft, now) else vault.update(route.id, draft, now)
+                        // The note is the user's, not the page's: it is kept apart from what a site may save.
+                        val id = when (saved) {
+                            is VaultSaveResult.Added -> saved.login.id
+                            is VaultSaveResult.Updated -> saved.login.id
+                            is VaultSaveResult.Unchanged -> saved.login.id
+                            else -> null
+                        }
+                        if (id != null && !vault.setNote(id, cleanNote, now)) VaultSaveResult.Failed else saved
                     }
                     model.route = when (result) {
                         is VaultSaveResult.Added -> PasswordsRoute.Detail(result.login.id)
@@ -860,6 +958,15 @@ class PasswordsActivity : FragmentActivity() {
             ContextCompat.getMainExecutor(this),
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) = onSuccess()
+
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    val text = PasswordsRules.authenticationError(errorCode) ?: return
+                    // The lock and intro pages show the line; on the others (export, say) a toast does.
+                    when (model.route) {
+                        PasswordsRoute.Locked, PasswordsRoute.Intro -> model.message = text
+                        else -> Toast.makeText(this@PasswordsActivity, text, Toast.LENGTH_LONG).show()
+                    }
+                }
             },
         )
         prompt.authenticate(

@@ -72,6 +72,36 @@ class BrowserControllerProfilesInstrumentedTest {
     }
 
     @Test
+    fun turningProfilesOffOpensALockedFirstProfileFirst() {
+        activityRule.scenario.onActivity { activity ->
+            val protected = profiles().map { profile ->
+                if (profile.id == "home") {
+                    profile.copy(protection = ProfileProtection(ProfileLockTrigger.AppBackgrounded))
+                } else {
+                    profile
+                }
+            }
+            resetAndSeed(activity, protected, activeProfileId = "work")
+            var authenticationResult: ((Boolean) -> Unit)? = null
+            val controller = BrowserController(
+                activity = activity,
+                profileProtectionSupported = { true },
+                authenticateProfile = { _, onResult -> authenticationResult = onResult },
+            ).also { this.controller = it }
+            assertTrue("home" in controller.lockedProfileIds)
+
+            // V-05: the switch used to spring back in silence; now the fingerprint is asked for.
+            controller.updateProfilesEnabled(false)
+            assertTrue(controller.profilesEnabled)
+            requireNotNull(authenticationResult).invoke(true)
+
+            assertFalse(controller.profilesEnabled)
+            assertEquals("home", controller.activeProfileId)
+            assertFalse(controller.isActiveProfileLocked)
+        }
+    }
+
+    @Test
     fun authenticationResultIsRejectedAfterAppBackgrounds() {
         activityRule.scenario.onActivity { activity ->
             val protected = profiles().map { profile ->

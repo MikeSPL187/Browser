@@ -93,6 +93,19 @@ class VaultFormatTest {
     }
 
     @Test
+    fun `a note round-trips, and a vault without notes stays in version 2`() {
+        val plain = listOf(login("1", "https://example.com"))
+        // No note anywhere: the file is the one a Vola without notes still opens.
+        assertEquals(2, java.io.DataInputStream(VaultDocumentCodec.encode(plain).inputStream()).readInt())
+
+        val noted = listOf(login("1", "https://example.com").copy(note = "PIN hint: the year\nsecond line"), login("2", "https://example.org"))
+        val bytes = VaultDocumentCodec.encode(noted)
+        assertEquals(3, java.io.DataInputStream(bytes.inputStream()).readInt())
+        assertEquals(noted, VaultDocumentCodec.decode(bytes))
+        assertNull(VaultDocumentCodec.decode(VaultDocumentCodec.encode(listOf(login("1", "https://example.com").copy(note = "a\u0000b")))))
+    }
+
+    @Test
     fun `the shipped word list is EFF's short list and a phrase is 12 of its words`() {
         val wordlist = requireNotNull(RecoveryWordlist.from(File("src/main/assets/${RecoveryWordlist.ASSET}").readBytes()))
         assertEquals(RecoveryWordlist.SIZE, wordlist.words.size)
