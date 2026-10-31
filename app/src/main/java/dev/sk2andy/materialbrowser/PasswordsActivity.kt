@@ -411,6 +411,7 @@ class PasswordsActivity : FragmentActivity() {
                             onCopyCode = { code -> use { copy(code) } },
                             onSetTotp = { input -> setTotp(login.id, input) },
                             onRemoveTotp = { writeTotp(login.id, null) },
+                            onOpenSite = { use { openSite(login.origin) } },
                         )
                     }
                 }
@@ -513,6 +514,12 @@ class PasswordsActivity : FragmentActivity() {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(target)).setPackage(packageName)
             runCatching { startActivity(intent) }
         }
+    }
+
+    /** The login's site in a Vola tab; the passwords stay where they are behind it. */
+    private fun openSite(origin: String) {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(origin)).setPackage(packageName)
+        runCatching { startActivity(intent) }
     }
 
     /** Runs a screen action on the open vault and keeps it open for another five minutes. */

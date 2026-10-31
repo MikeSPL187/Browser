@@ -275,6 +275,8 @@ internal fun PasswordDetailV5(
     onCopyCode: (String) -> Unit,
     onSetTotp: (String) -> Boolean,
     onRemoveTotp: () -> Unit,
+    /** Opens the login's site in a tab, as Safari's and Chrome's password page link to it. */
+    onOpenSite: (() -> Unit)? = null,
 ) {
     // Shown only while this page is on screen: never restored after the app was in the background.
     var revealed by remember(login.id) { mutableStateOf(false) }
@@ -318,7 +320,13 @@ internal fun PasswordDetailV5(
                             modifier = Modifier.testTag(PasswordsTestTags.AddTotp),
                         )
                     }
-                    V5ListRow(title = stringResource(R.string.passwords_site), value = login.origin)
+                    V5ListRow(
+                        title = stringResource(R.string.passwords_site),
+                        value = login.origin,
+                        trailing = if (onOpenSite != null) V5RowTrailing.Chevron else V5RowTrailing.None,
+                        onClick = onOpenSite,
+                        modifier = Modifier.testTag(PasswordsTestTags.OpenSite),
+                    )
                 }
                 V5ListGroup(dividerInset = V5ListDefaults.dividerInsetText) {
                     if (login.totp != null) {
