@@ -344,3 +344,10 @@ private fun V5OfflineChecksPreview() {
         }
     }
 }
+
+/** The status bar's colour without a site colour: the error page's background, else the M3 surface. */
+@Composable
+internal fun errorAwareStatusBarTint(pageErrorFeedback: PageErrorFeedbackState): Int = when (pageErrorFeedback) {
+    is PageErrorFeedbackState.Hidden -> MaterialTheme.colorScheme.surface.toArgb()
+    else -> V5Theme.colors.background.toArgb()
+}

@@ -6,7 +6,6 @@
 
 package dev.sk2andy.materialbrowser.ui
 
-import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.browser.EssentialsController
 import dev.sk2andy.materialbrowser.browser.safety.BlockedSite
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
@@ -1169,9 +1168,3 @@ internal fun BlankTabPreview(
     }
 }
 
-/** The status bar's colour without a site colour: the error page's background, else the M3 surface. */
-@Composable
-private fun errorAwareStatusBarTint(pageErrorFeedback: PageErrorFeedbackState): Int = when (pageErrorFeedback) {
-    is PageErrorFeedbackState.Hidden -> MaterialTheme.colorScheme.surface.toArgb()
-    else -> V5Theme.colors.background.toArgb()
-}
