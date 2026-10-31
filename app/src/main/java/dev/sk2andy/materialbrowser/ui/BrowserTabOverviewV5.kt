@@ -214,7 +214,7 @@ private fun OverviewContent(
                     privateSegment = privateSegment,
                     counts = counts,
                     query = query,
-                    profileLabel = profile?.name?.ifBlank { null } ?: stringResource(R.string.v5_profile_untitled),
+                    profileLabel = profile.v5DisplayName(),
                     profileIcon = profile?.let { WorkspaceIcons.vector(it.emoji) },
                     groups = groups,
                     canOpenPrivate = controller.canOpenLinkInPrivate,

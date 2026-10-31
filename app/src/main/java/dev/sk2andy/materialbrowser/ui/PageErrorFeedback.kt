@@ -74,7 +74,7 @@ internal fun PageErrorFeedback(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surface)
+                .background(V5Theme.colors.background)
                 .testTag(PageErrorFeedbackTestTags.Page),
         ) {
             AnimatedContent(
