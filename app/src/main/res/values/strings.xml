@@ -1813,6 +1813,7 @@
     <string name="passwords_prompt_subtitle">Confirm it’s you</string>
     <string name="passwords_failed">Something went wrong. Try again.</string>
     <string name="passwords_auth_lockout">Too many attempts. Unlock the phone with its PIN, then try again.</string>
+    <string name="passwords_unlocking">Opening passwords…</string>
     <string name="passwords_search">Site or login</string>
     <string name="passwords_clear_search">Clear search</string>
     <string name="passwords_all_count">All · %1$d</string>

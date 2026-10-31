@@ -149,6 +149,9 @@ internal data class PendingImport(val source: PasswordImportSource, val files: L
 internal class PasswordsViewModel : ViewModel() {
     var route by mutableStateOf<PasswordsRoute?>(null)
     var busy by mutableStateOf(false)
+
+    /** The prompt said yes and the device key is opening the vault (StrongBox can take a second). */
+    var unlocking by mutableStateOf(false)
     var message by mutableStateOf<Int?>(null)
     var revision by mutableIntStateOf(0)
 
@@ -303,6 +306,7 @@ class PasswordsActivity : FragmentActivity() {
                         onRecover = { model.message = null; model.route = PasswordsRoute.Recover() },
                         onBack = ::finish,
                         onErase = ::eraseVault,
+                        unlocking = model.unlocking,
                     )
                 }
                 is PasswordsRoute.Recover -> {
@@ -565,7 +569,13 @@ class PasswordsActivity : FragmentActivity() {
         }
         authenticate {
             runBusy {
-                when (withContext(Dispatchers.IO) { vault.unlock(KeystoreVaultKeyWrapper()) }) {
+                model.unlocking = true
+                val result = try {
+                    withContext(Dispatchers.IO) { vault.unlock(KeystoreVaultKeyWrapper()) }
+                } finally {
+                    model.unlocking = false
+                }
+                when (result) {
                     VaultOpenResult.Opened -> opened()
                     VaultOpenResult.Refused, VaultOpenResult.NoSlot -> {
                         model.deviceKeyLost = true

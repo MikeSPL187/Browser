@@ -83,6 +83,8 @@ internal fun PasswordsLockedV5(
     onRecover: () -> Unit,
     onBack: () -> Unit,
     onErase: () -> Unit,
+    /** The fingerprint was accepted and the vault is opening: the button shows it. */
+    unlocking: Boolean = false,
 ) {
     var erasing by remember { mutableStateOf(false) }
     V5PromptTheme {
@@ -97,6 +99,8 @@ internal fun PasswordsLockedV5(
                     icon = VolaIcons.Fingerprint,
                     enabled = !busy,
                     testTag = PasswordsTestTags.Unlock,
+                    busy = unlocking,
+                    busyLabel = stringResource(R.string.passwords_unlocking),
                 ),
                 secondary = listOf(
                     V5StateAction(stringResource(R.string.passwords_recover), onRecover, testTag = PasswordsTestTags.Recover),

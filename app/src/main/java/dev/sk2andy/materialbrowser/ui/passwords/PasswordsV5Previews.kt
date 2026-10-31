@@ -41,6 +41,18 @@ private fun PasswordsLockedV5Preview() = PreviewScheme(dark = false) {
     PasswordsLockedV5(busy = false, message = null, onUnlock = {}, onRecover = {}, onBack = {}, onErase = {})
 }
 
+@Preview(name = "Passwords v5 · locked, opening", heightDp = 640)
+@Composable
+private fun PasswordsLockedOpeningV5Preview() = PreviewScheme(dark = false) {
+    PasswordsLockedV5(busy = true, message = null, onUnlock = {}, onRecover = {}, onBack = {}, onErase = {}, unlocking = true)
+}
+
+@Preview(name = "Passwords v5 · locked, opening, dark", heightDp = 640)
+@Composable
+private fun PasswordsLockedOpeningV5DarkPreview() = PreviewScheme(dark = true) {
+    PasswordsLockedV5(busy = true, message = null, onUnlock = {}, onRecover = {}, onBack = {}, onErase = {}, unlocking = true)
+}
+
 @Preview(name = "Passwords v5 · list, light", heightDp = 720)
 @Composable
 private fun PasswordsListV5LightPreview() = PasswordsListPreview(dark = false)
