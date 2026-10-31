@@ -215,6 +215,7 @@ android {
         manifestPlaceholders["appLabel"] = "@string/app_name"
         manifestPlaceholders["networkSecurityConfig"] = "@xml/network_security_config"
         buildConfigField("boolean", "ENABLE_GITHUB_UPDATES", "false")
+        buildConfigField("boolean", "GECKO_MEMORY_REPORT_FIFO", "false")
         buildConfigField("boolean", "SYSTEM_WEBVIEW_ONLY", "false")
         buildConfigField("boolean", "TRUST_USER_CERTIFICATES", "false")
         buildConfigField(
@@ -305,6 +306,8 @@ android {
             manifestPlaceholders["appLabel"] = "Vola Benchmark"
             manifestPlaceholders["performanceDiagnosticsEnabled"] = "true"
             buildConfigField("boolean", "ENABLE_GITHUB_UPDATES", "false")
+            // CI's performance job asks Gecko for its about:memory report through this FIFO.
+            buildConfigField("boolean", "GECKO_MEMORY_REPORT_FIFO", "true")
             matchingFallbacks += listOf("release")
         }
 

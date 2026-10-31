@@ -7,8 +7,10 @@ look into. Gecko can: its memory-info dumper (`nsMemoryInfoDumper`) answers a re
 collecting the memory reporters of every Gecko process into one `memory-report-*.json.gz`, the file
 about:memory's «Measure and save» writes. This script makes it do that and summarises the file.
 
-capture: becomes root on the emulator (`adb root`; Google APIs images allow it), reads the browser's
-  main process, and signals it only if the process catches the dumper's three neighbouring real-time
+capture: becomes root on the emulator (`adb root`; Google APIs images allow it) and writes «memory
+  report» into the dumper's FIFO, `debug_info_trigger`, which Gecko opens when the benchmark build
+  starts it with memory_info_dumper.watch_fifo.enabled (on Android the only trigger: Gecko leaves the
+  real-time signals alone there). Without the FIFO it reads the browser's main process and signals it only if the process catches the dumper's three neighbouring real-time
   signals (dump, dump after minimizing, GC/CC log) starting at bionic's SIGRTMIN, which the device
   itself names (`kill -l RTMIN`). Otherwise it says the dumper is not there and sends nothing: a
   real-time signal nobody catches would end the process. Then it waits for the new report under the
@@ -33,6 +35,7 @@ from collections import defaultdict
 from pathlib import Path
 
 REPORT_TIMEOUT_SECONDS = 90
+FIFO_NAME = "debug_info_trigger"
 POLL_SECONDS = 3
 BYTES = 0  # nsIMemoryReporter.UNITS_BYTES
 MB = 1024 * 1024
@@ -72,6 +75,13 @@ def dumper_signal(pid: str) -> int | None:
     return rtmin if {rtmin, rtmin + 1, rtmin + 2} <= caught else None
 
 
+def trigger_fifo(package: str) -> str | None:
+    """The dumper's FIFO in the app's data, present when Gecko started with watch_fifo on."""
+    found = shell(f"find /data/data/{package} -name {FIFO_NAME} -type p 2>/dev/null", check=False)
+    paths = [line.strip() for line in found.splitlines() if line.strip()]
+    return paths[0] if paths else None
+
+
 def reports_on_device(package: str) -> set[str]:
     found = shell(f"find /data/data/{package} /data/local/tmp -name 'memory-report-*.json.gz' 2>/dev/null", check=False)
     return {line.strip() for line in found.splitlines() if line.strip()}
@@ -85,12 +95,22 @@ def capture(package: str, out: Path) -> int:
     if not pid.isdigit():
         print(f"Gecko memory report: {package} is not running.")
         return 0
-    signal = dumper_signal(pid)
-    if signal is None:
-        print(f"Gecko memory report: process {pid} does not catch the memory-info dumper's signals; nothing sent.")
-        return 0
     before = reports_on_device(package)
-    shell(f"kill -{signal} {pid}")
+    fifo = trigger_fifo(package)
+    if fifo is not None:
+        # Gecko on Android listens only here (memory_info_dumper.watch_fifo.enabled, benchmark build).
+        shell(f"echo 'memory report' > {fifo}")
+        trigger = f"FIFO {fifo}"
+    else:
+        signal = dumper_signal(pid)
+        if signal is None:
+            print(
+                f"Gecko memory report: process {pid} has no {FIFO_NAME} and does not catch the "
+                "memory-info dumper's signals; nothing sent."
+            )
+            return 0
+        shell(f"kill -{signal} {pid}")
+        trigger = f"signal {signal}"
     deadline = time.monotonic() + REPORT_TIMEOUT_SECONDS
     while time.monotonic() < deadline:
         time.sleep(POLL_SECONDS)
@@ -100,9 +120,9 @@ def capture(package: str, out: Path) -> int:
         if done:
             out.parent.mkdir(parents=True, exist_ok=True)
             adb("pull", done[-1], str(out))
-            print(f"Gecko memory report: signal {signal}, {done[-1]} -> {out}")
+            print(f"Gecko memory report: {trigger}, {done[-1]} -> {out}")
             return 0
-    print(f"Gecko memory report: signal {signal} sent, no report within {REPORT_TIMEOUT_SECONDS} s.")
+    print(f"Gecko memory report: {trigger} used, no report within {REPORT_TIMEOUT_SECONDS} s.")
     return 0
 
 

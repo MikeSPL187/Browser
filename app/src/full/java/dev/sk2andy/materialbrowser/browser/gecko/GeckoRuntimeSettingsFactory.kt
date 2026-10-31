@@ -44,6 +44,9 @@ internal object GeckoRuntimeSettingsFactory {
             // is; Firefox for Android isolates only sites someone signed in to or that ask for it.
             setWebContentIsolationStrategy(GeckoRuntimeSettings.STRATEGY_ISOLATE_HIGH_VALUE)
             CandyGeckoPrefsBridge.setStartupPref(this, PROCESS_PRELAUNCH_PREF, false)
+            if (BuildConfig.GECKO_MEMORY_REPORT_FIFO) {
+                CandyGeckoPrefsBridge.setStartupPref(this, MEMORY_REPORT_FIFO_PREF, true)
+            }
         }
 }
 
@@ -52,6 +55,13 @@ internal object GeckoRuntimeSettingsFactory {
  * process of memory doing nothing. Off, a page that needs a new process starts one on demand.
  */
 internal const val PROCESS_PRELAUNCH_PREF = "dom.ipc.processPrelaunch.enabled"
+
+/**
+ * Gecko's memory-info dumper listens on a FIFO (`debug_info_trigger` in its temporary directory)
+ * when this is on at startup; on Android it is the only trigger, the real-time signals are off.
+ * Only the benchmark build turns it on, for the about:memory report in CI (gecko_memory_report.py).
+ */
+internal const val MEMORY_REPORT_FIFO_PREF = "memory_info_dumper.watch_fifo.enabled"
 
 /** The Gecko preference that exposes the Web Authentication API (passkeys, security keys). */
 internal const val WEB_AUTHN_PREF = "security.webauth.webauthn"
