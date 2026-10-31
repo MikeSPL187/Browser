@@ -136,9 +136,12 @@ internal fun PasswordsListV5(
     onImport: () -> Unit,
     busy: Boolean,
     onTurnOff: () -> Unit,
+    /** «Export passwords» after the warning; null hides the row. */
+    onExport: (() -> Unit)? = null,
 ) {
     var query by rememberSaveable { mutableStateOf("") }
     var erasing by remember { mutableStateOf(false) }
+    var exporting by remember { mutableStateOf(false) }
     val visible = remember(logins, query) { PasswordsRules.filter(logins, query) }
     V5PromptTheme {
         val colors = V5Theme.colors
@@ -176,6 +179,16 @@ internal fun PasswordsListV5(
                             onClick = onImport,
                             modifier = Modifier.testTag(PasswordsTestTags.Import),
                         )
+                        if (onExport != null && logins.isNotEmpty()) {
+                            V5ListRow(
+                                title = stringResource(R.string.passwords_export_entry),
+                                icon = V5RowIcon(VolaIcons.Download, V5Tile.Gray),
+                                trailing = V5RowTrailing.Chevron,
+                                enabled = !busy,
+                                onClick = { exporting = true },
+                                modifier = Modifier.testTag(PasswordsTestTags.Export),
+                            )
+                        }
                     }
                 }
                 ListNotes(systemFillNote, passkeyNote)
@@ -230,6 +243,19 @@ internal fun PasswordsListV5(
             }
         }
         EraseSheet(visible = erasing && !busy, onErase = onTurnOff, onDismiss = { erasing = false })
+        // As Chrome and Safari: the file is plain text, said before anything is written.
+        V5PromptSheet(
+            visible = exporting && !busy,
+            title = stringResource(R.string.passwords_export_title),
+            message = stringResource(R.string.passwords_export_body),
+            actions = listOf(
+                V5PromptAction(stringResource(R.string.passwords_export_action), {
+                    exporting = false
+                    onExport?.invoke()
+                }, V5PromptRole.Primary),
+            ),
+            onDismiss = { exporting = false },
+        )
     }
 }
 

@@ -1949,6 +1949,17 @@
     <string name="passwords_import_file">У меня уже есть файл</string>
     <string name="passwords_import_private">Файлы разбираются на телефоне и никуда не уходят</string>
     <string name="passwords_import_entry">Перенести пароли в Vola</string>
+    <string name="passwords_export_entry">Экспорт паролей</string>
+    <string name="passwords_export_title">Экспортировать пароли?</string>
+    <string name="passwords_export_body">В файле все пароли без шифрования: их прочтёт любой, кто его откроет. Храните его, только пока переносите пароли, потом удалите.</string>
+    <string name="passwords_export_action">Экспортировать</string>
+    <string name="passwords_export_failed">Не удалось сохранить файл. Попробуйте ещё раз.</string>
+    <plurals name="passwords_exported">
+        <item quantity="one">Экспортирован %d пароль. Удалите файл, когда перенесёте его.</item>
+        <item quantity="few">Экспортировано %d пароля. Удалите файл, когда перенесёте их.</item>
+        <item quantity="many">Экспортировано %d паролей. Удалите файл, когда перенесёте их.</item>
+        <item quantity="other">Экспортировано %d пароля. Удалите файл, когда перенесёте их.</item>
+    </plurals>
     <string name="passwords_import_chrome_title">Перенос из Chrome</string>
     <string name="passwords_import_firefox_title">Перенос из Firefox</string>
     <string name="passwords_import_managers_title">Перенос из менеджера паролей</string>

@@ -74,6 +74,7 @@ import dev.sk2andy.materialbrowser.browser.credentials.PasswordCheck
 import dev.sk2andy.materialbrowser.browser.credentials.ChangePasswordPage
 import dev.sk2andy.materialbrowser.browser.credentials.LeakAnswers
 import dev.sk2andy.materialbrowser.browser.credentials.PwnedPasswordCheck
+import dev.sk2andy.materialbrowser.shared.credentials.PasswordExportRules
 import dev.sk2andy.materialbrowser.shared.credentials.PasswordHealthRules
 import dev.sk2andy.materialbrowser.shared.credentials.TotpRules
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
@@ -197,6 +198,11 @@ class PasswordsActivity : FragmentActivity() {
     private val exportPicker = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         importFrom(uris)
     }
+
+    /** Where «Export passwords» writes its CSV; the system asks, Vola never picks a folder itself. */
+    private val exportTarget = registerForActivityResult(
+        ActivityResultContracts.CreateDocument(PasswordExportRules.MIME_TYPE),
+    ) { uri -> uri?.let(::exportTo) }
 
     /** System WebView fills sites through Android's autofill service; the screen says so. */
     private val systemFillOnly: Boolean by lazy {
@@ -330,6 +336,7 @@ class PasswordsActivity : FragmentActivity() {
                         },
                         busy = model.busy,
                         onTurnOff = ::eraseVault,
+                        onExport = ::startExport,
                     )
                 }
                 PasswordsRoute.Import -> {
@@ -784,6 +791,43 @@ class PasswordsActivity : FragmentActivity() {
             model.route = PasswordsRoute.Intro
         } else {
             model.message = R.string.passwords_failed
+        }
+    }
+
+    /**
+     * «Export passwords»: the owner of the screen lock confirms first, as Chrome and Safari ask,
+     * then the system file picker names the file.
+     */
+    private fun startExport() = use {
+        if (model.busy) return@use
+        val pick = { runCatching { exportTarget.launch(PasswordExportRules.FILE_NAME) } }
+        if (canAuthenticate()) authenticate { pick() } else pick()
+    }
+
+    private fun exportTo(target: Uri) {
+        // The picker may outlast the five minutes: a vault that locked meanwhile writes nothing.
+        if (!vault.isUnlocked) {
+            model.route = PasswordsRoute.Locked
+            return
+        }
+        CredentialVaultSession.touch(vault)
+        val logins = vault.allLogins()
+        runBusy {
+            val written = withContext(Dispatchers.IO) {
+                runCatching {
+                    val csv = PasswordExportRules.csv(logins) { login -> PasswordsRules.displaySite(login.origin) }
+                    contentResolver.openOutputStream(target, "wt")?.use { output ->
+                        output.write(csv.toByteArray(Charsets.UTF_8))
+                        true
+                    } ?: false
+                }.getOrDefault(false)
+            }
+            val text = if (written) {
+                resources.getQuantityString(R.plurals.passwords_exported, logins.size, logins.size)
+            } else {
+                getString(R.string.passwords_export_failed)
+            }
+            Toast.makeText(this@PasswordsActivity, text, Toast.LENGTH_LONG).show()
         }
     }
 

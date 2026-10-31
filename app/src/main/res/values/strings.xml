@@ -1895,6 +1895,15 @@
     <string name="passwords_import_file">I already have a file</string>
     <string name="passwords_import_private">Files are read on this phone and go nowhere</string>
     <string name="passwords_import_entry">Move passwords to Vola</string>
+    <string name="passwords_export_entry">Export passwords</string>
+    <string name="passwords_export_title">Export passwords?</string>
+    <string name="passwords_export_body">The file holds every password unencrypted: anyone who opens it can read them. Keep it only while you move them, then delete it.</string>
+    <string name="passwords_export_action">Export</string>
+    <string name="passwords_export_failed">Couldn’t save the file. Try again.</string>
+    <plurals name="passwords_exported">
+        <item quantity="one">%d password exported. Delete the file once you’ve moved it.</item>
+        <item quantity="other">%d passwords exported. Delete the file once you’ve moved them.</item>
+    </plurals>
     <string name="passwords_import_chrome_title">Move from Chrome</string>
     <string name="passwords_import_firefox_title">Move from Firefox</string>
     <string name="passwords_import_managers_title">Move from a password manager</string>

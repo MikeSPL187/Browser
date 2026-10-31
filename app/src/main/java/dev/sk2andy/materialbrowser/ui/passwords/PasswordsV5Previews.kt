@@ -68,6 +68,7 @@ private fun PasswordsListPreview(dark: Boolean) = PreviewScheme(dark) {
         onImport = {},
         busy = false,
         onTurnOff = {},
+        onExport = {},
     )
 }
 
