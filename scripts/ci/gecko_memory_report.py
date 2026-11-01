@@ -85,8 +85,13 @@ def trigger_fifo(package: str) -> str | None:
 def reports_on_device(package: str) -> set[str]:
     # On Android Gecko writes its reports to DOWNLOADS_DIRECTORY first (world-readable), else to its
     # temporary directory, each in a memory-reports folder.
-    places = f"/data/data/{package} /data/local/tmp /sdcard/Download /sdcard/Android/data/{package}"
-    found = shell(f"find {places} -name 'memory-report-*.json.gz' 2>/dev/null", check=False)
+    # /sdcard is a link that find does not follow: the real path. The file is named
+    # unified-memory-report-<time>-<pid>.json.gz (seen in CI, PR #622).
+    places = (
+        f"/data/data/{package} /data/local/tmp /storage/emulated/0/Download "
+        f"/storage/emulated/0/Android/data/{package}"
+    )
+    found = shell(f"find {places} -name '*memory-report-*.json.gz' 2>/dev/null", check=False)
     return {line.strip() for line in found.splitlines() if line.strip()}
 
 
@@ -118,8 +123,8 @@ def capture(package: str, out: Path) -> int:
     while time.monotonic() < deadline:
         time.sleep(POLL_SECONDS)
         new = sorted(reports_on_device(package) - before)
-        # The dumper writes under a temporary name and renames it when complete.
-        done = [path for path in new if not path.endswith(".tmp")]
+        # The dumper writes under an «incomplete-» name and renames it when complete.
+        done = [path for path in new if not path.endswith(".tmp") and "/incomplete-" not in path]
         if done:
             out.parent.mkdir(parents=True, exist_ok=True)
             adb("pull", done[-1], str(out))
