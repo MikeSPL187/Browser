@@ -162,47 +162,55 @@ jobs:
             sed -nE "s/^instrumentation:${test_package}\/([^ ]+) .*/\1/p" | head -n 1)"
           device_output="/sdcard/Android/media/${test_package}/additional_test_output"
 
+          # Brings the device back: reconnects an offline one, or starts the emulator again, cold, as
+          # the start step does, when it is gone.
+          ensure_emulator() {
+            timeout 60 adb wait-for-device && return 0
+            adb reconnect offline || true
+            timeout 60 adb wait-for-device && return 0
+            adb emu kill > /dev/null 2>&1 || true
+            nohup "$ANDROID_HOME/emulator/emulator" -avd vola_ci -port 5554 -no-window -noaudio \
+              -no-boot-anim -gpu swiftshader_indirect >> "$RUNNER_TEMP/emulator.log" 2>&1 &
+            timeout 300 adb wait-for-device
+            # shellcheck disable=SC2016 # expanded by the inner shell
+            timeout 300 bash -c '
+              until [[ "$(adb shell getprop sys.boot_completed | tr -d "\r")" == "1" ]]; do sleep 2; done
+            '
+            adb shell settings put global hide_error_dialogs 1
+            adb reverse "tcp:$PAGE_PORT" "tcp:$PAGE_PORT"
+            adb install -r -t perf/benchmarks.apk
+          }
+
           # Alternating turns: a drift in the emulator's speed hits both builds alike.
           for turn in base:1 head:1 head:2 base:2 base:3 head:3; do
             build="${turn%%:*}"
             round="${turn##*:}"
             echo "::group::${build}, round ${round}"
-            adb uninstall "$APP_PACKAGE" > /dev/null 2>&1 || true
-            adb install "perf/${build}.apk"
-            # A round whose instrumentation ends without a result (adb lost the emulator for a
-            # moment: exit 255 and no INSTRUMENTATION_CODE, PR #622) is run once more instead of
-            # ending the whole job.
+            # A round whose device drops (adb: «device offline», or exit 255 and no
+            # INSTRUMENTATION_CODE, PR #622) is run once more, the emulator brought back first,
+            # instead of ending the whole job.
             for attempt in 1 2; do
-              adb wait-for-device
-              adb shell rm -rf "$device_output"
-              adb shell mkdir -p "$device_output"
-              adb shell am instrument -w -r \
-                -e class "$BENCHMARKS" \
-                -e androidx.benchmark.suppressErrors EMULATOR \
-                -e additionalTestOutputDir "$device_output" \
-                "${test_package}/${runner}" | tee "perf/${build}-${round}.log" || true
+              if [[ "$attempt" == 2 ]]; then
+                echo "::warning title=Performance budget::${build} round ${round} lost the device; running it again"
+                free -m
+                ensure_emulator
+              fi
+              : > "perf/${build}-${round}.log"
+              adb uninstall "$APP_PACKAGE" > /dev/null 2>&1 || true
+              if adb install "perf/${build}.apk" &&
+                adb shell rm -rf "$device_output" &&
+                adb shell mkdir -p "$device_output"; then
+                adb shell am instrument -w -r \
+                  -e class "$BENCHMARKS" \
+                  -e androidx.benchmark.suppressErrors EMULATOR \
+                  -e additionalTestOutputDir "$device_output" \
+                  "${test_package}/${runner}" | tee "perf/${build}-${round}.log" || true
+              fi
               if grep -q "INSTRUMENTATION_CODE" "perf/${build}-${round}.log"; then break; fi
               if [[ "$attempt" == 2 ]]; then
-                echo "::error title=Performance budget::${build} round ${round} ended twice without a result"
+                echo "::error title=Performance budget::${build} round ${round} lost the device twice"
                 exit 1
               fi
-              echo "::warning title=Performance budget::${build} round ${round} ended without a result; running it again"
-              free -m
-              if ! timeout 60 adb wait-for-device; then
-                # The emulator itself is gone: start it again, cold, as the step above did.
-                nohup "$ANDROID_HOME/emulator/emulator" -avd vola_ci -port 5554 -no-window -noaudio \
-                  -no-boot-anim -gpu swiftshader_indirect >> "$RUNNER_TEMP/emulator.log" 2>&1 &
-                timeout 300 adb wait-for-device
-                # shellcheck disable=SC2016 # expanded by the inner shell
-                timeout 300 bash -c '
-                  until [[ "$(adb shell getprop sys.boot_completed | tr -d "\r")" == "1" ]]; do sleep 2; done
-                '
-                adb shell settings put global hide_error_dialogs 1
-                adb reverse "tcp:$PAGE_PORT" "tcp:$PAGE_PORT"
-                adb install -r -t perf/benchmarks.apk
-              fi
-              adb uninstall "$APP_PACKAGE" > /dev/null 2>&1 || true
-              adb install "perf/${build}.apk"
             done
             if grep -qE "FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed" "perf/${build}-${round}.log"; then
               echo "::warning title=Performance budget::${build} round ${round} had a failing benchmark (see its log group)"
