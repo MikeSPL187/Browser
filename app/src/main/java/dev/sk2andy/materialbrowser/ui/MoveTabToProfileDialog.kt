@@ -51,6 +51,7 @@ private fun MoveTabToProfileSheetV5(
                 activeProfileId = "",
                 lockedProfileIds = emptySet(),
                 untitled = untitled,
+                defaultName = stringResource(R.string.workspace_default_name),
             ).map { item -> item.copy(tabCount = null) },
             onSelect = onMove,
             onDismiss = onDismiss,

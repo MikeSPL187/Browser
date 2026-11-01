@@ -130,3 +130,13 @@ test("owner family exceptions refuse to load without their matcher", () => {
   assert.throws(() => create({ familyPairs: ["adservice.google.com\tgoogle.*"], hostPatternMatches: null }));
   assert.doesNotThrow(() => create({ hostLists: ["ads.example"], hostPatternMatches: null }));
 });
+
+test("a sorted list given as bytes answers as its text does", () => {
+  const text = "# generated\r\nads.example\r\nalpha.example\nbeta.example\n";
+  const index = sortedHostIndex(new TextEncoder().encode(text));
+  assert.equal(index.size, 3);
+  assert.equal(index.has("alpha.example"), true);
+  assert.equal(index.has("beta.example"), true);
+  assert.equal(index.has("gamma.example"), false);
+  assert.throws(() => sortedHostIndex(new TextEncoder().encode("b.example\na.example\n")));
+});

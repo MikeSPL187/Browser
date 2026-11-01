@@ -198,7 +198,9 @@ fun V5FindInPage(
                         )
                     }
                 }
-                if (!countOnItsOwnLine) FindCount(matchText, isCounting, labels.counting)
+                // Weighted too: «Not found» must not squeeze the query to one letter, as an unweighted
+                // neighbour of the weighted field did.
+                if (!countOnItsOwnLine) FindCount(matchText, isCounting, labels.counting, Modifier.weight(1f, fill = false))
             }
             // The steps stand beside the field on round plates (canvas «FindInPage»).
             StepButton(VolaIcons.KeyboardArrowUp, labels.previous, canNavigate, onPrevious, V5FindInPageTestTags.Previous)

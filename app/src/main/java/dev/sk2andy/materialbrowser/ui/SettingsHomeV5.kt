@@ -81,8 +81,9 @@ internal fun SettingsHomeV5(
             Modifier
                 .fillMaxSize()
                 .background(colors.background)
-                .verticalScroll(rememberScrollState())
+                // Before the scroll: the list stops under the status bar instead of running behind the clock.
                 .statusBarsPadding()
+                .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
                 .padding(bottom = V5Spacing.space8),
             verticalArrangement = Arrangement.spacedBy(V5Spacing.space6),

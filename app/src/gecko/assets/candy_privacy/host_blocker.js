@@ -34,17 +34,29 @@
     return hosts;
   }
 
+  // A list as bytes. Fetched lists come as bytes already (CandyNetworkBlocker.load with loadBytes):
+  // a string from Response.text() is UTF-16, two bytes per character, and the two large host lists
+  // held 12 MB for 5 MB of ASCII (about:memory in CI, PR #622). A string (tests, small lists) is
+  // copied byte by byte; host lists are ASCII.
+  function listBytes(list) {
+    if (ArrayBuffer.isView(list)) return list;
+    const text = String(list || "");
+    const bytes = new Uint8Array(text.length);
+    for (let index = 0; index < text.length; index++) bytes[index] = text.charCodeAt(index);
+    return bytes;
+  }
+
   // A strictly sorted host list, searched in place (SortedHostIndex in Kotlin).
-  function sortedHostIndex(text) {
-    const source = String(text || "");
+  function sortedHostIndex(list) {
+    const source = listBytes(list);
     const starts = [];
     const ends = [];
     let start = 0;
     while (start < source.length) {
-      let end = source.indexOf("\n", start);
+      let end = source.indexOf(10, start);
       if (end < 0) end = source.length;
-      const contentEnd = end > start && source.charCodeAt(end - 1) === 13 ? end - 1 : end;
-      if (contentEnd > start && source.charCodeAt(start) !== 35) {
+      const contentEnd = end > start && source[end - 1] === 13 ? end - 1 : end;
+      if (contentEnd > start && source[start] !== 35) {
         if (starts.length > 0 &&
           compareRange(source, starts[starts.length - 1], ends[ends.length - 1], start, contentEnd) >= 0) {
           throw new Error("Host index must be strictly sorted");
@@ -62,7 +74,7 @@
       const length = endOffsets[index] - lineStart;
       const common = Math.min(host.length, length);
       for (let offset = 0; offset < common; offset++) {
-        const difference = host.charCodeAt(offset) - source.charCodeAt(lineStart + offset);
+        const difference = host.charCodeAt(offset) - source[lineStart + offset];
         if (difference !== 0) return difference;
       }
       return host.length - length;
@@ -90,7 +102,7 @@
     const secondLength = secondEnd - secondStart;
     const common = Math.min(firstLength, secondLength);
     for (let offset = 0; offset < common; offset++) {
-      const difference = source.charCodeAt(firstStart + offset) - source.charCodeAt(secondStart + offset);
+      const difference = source[firstStart + offset] - source[secondStart + offset];
       if (difference !== 0) return difference;
     }
     return firstLength - secondLength;

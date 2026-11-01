@@ -40,7 +40,8 @@ internal object BrowserSettingsTestTags {
 @Composable
 internal fun BrowserSettingsPage(
     browserEngineKind: AndroidBrowserEngineKind = AndroidBrowserEngineKind.GeckoView,
-    pageTranslationProvider: PageTranslationProvider,
+    /** Null where pages translate on the device (Gecko): no provider is ever asked there. */
+    pageTranslationProvider: PageTranslationProvider?,
     isExternalLinkPreviewEnabled: Boolean = false,
     externalAppLinkHandling: ExternalAppLinkHandling = ExternalAppLinkHandling.Default,
     isFullImmersiveModeEnabled: Boolean,
@@ -228,7 +229,7 @@ internal fun BrowserSettingsPage(
                 )
             }
         }
-        if (layer.main) {
+        if (layer.main && pageTranslationProvider != null) {
             add { divider ->
                 SettingsCardDropdownRow(
                     title = stringResource(R.string.settings_translation_provider),

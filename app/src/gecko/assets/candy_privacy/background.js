@@ -242,10 +242,19 @@ function ensureAnimationPolicyRegistration(policy) {
   });
 }
 
-async function loadText(fileName) {
+async function loadRule(fileName) {
   const response = await fetch(browser.runtime.getURL(`rules/${fileName}`));
   if (!response.ok) throw new Error(`Candy rule asset unavailable: ${fileName}`);
-  return response.text();
+  return response;
+}
+
+async function loadText(fileName) {
+  return (await loadRule(fileName)).text();
+}
+
+// The host lists as bytes: Response.text() would make them two-byte strings (12 MB for 5 MB).
+async function loadBytes(fileName) {
+  return new Uint8Array(await (await loadRule(fileName)).arrayBuffer());
 }
 
 // The bank and payment sites travel with the cookie rules: every frame's answer waits for those.
@@ -280,7 +289,7 @@ function ensureCookieRules() {
 
 function ensureNetworkBlocker() {
   if (!networkBlockerPromise) {
-    networkBlockerPromise = CandyNetworkBlocker.load(loadText).then((blocker) => {
+    networkBlockerPromise = CandyNetworkBlocker.load(loadText, {}, loadBytes).then((blocker) => {
       networkBlocker = blocker;
       return blocker;
     }, (error) => {

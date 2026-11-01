@@ -70,3 +70,15 @@ test("a pattern edge that is only `*` adds nothing to scan", () => {
   assert.equal(patternToRegExp("|https://x.example/*").source.endsWith(".*"), false);
   assert.equal(patternToRegExp("/ads/*|").source.endsWith(".*$"), true);
 });
+
+test("the bundled list parses the same from bytes as from text", () => {
+  const url = new URL("../app/src/blocking/gecko/easylist_network_filters.txt", import.meta.url);
+  const fromText = parse(fs.readFileSync(url, "utf8"));
+  const fromBytes = parse(new Uint8Array(fs.readFileSync(url)));
+  assert.equal(fromBytes.length, fromText.length);
+  for (const at of [0, 1, Math.floor(fromText.length / 2), fromText.length - 1]) {
+    assert.equal(fromBytes[at].pattern, fromText[at].pattern);
+    assert.equal(fromBytes[at].token, fromText[at].token);
+    assert.equal(fromBytes[at].party, fromText[at].party);
+  }
+});

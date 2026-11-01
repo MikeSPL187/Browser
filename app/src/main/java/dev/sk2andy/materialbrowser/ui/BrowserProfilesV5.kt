@@ -15,6 +15,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.DEFAULT_PROFILE_EMOJI
+import dev.sk2andy.materialbrowser.browser.DEFAULT_PROFILE_ID
 import dev.sk2andy.materialbrowser.browser.DistinctNames
 import dev.sk2andy.materialbrowser.browser.MAX_PROFILES
 import dev.sk2andy.materialbrowser.browser.ProfileLockTrigger
@@ -90,13 +91,16 @@ internal object V5ProfileRules {
         activeProfileId: String,
         lockedProfileIds: Set<String>,
         untitled: String,
+        /** The built-in profile's name while it has none of its own: «Personal», as on the launcher. */
+        defaultName: String = untitled,
     ): List<V5ProfileItem> {
         val counts = tabs.groupingBy(BrowserTab::profileId).eachCount()
         return order(profiles).map { profile ->
             V5ProfileItem(
                 id = profile.id,
                 icon = WorkspaceIcons.vector(profile.emoji),
-                name = profile.name.ifBlank { profile.syncedDisplayName.orEmpty() }.ifBlank { untitled },
+                name = profile.name.ifBlank { profile.syncedDisplayName.orEmpty() }
+                    .ifBlank { if (profile.id == DEFAULT_PROFILE_ID) defaultName else untitled },
                 accent = accent(profile.accent),
                 // A locked profile hides its tabs until it is opened, their number too (ПР-4).
                 tabCount = if (profile.id in lockedProfileIds) null else counts[profile.id] ?: 0,
@@ -134,6 +138,7 @@ internal fun BrowserProfileSheetV5(controller: BrowserController, visible: Boole
             activeProfileId = controller.activeProfileId,
             lockedProfileIds = controller.lockedProfileIds,
             untitled = untitled,
+            defaultName = stringResource(R.string.workspace_default_name),
         ),
         onSelect = { id ->
             if (id == controller.activeProfileId && !controller.isActiveProfileLocked) {
@@ -306,3 +311,8 @@ private fun BrowserProfileEditSheetV5(
         )
     }
 }
+
+/** A profile's name wherever v5 shows one alone: its own, else «Personal» for the built-in one, else «Profile». */
+@Composable
+internal fun BrowserProfile?.v5DisplayName(): String = this?.name?.ifBlank { null }
+    ?: stringResource(if (this?.id == DEFAULT_PROFILE_ID) R.string.workspace_default_name else R.string.v5_profile_untitled)

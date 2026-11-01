@@ -36,6 +36,7 @@ import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineEvent
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineEventType
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
+import dev.sk2andy.materialbrowser.data.BrowsingHistoryRepository
 import dev.sk2andy.materialbrowser.data.DeveloperSettings
 import dev.sk2andy.materialbrowser.data.HistoryEntry
 import dev.sk2andy.materialbrowser.data.HistoryRecordingMode
@@ -673,6 +674,9 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                 ),
             )
 
+            // The visit is written in the background (BrowsingHistoryRepository.record): wait for
+            // that write before reading the file, or the read can come first (nightly 01.11, flaky).
+            assertTrue(BrowsingHistoryRepository.get(composeRule.activity).flush())
             val entry = store.loadHistory().single()
             assertEquals("https://history.example/article", entry.url)
             assertEquals("Recorded article", entry.title)

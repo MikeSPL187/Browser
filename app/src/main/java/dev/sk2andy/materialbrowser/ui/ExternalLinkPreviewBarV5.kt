@@ -95,6 +95,7 @@ internal fun ExternalLinkPreviewBarV5(
         activeProfileId = state.targetProfileId,
         lockedProfileIds = emptySet(),
         untitled = untitled,
+        defaultName = stringResource(R.string.workspace_default_name),
     ).map { item -> item.copy(tabCount = null) }
     val target = items.firstOrNull { it.active } ?: items.firstOrNull()
     val targetName = target?.name.orEmpty()

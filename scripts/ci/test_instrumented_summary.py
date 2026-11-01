@@ -238,5 +238,30 @@ class InstrumentedSummaryTest(unittest.TestCase):
         self.assertEqual(1, status)
 
 
+class WholeShardRerunTest(unittest.TestCase):
+    def test_a_shard_run_again_counts_each_test_once_as_its_later_run(self):
+        with tempfile.TemporaryDirectory() as directory:
+            shard = Path(directory) / "shard-1"
+            first = shard / "results" / "1"
+            again = shard / "results" / "whole-rerun"
+            first.mkdir(parents=True)
+            again.mkdir(parents=True)
+            (first / "TEST-a.xml").write_text(
+                "<testsuite><testcase name=\"walk\" classname=\"a.Walk\" time=\"1\">"
+                "<error>device offline</error></testcase></testsuite>",
+                encoding="utf-8",
+            )
+            (again / "TEST-a.xml").write_text(
+                "<testsuite><testcase name=\"walk\" classname=\"a.Walk\" time=\"1\" />"
+                "<testcase name=\"other\" classname=\"a.Other\" time=\"1\" /></testsuite>",
+                encoding="utf-8",
+            )
+
+            results = collect([str(shard)]).results
+
+        self.assertEqual(["passed", "passed"], [result.outcome for result in results])
+        self.assertEqual(2, len(results))
+
+
 if __name__ == "__main__":
     unittest.main()

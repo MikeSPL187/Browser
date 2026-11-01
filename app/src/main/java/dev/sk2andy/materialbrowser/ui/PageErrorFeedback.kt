@@ -19,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -74,7 +75,8 @@ internal fun PageErrorFeedback(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surface)
+                // Outside V5PromptTheme V5Theme is the light default: a dark shell got a light page.
+                .background(v5PromptBackground())
                 .testTag(PageErrorFeedbackTestTags.Page),
         ) {
             AnimatedContent(
@@ -343,4 +345,11 @@ private fun V5OfflineChecksPreview() {
             )
         }
     }
+}
+
+/** The status bar's colour without a site colour: the error page's background, else the M3 surface. */
+@Composable
+internal fun errorAwareStatusBarTint(pageErrorFeedback: PageErrorFeedbackState): Int = when (pageErrorFeedback) {
+    is PageErrorFeedbackState.Hidden -> MaterialTheme.colorScheme.surface.toArgb()
+    else -> v5PromptBackground().toArgb()
 }

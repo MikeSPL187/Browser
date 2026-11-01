@@ -26,7 +26,7 @@ internal fun BrowserSettingsProfileCardV5(controller: BrowserController, onOpenS
     val profile = controller.profiles.firstOrNull { it.id == controller.activeProfileId }
     V5SettingsProfileCard(
         profile = V5SettingsProfile(
-            name = profile?.name?.ifBlank { null } ?: stringResource(R.string.v5_profile_untitled),
+            name = profile.v5DisplayName(),
             icon = profile?.let { WorkspaceIcons.vector(it.emoji) },
             sync = BrowserSettingsProfileRules.sync(sync.available, sync.state, sync::relativeTime),
         ),

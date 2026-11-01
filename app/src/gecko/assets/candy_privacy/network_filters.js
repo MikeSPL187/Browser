@@ -9,9 +9,35 @@
   const SEPARATOR = "(?:[^a-z0-9_.%-]|$)";
   // Shared by the 12 000 filters without page conditions instead of two empty arrays each.
   const NO_PAGES = Object.freeze([]);
+  // Bytes per String.fromCharCode call: well under any engine's argument limit.
+  const LATIN1_CHUNK = 8192;
 
-  function declaredCount(text, prefix) {
-    const line = text.split(/\r?\n/).find((value) => value.startsWith(prefix));
+  // Fetched as bytes the list gives one latin-1 string per row. As one text from Response.text() it
+  // was a two-byte string of 2 MB that every parsed filter kept alive (about:memory, PR #622).
+  function linesOf(input) {
+    if (!ArrayBuffer.isView(input)) return String(input).split(/\r?\n/);
+    const lines = [];
+    let start = 0;
+    while (start < input.length) {
+      let end = input.indexOf(10, start);
+      if (end < 0) end = input.length;
+      const contentEnd = end > start && input[end - 1] === 13 ? end - 1 : end;
+      lines.push(latin1(input, start, contentEnd));
+      start = end + 1;
+    }
+    return lines;
+  }
+
+  function latin1(bytes, start, end) {
+    let text = "";
+    for (let from = start; from < end; from += LATIN1_CHUNK) {
+      text += String.fromCharCode.apply(null, bytes.subarray(from, Math.min(end, from + LATIN1_CHUNK)));
+    }
+    return text;
+  }
+
+  function declaredCount(lines, prefix) {
+    const line = lines.find((value) => value.startsWith(prefix));
     const count = line ? Number(line.slice(prefix.length).trim()) : NaN;
     if (!Number.isSafeInteger(count) || count < 0) throw new Error(`Missing ${prefix}`);
     return count;
@@ -45,10 +71,11 @@
     return new RegExp(prefix + source + suffix);
   }
 
-  function parse(text) {
-    if (!text.startsWith(HEADER)) throw new Error("Invalid network filter header");
-    const rows = text.split(/\r?\n/).slice(1).filter((line) => line && !line.startsWith("#"));
-    if (rows.length !== declaredCount(text, "# Rules:")) throw new Error("Network filter count mismatch");
+  function parse(input) {
+    const lines = linesOf(input);
+    if (!lines.length || !lines[0].startsWith(HEADER)) throw new Error("Invalid network filter header");
+    const rows = lines.slice(1).filter((line) => line && !line.startsWith("#"));
+    if (rows.length !== declaredCount(lines, "# Rules:")) throw new Error("Network filter count mismatch");
     // The lists use a few dozen type combinations: one read-only set per combination.
     const typeSets = new Map();
     const typesOf = (value) => {

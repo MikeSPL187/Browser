@@ -1,5 +1,7 @@
 package dev.sk2andy.materialbrowser.ui.theme
 
+import dev.sk2andy.materialbrowser.ui.V5ProfileRules
+import dev.sk2andy.materialbrowser.ui.theme.v5.LocalV5ProfileAccent
 import android.app.UiModeManager
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -115,6 +117,9 @@ internal fun CandyTheme(
             LocalCandyDesignLanguage provides designLanguage,
             LocalCandyMotionScheme provides CandyMotionSchemes.forDesignLanguage(designLanguage),
             LocalCandyChromeSurfaceRenderer provides chromeSurfaceRenderer,
+            // The v5 screens of the other activities (library, passwords) take the profile's accent
+            // as the browser's do; they fell back to the default blue (screenshot review, 31.10).
+            LocalV5ProfileAccent provides V5ProfileRules.accent(workspaceAccent),
             content = content,
         )
     }

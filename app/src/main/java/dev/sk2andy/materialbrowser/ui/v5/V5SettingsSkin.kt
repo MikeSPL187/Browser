@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
@@ -43,7 +42,6 @@ import androidx.compose.ui.node.invalidateDraw
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
@@ -51,7 +49,6 @@ import dev.sk2andy.materialbrowser.shared.ui.settings.LocalSettingsSkin
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsRowEnd
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsSkin
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsTileColors
-import dev.sk2andy.materialbrowser.shared.ui.theme.SettingsCardTokens
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
@@ -182,19 +179,29 @@ internal class V5SettingsSkin(private val view: View) : SettingsSkin {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 leading?.invoke()
-                Column(Modifier.weight(1f)) {
-                    Text(title, style = V5Theme.type.body, color = colors.label)
-                    if (!summary.isNullOrEmpty()) {
-                        Text(
-                            summary,
-                            style = V5Theme.type.footnote,
-                            color = colors.labelSecondary,
-                            maxLines = summaryMaxLines,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                val titleAndSummary = @Composable {
+                    Column {
+                        Text(title, style = V5Theme.type.body, color = colors.label)
+                        if (!summary.isNullOrEmpty()) {
+                            Text(
+                                summary,
+                                style = V5Theme.type.footnote,
+                                color = colors.labelSecondary,
+                                maxLines = summaryMaxLines,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
                 }
-                RowEnd(end)
+                if (end is SettingsRowEnd.Value) {
+                    // A long value goes under the title instead of squeezing it.
+                    V5TitleValueLayout(gap = V5Spacing.space3, modifier = Modifier.weight(1f), title = titleAndSummary) {
+                        LayoutRow(verticalAlignment = Alignment.CenterVertically) { RowEnd(end) }
+                    }
+                } else {
+                    Box(Modifier.weight(1f)) { titleAndSummary() }
+                    RowEnd(end)
+                }
             }
             if (divider) {
                 Divider(
@@ -266,7 +273,7 @@ internal class V5SettingsSkin(private val view: View) : SettingsSkin {
     }
 
     @Composable
-    private fun RowEnd(end: SettingsRowEnd) {
+    private fun RowScope.RowEnd(end: SettingsRowEnd) {
         val colors = V5Theme.colors
         when (end) {
             SettingsRowEnd.Chevron -> Icon(
@@ -284,10 +291,9 @@ internal class V5SettingsSkin(private val view: View) : SettingsSkin {
                     end.text,
                     style = V5Theme.type.body,
                     color = colors.labelSecondary,
-                    textAlign = TextAlign.End,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.widthIn(max = SettingsCardTokens.valueMaxWidth),
+                    modifier = Modifier.weight(1f, fill = false),
                 )
                 Icon(
                     VolaIcons.ArrowDropDown,

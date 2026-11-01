@@ -49,6 +49,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.runtime.DisposableEffect
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.ui.WorkspaceIcons
 import dev.sk2andy.materialbrowser.browser.BrowserController
@@ -200,6 +201,11 @@ private fun OverviewContent(
     val profileIds = V5ProfileRules.order(controller.profiles).map { it.id }
     val profileDots = V5ProfileDots(profileIds.size, profileIds.indexOf(controller.activeProfileId))
         .takeIf { controller.profilesEnabled && it.count > 1 && it.active >= 0 }
+    // The private palette is always dark: the status bar's icons turn light over it (BrowserViewport).
+    DisposableEffect(privateSegment) {
+        V5OverviewSurface.showsPrivate = privateSegment
+        onDispose { V5OverviewSurface.showsPrivate = false }
+    }
     VolaV5Theme(dark = darkShell, privateBrowsing = privateSegment) {
         Box(Modifier.fillMaxSize().onGloballyPositioned { overviewBounds = it.boundsInRoot() }) {
             V5TabOverview(
@@ -208,7 +214,7 @@ private fun OverviewContent(
                     privateSegment = privateSegment,
                     counts = counts,
                     query = query,
-                    profileLabel = profile?.name?.ifBlank { null } ?: stringResource(R.string.v5_profile_untitled),
+                    profileLabel = profile.v5DisplayName(),
                     profileIcon = profile?.let { WorkspaceIcons.vector(it.emoji) },
                     groups = groups,
                     canOpenPrivate = controller.canOpenLinkInPrivate,
@@ -301,6 +307,11 @@ private fun OverviewContent(
     var shownCount by remember { mutableIntStateOf(1) }
     if (closeAllIds.isNotEmpty()) shownCount = closeAllIds.size
     val pinnedStay = cards.any { !it.closable }
+    // The private palette is always dark: the status bar's icons turn light over it (BrowserViewport).
+    DisposableEffect(privateSegment) {
+        V5OverviewSurface.showsPrivate = privateSegment
+        onDispose { V5OverviewSurface.showsPrivate = false }
+    }
     VolaV5Theme(dark = darkShell, privateBrowsing = privateSegment) {
         V5PromptSheet(
             visible = closeAllIds.isNotEmpty(),
@@ -358,3 +369,11 @@ private const val DARK_SHELL_LUMINANCE = 0.5f
 
 /** Cards grow into place from this scale (system-v5.md, section 7, overviewEnter). */
 private const val ENTER_SCALE = 0.92f
+
+/**
+ * What the open tab overview shows, for the parts of the window it does not own: over the private
+ * segment's always-dark palette the status bar needs light icons, even in the light theme.
+ */
+internal object V5OverviewSurface {
+    var showsPrivate by mutableStateOf(false)
+}
