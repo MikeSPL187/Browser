@@ -38,6 +38,7 @@ REPORT_TIMEOUT_SECONDS = 180
 FIFO_NAME = "debug_info_trigger"
 POLL_SECONDS = 3
 BYTES = 0  # nsIMemoryReporter.UNITS_BYTES
+KIND_HEAP = 1  # nsIMemoryReporter.KIND_HEAP
 MB = 1024 * 1024
 
 
@@ -153,6 +154,8 @@ def summarize(path: Path, top: int) -> list[str]:
     explicit: dict[str, float] = defaultdict(float)
     other: dict[tuple[str, str], float] = defaultdict(float)
     subtrees: dict[tuple[str, str], float] = defaultdict(float)
+    leaves: dict[tuple[str, str], float] = defaultdict(float)
+    heap_explicit: dict[str, float] = defaultdict(float)
     for report in load_reports(path):
         if report.get("units") != BYTES:
             continue
@@ -161,6 +164,9 @@ def summarize(path: Path, top: int) -> list[str]:
         amount = report.get("amount", 0) / MB
         if path_.startswith("explicit/"):
             explicit[process] += amount
+            leaves[(process, path_)] += amount
+            if report.get("kind") == KIND_HEAP:
+                heap_explicit[process] += amount
             parts = path_.split("/")
             # As about:memory's tree: «explicit/js-non-window» and one level under it.
             subtrees[(process, "/".join(parts[:2]))] += amount
@@ -171,15 +177,21 @@ def summarize(path: Path, top: int) -> list[str]:
     lines = [
         "### Gecko memory report (about:memory, MB)",
         "",
-        "| Process | explicit | heap-unclassified | resident | resident-unique | heap-allocated |",
-        "| --- | ---: | ---: | ---: | ---: | ---: |",
+        "| Process | explicit | heap-unclassified | resident | resident-unique | heap-allocated | heap-mapped |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
-    unclassified = {process: subtrees.get((process, "explicit/heap-unclassified"), 0.0) for process in explicit}
+    # about:memory works heap-unclassified out itself: the heap the allocator handed out minus what
+    # the heap reporters account for. A report that carries it as a path keeps its own figure.
+    unclassified = {
+        process: subtrees.get((process, "explicit/heap-unclassified"))
+        or max(0.0, other.get((process, "heap-allocated"), 0.0) - heap_explicit[process])
+        for process in explicit
+    }
     for process in sorted(explicit, key=explicit.get, reverse=True):
         lines.append(
             f"| {process} | {explicit[process]:.1f} | {unclassified[process]:.1f} | "
             f"{other.get((process, 'resident'), 0):.1f} | {other.get((process, 'resident-unique'), 0):.1f} | "
-            f"{other.get((process, 'heap-allocated'), 0):.1f} |"
+            f"{other.get((process, 'heap-allocated'), 0):.1f} | {other.get((process, 'heap-mapped'), 0):.1f} |"
         )
     lines += ["", f"#### Largest explicit subtrees (top {top} per process)", "", "| Process | Path | MB |", "| --- | --- | ---: |"]
     for process in sorted(explicit, key=explicit.get, reverse=True):
@@ -189,6 +201,15 @@ def summarize(path: Path, top: int) -> list[str]:
             reverse=True,
         )[:top]
         lines += [f"| {process} | `{tree}` | {amount:.1f} |" for tree, amount in rows]
+    # The single reporters behind those subtrees, full path: which strings, objects or caches.
+    lines += ["", f"#### Largest single reporters (top {top} per process)", "", "| Process | Path | MB |", "| --- | --- | ---: |"]
+    for process in sorted(explicit, key=explicit.get, reverse=True):
+        rows = sorted(
+            ((leaf, amount) for (owner, leaf), amount in leaves.items() if owner == process and amount >= 0.05),
+            key=lambda row: row[1],
+            reverse=True,
+        )[:top]
+        lines += [f"| {process} | `{leaf}` | {amount:.1f} |" for leaf, amount in rows]
     return lines
 
 

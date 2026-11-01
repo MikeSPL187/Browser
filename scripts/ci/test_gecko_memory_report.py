@@ -34,6 +34,19 @@ class GeckoMemoryReportTest(unittest.TestCase):
         self.assertIn("| Main Process | `explicit/js-non-window` | 40.0 |", text)
         self.assertIn("| Main Process | `explicit/js-non-window/zones` | 30.0 |", text)
         self.assertNotIn("pid", text)
+        self.assertIn("| Main Process | `explicit/js-non-window/zones/x` | 30.0 |", text)
+
+    def test_heap_unclassified_is_worked_out_from_the_heap(self):
+        mb = 1024 * 1024
+        path = self.write([
+            {"process": "", "path": "explicit/a", "kind": 1, "units": 0, "amount": 40 * mb},
+            {"process": "", "path": "explicit/b", "kind": 0, "units": 0, "amount": 5 * mb},
+            {"process": "", "path": "heap-allocated", "kind": 2, "units": 0, "amount": 64 * mb},
+        ])
+
+        text = "\n".join(report.summarize(path, top=5))
+
+        self.assertIn("| Main Process | 45.0 | 24.0 |", text)
 
     def test_no_signal_is_sent_unless_the_dumper_catches_its_three(self):
         status = "Name:\tvola\nSigCgt:\t%x\n"
