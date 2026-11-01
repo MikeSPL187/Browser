@@ -264,9 +264,23 @@ jobs:
             if (( index > 1 )); then ensure_device "the filter entry $entry" < /dev/null; fi
             rm -rf app/build/outputs/androidTest-results
             ./gradlew --no-daemon --stacktrace "connected${FLAVOR}DebugAndroidTest" \
-              "${args[@]}" "${filter_args[@]}" < /dev/null || true
+              "${args[@]}" "${filter_args[@]}" < /dev/null | tee "$RUNNER_TEMP/first-$index.log" || true
             cp -r app/build/outputs/androidTest-results "$first/$index" 2>/dev/null || true
           done
+          # The emulator can drop mid-run (adb: «device offline», nightly 01.11): the runner then
+          # stops and the rest of the shard never starts — 16 of 145 tests ran. Such a shard runs
+          # once more, whole; the summary counts each test once, as its later run.
+          if [[ -z "$FILTER" ]]; then
+            listed=$(grep -oE 'run started: [0-9]+ tests' "$RUNNER_TEMP/first-1.log" | grep -oE '[0-9]+' | sort -n | tail -n 1)
+            ran=$(find "$first/1" -name '*.xml' -exec grep -o '<testcase ' {} + 2>/dev/null | wc -l)
+            if (( ${listed:-0} > 0 && ran < listed )); then
+              echo "::warning::Shard $SHARD: $ran of $listed tests ran; running the shard once more"
+              ensure_device "the shard's second run" < /dev/null
+              rm -rf app/build/outputs/androidTest-results
+              ./gradlew --no-daemon --stacktrace "connected${FLAVOR}DebugAndroidTest" "${args[@]}" < /dev/null || true
+              cp -r app/build/outputs/androidTest-results "$first/whole-rerun" 2>/dev/null || true
+            fi
+          fi
           # A new failure gets one rerun on its own; the Report job lists it as flaky when the
           # rerun passes. Known failures are not rerun, and a long list means a real breakage.
           # One Gradle call per test: with the orchestrator, a comma-separated class list ran

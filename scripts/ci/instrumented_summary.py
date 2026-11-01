@@ -134,13 +134,17 @@ def first_run_files(shard: Path, pattern: str) -> list:
 
 
 def read_all(files: list) -> list:
-    results = []
+    """Every result in [files], in order; a test run twice (a shard run again after the emulator
+    dropped mid-run) counts once, as its later run, which is complete where the first was cut."""
+    by_test = {}
     for file in files:
         try:
-            results.extend(read_results(file))
+            for result in read_results(file):
+                by_test.pop(result.test_id, None)
+                by_test[result.test_id] = result
         except ElementTree.ParseError:
             continue
-    return results
+    return list(by_test.values())
 
 
 def has_readable_xml(files: list) -> bool:
