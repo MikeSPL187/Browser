@@ -158,15 +158,17 @@
     };
   }
 
-  // Reads every list through load(fileName) -> Promise<string>; a missing list fails the load.
-  async function load(loadText, options = {}) {
+  // Reads every list through load(fileName) -> Promise<string>; a missing list fails the load. The
+  // large sorted host lists go through loadBytes(fileName) -> Promise<Uint8Array> when given: kept
+  // as bytes they take half the memory of a string (CandyHostBlocker.sortedHostIndex).
+  async function load(loadText, options = {}, loadBytes = loadText) {
     const read = (names) => Promise.all(names.map(loadText));
     const [
       hostLists, indexedLists, blockedPairs, allowedPairs, familyPairs, advancedText, networkFiltersText,
       exemptSitesText,
     ] = await Promise.all([
       read(LIST_FILES.hostLists),
-      read(LIST_FILES.indexedLists),
+      Promise.all(LIST_FILES.indexedLists.map(loadBytes)),
       read(LIST_FILES.blockedPairs),
       read(LIST_FILES.allowedPairs),
       read(LIST_FILES.familyPairs),
