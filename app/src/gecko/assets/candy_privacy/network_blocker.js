@@ -173,7 +173,7 @@
       read(LIST_FILES.allowedPairs),
       read(LIST_FILES.familyPairs),
       loadText(LIST_FILES.advanced),
-      loadText(LIST_FILES.networkFilters),
+      loadBytes(LIST_FILES.networkFilters),
       loadText(LIST_FILES.exemptSites),
     ]);
     return create({
