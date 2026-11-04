@@ -1,0 +1,480 @@
+ui.v5 = false
+screenshot 01-launch.png
+screenshot 02-first-run-welcome.png
+saved ui-first-run-welcome.xml
+tap 'Get started' at 540,2025
+screenshot 03-first-run-default.png
+saved ui-first-run-default.xml
+tap 'Not now' at 540,2232
+screenshot 04-first-run-gestures.png
+saved ui-first-run-gestures.xml
+tap 'Got it' at 540,2043
+ui.v5 = true
+screenshot 05-v5-new-tab-light.png
+screenshot 06-v5-page-light.png
+screenshot 07-v5-page-scrolled-light.png
+not found: ('Show the bar', 'Показать панель')
+tap 'More options' at 985,2253
+screenshot 08-v5-menu-light.png
+tap 'More options' at 985,2253
+tap 'Find on page' at 327,1743
+screenshot 09-v5-find-light.png
+tap 'Open site information' at 95,2253
+screenshot 10-v5-site-protection-light.png
+tap 'en.wikipedia.org' at 393,2253
+screenshot 11-v5-address-light.png
+tap 'Open tab overview' at 838,2253
+screenshot 12-v5-overview-light.png
+tap 'More options' at 985,2253
+tap 'History' at 159,2248
+screenshot 13-v5-history-light.png
+tap 'More options' at 985,2253
+tap 'Favorites' at 414,2248
+screenshot 14-v5-favorites-light.png
+tap 'More options' at 985,2253
+tap 'Downloads' at 308,1427
+screenshot 15-v5-downloads-light.png
+tap 'More options' at 985,2253
+tap 'Settings' at 921,2248
+screenshot 16-v5-settings-light.png
+screenshot 17-v5-private-tab-light.png
+ui.v5 = true
+screenshot 18-v5-new-tab-dark.png
+screenshot 19-v5-page-dark.png
+screenshot 20-v5-page-scrolled-dark.png
+not found: ('Show the bar', 'Показать панель')
+tap 'More options' at 985,2253
+screenshot 21-v5-menu-dark.png
+tap 'More options' at 985,2253
+tap 'Find on page' at 327,1743
+screenshot 22-v5-find-dark.png
+tap 'Open site information' at 95,2253
+screenshot 23-v5-site-protection-dark.png
+tap 'en.wikipedia.org' at 393,2253
+screenshot 24-v5-address-dark.png
+tap 'Open tab overview' at 838,2253
+screenshot 25-v5-overview-dark.png
+tap 'More options' at 985,2253
+tap 'History' at 159,2248
+screenshot 26-v5-history-dark.png
+tap 'More options' at 985,2253
+tap 'Favorites' at 414,2248
+screenshot 27-v5-favorites-dark.png
+tap 'More options' at 985,2253
+tap 'Downloads' at 308,1427
+screenshot 28-v5-downloads-dark.png
+tap 'More options' at 985,2253
+tap 'Settings' at 921,2248
+screenshot 29-v5-settings-dark.png
+screenshot 30-v5-private-tab-dark.png
+ui.v5 = false
+screenshot 31-new-tab-light.png
+screenshot 32-page-light.png
+screenshot 33-page-scrolled-light.png
+saved ui-first-paint-frame-1.xml
+screenshot 34-first-paint-frame-1.png
+first paint frame-1: OK: card spread at 5/10/15/20 s [None, 45.6, 45.6, 45.6], page text in tree True, after a small scroll 49.1
+saved ui-first-paint-frame-2.xml
+screenshot 35-first-paint-frame-2.png
+first paint frame-2: OK: card spread at 5/10/15/20 s [45.6, 45.6, 45.6, 45.6], page text in tree True, after a small scroll 48.2
+not found: ('Search or enter an address', 'Поиск или адрес')
+open site frame-wikipedia: 23 frames, 23 janky (100%), p50 150 ms, p90 300 ms, p99 400 ms
+not found: ('Search or enter an address', 'Поиск или адрес')
+open site frame-local: 6 frames, 6 janky (100%), p50 400 ms, p90 700 ms, p99 700 ms
+touch frame-top: no probe bands on screen
+screenshot 36-touch-none-frame-top.png
+touch frame-scrolled: no probe bands on screen
+screenshot 37-touch-none-frame-scrolled.png
+tap feedback frame: no probe bands on screen
+keyboard frame: form probe not found
+screenshot 38-keyboard-none-frame.png
+tap 'More options' at 985,2253
+not found: ('Compact mode', 'Компактный режим')
+not found: ('Compact mode', 'Компактный режим')
+not found: ('Compact mode', 'Компактный режим')
+not found: ('Compact mode', 'Компактный режим')
+not found: ('Compact mode', 'Компактный режим')
+not found: ('Compact mode', 'Компактный режим')
+not found: ('Compact mode', 'Компактный режим')
+saved ui-probe-compact-light.xml
+tap 'More options' at 985,2253
+not found: ('Compact mode', 'Компактный режим')
+not found: ('Compact mode', 'Компактный режим')
+not found: ('Compact mode', 'Компактный режим')
+not found: ('Compact mode', 'Компактный режим')
+not found: ('Compact mode', 'Компактный режим')
+not found: ('Compact mode', 'Компактный режим')
+not found: ('Compact mode', 'Компактный режим')
+saved ui-compact-menu-light.xml
+tap 'More options' at 985,2253
+tap 'Find on page' at 327,1743
+screenshot 39-find-light.png
+find counter light: counting
+step site-info failed: Command '['adb', 'shell', 'input', 'tap', '540', '2256']' returned non-zero exit status 1.
+ui dump failed: 
+ui dump failed: 
+screenshot 40-address-light.png
+tap 'More options' at 985,2253
+not found: ('Open Reader Studio', 'Открыть режим чтения')
+not found: ('Open Reader Studio', 'Открыть режим чтения')
+not found: ('Open Reader Studio', 'Открыть режим чтения')
+not found: ('Open Reader Studio', 'Открыть режим чтения')
+not found: ('Open Reader Studio', 'Открыть режим чтения')
+not found: ('Open Reader Studio', 'Открыть режим чтения')
+not found: ('Open Reader Studio', 'Открыть режим чтения')
+saved ui-reader-menu-light.xml
+screenshot 41-https-upgrade-light.png
+saved ui-glance-page-light.xml
+not found: link for glance
+not found: ('More options', 'Другие действия')
+not found: menu for split view
+https-only probe httpforever.com: 11-04 13:29:39.748  9427  9427 D VolaLoadError: onLoadError httpsOnly=true uri=https://httpforever.com/ category=3 code=163
+screenshot 42-https-only-light.png
+screenshot 43-page-unknown-host-light.png
+screenshot 44-page-insecure-light.png
+screenshot 45-dangerous-site-light.png
+not found: ('Back to safety', 'Вернуться в безопасное место')
+screenshot 46-page-offline-light.png
+screenshot 47-page-back-online-light.png
+screenshot 48-workspace-locked-light.png
+tap 'Go to another workspace' at 540,1555
+screenshot 49-download-check-light.png
+tap 'Don’t download' at 242,2090
+tap 'More options' at 985,2253
+tap 'History' at 159,2248
+screenshot 50-history-light.png
+saved ui-history-light.xml
+tap 'More options' at 985,2253
+tap 'Favorites' at 414,2248
+screenshot 51-favorites-light.png
+saved ui-favorites-light.xml
+tap 'More options' at 985,2253
+tap 'Downloads' at 308,1427
+screenshot 52-downloads-light.png
+saved ui-downloads-light.xml
+tap 'More options' at 985,2253
+tap 'More' at 247,2017
+not found: ('Snoozed Tabs', 'Отложенные вкладки')
+not found: ('Snoozed Tabs', 'Отложенные вкладки')
+not found: ('Snoozed Tabs', 'Отложенные вкладки')
+not found: ('Snoozed Tabs', 'Отложенные вкладки')
+not found: ('Snoozed Tabs', 'Отложенные вкладки')
+not found: ('Snoozed Tabs', 'Отложенные вкладки')
+not found: ('Snoozed Tabs', 'Отложенные вкладки')
+saved ui-snoozed-menu-light.xml
+screenshot 53-tab-overview-light.png
+saved ui-tab-overview-light.xml
+not found: workspace switcher entry
+not found: ('Add workspace', 'Добавить пространство')
+not found: add workspace
+not found: ('Add workspace', 'Добавить пространство')
+tap 'New tab' at 697,620
+screenshot 54-essentials-start-light.png
+not found: ('Add a site', 'Добавить сайт')
+screenshot 55-essentials-light.png
+not found: ('Edit', 'Изменить')
+screenshot 56-tab-overview-essentials-light.png
+saved ui-tab-overview-essentials-light.xml
+not found: ('Tab actions', 'Действия со вкладкой')
+tap 'Search tabs' at 514,212
+screenshot 57-tab-search-light.png
+not found: ('Close search', 'Закрыть поиск')
+screenshot 58-protection-card-light.png
+not found: ('this week', 'за неделю', 'Tracker protection is on', 'Защита от трекеров')
+saved ui-protection-card-light.xml
+tap 'Search or enter an address' at 393,2253
+not found: ('Make blank tab incognito', 'Сделать пустую вкладку приватной')
+saved ui-private-toggle-light.xml
+screenshot 59-private-locked-light.png
+screenshot 60-permission-prompt-light.png
+tap 'Don’t allow' at 794,2161
+tap 'Search or enter an address' at 504,2253
+saved ui-voice-editor-light.xml
+voice search light: the address editor did not open
+screenshot 61-voice-listening-light.png
+screenshot 62-voice-explain-light.png
+tap 'Not now' at 549,1487
+not found: ('More options', 'Другие действия')
+not found: ('More options', 'Другие действия')
+screenshot 63-current-dark.png
+screenshot 64-new-tab-dark.png
+screenshot 65-page-dark.png
+screenshot 66-page-scrolled-dark.png
+tap 'More options' at 985,2253
+not found: ('Compact mode', 'Компактный режим')
+not found: ('Compact mode', 'Компактный режим')
+not found: ('Compact mode', 'Компактный режим')
+not found: ('Compact mode', 'Компактный режим')
+not found: ('Compact mode', 'Компактный режим')
+not found: ('Compact mode', 'Компактный режим')
+not found: ('Compact mode', 'Компактный режим')
+saved ui-compact-menu-dark.xml
+tap 'More options' at 985,2253
+tap 'Find on page' at 327,1743
+screenshot 67-find-dark.png
+find counter dark: counting
+tap 'Open site information' at 95,2253
+screenshot 68-site-info-dark.png
+saved ui-site-info-dark.xml
+not found: ('Certificate', 'Сертификат')
+not found: ('Privacy X-Ray', 'Рентген приватности')
+saved ui-site-info-fixes-dark.xml
+saved ui-site-info-data-dark.xml
+screenshot 69-address-dark.png
+tap 'More options' at 985,2253
+not found: ('Open Reader Studio', 'Открыть режим чтения')
+not found: ('Open Reader Studio', 'Открыть режим чтения')
+not found: ('Open Reader Studio', 'Открыть режим чтения')
+not found: ('Open Reader Studio', 'Открыть режим чтения')
+not found: ('Open Reader Studio', 'Открыть режим чтения')
+not found: ('Open Reader Studio', 'Открыть режим чтения')
+not found: ('Open Reader Studio', 'Открыть режим чтения')
+saved ui-reader-menu-dark.xml
+screenshot 70-https-upgrade-dark.png
+saved ui-glance-page-dark.xml
+not found: link for glance
+not found: ('More options', 'Другие действия')
+not found: menu for split view
+https-only probe httpforever.com: 11-04 13:40:42.480  9427  9427 D VolaLoadError: onLoadError httpsOnly=true uri=https://httpforever.com/ category=3 code=163
+screenshot 71-https-only-dark.png
+screenshot 72-page-unknown-host-dark.png
+screenshot 73-page-insecure-dark.png
+screenshot 74-dangerous-site-dark.png
+not found: ('Back to safety', 'Вернуться в безопасное место')
+screenshot 75-page-offline-dark.png
+screenshot 76-page-back-online-dark.png
+screenshot 77-workspace-locked-dark.png
+tap 'Go to another workspace' at 540,1555
+screenshot 78-download-check-dark.png
+tap 'Don’t download' at 242,2090
+tap 'More options' at 985,2253
+tap 'History' at 159,2248
+screenshot 79-history-dark.png
+saved ui-history-dark.xml
+tap 'More options' at 985,2253
+tap 'Favorites' at 414,2248
+screenshot 80-favorites-dark.png
+saved ui-favorites-dark.xml
+tap 'More options' at 985,2253
+tap 'Downloads' at 308,1427
+screenshot 81-downloads-dark.png
+saved ui-downloads-dark.xml
+tap 'More options' at 985,2253
+tap 'More' at 247,2017
+not found: ('Snoozed Tabs', 'Отложенные вкладки')
+not found: ('Snoozed Tabs', 'Отложенные вкладки')
+not found: ('Snoozed Tabs', 'Отложенные вкладки')
+not found: ('Snoozed Tabs', 'Отложенные вкладки')
+not found: ('Snoozed Tabs', 'Отложенные вкладки')
+not found: ('Snoozed Tabs', 'Отложенные вкладки')
+not found: ('Snoozed Tabs', 'Отложенные вкладки')
+saved ui-snoozed-menu-dark.xml
+screenshot 82-tab-overview-dark.png
+saved ui-tab-overview-dark.xml
+not found: workspace switcher entry
+not found: ('Add workspace', 'Добавить пространство')
+not found: add workspace
+not found: ('Add workspace', 'Добавить пространство')
+tap 'New tab' at 183,620
+screenshot 83-essentials-start-dark.png
+not found: ('Add a site', 'Добавить сайт')
+screenshot 84-essentials-dark.png
+not found: ('Edit', 'Изменить')
+screenshot 85-tab-overview-essentials-dark.png
+saved ui-tab-overview-essentials-dark.xml
+not found: ('Tab actions', 'Действия со вкладкой')
+tap 'Search tabs' at 514,212
+screenshot 86-tab-search-dark.png
+not found: ('Close search', 'Закрыть поиск')
+screenshot 87-protection-card-dark.png
+not found: ('this week', 'за неделю', 'Tracker protection is on', 'Защита от трекеров')
+saved ui-protection-card-dark.xml
+not found: ('Search or enter an address', 'Поиск или адрес')
+saved ui-private-start-dark.xml
+screenshot 88-private-locked-dark.png
+screenshot 89-permission-prompt-dark.png
+tap 'Don’t allow' at 794,2161
+not found: ('Search or enter an address', 'Поиск или адрес')
+saved ui-voice-editor-dark.xml
+voice search dark: the address editor did not open
+screenshot 90-voice-listening-dark.png
+screenshot 91-voice-explain-dark.png
+tap 'Not now' at 549,1487
+not found: ('More options', 'Другие действия')
+not found: ('More options', 'Другие действия')
+tap 'New tab' at 243,1191
+saved ui-new-tab-a11y.xml
+step new-tab-a11y failed: the new tab is not on screen
+screenshot 92-page-a11y.png
+tap 'More options' at 985,2243
+screenshot 93-menu-a11y.png
+tap 'Settings' at 921,2194
+screenshot 94-settings-a11y.png
+screenshot 95-page-unknown-host-a11y.png
+Cold start (am start -W, 5 runs): average 3455 ms, min 3319 ms, max 3634 ms
+Startup timeline (median of 5 runs, ms since process start):
+  ProviderCreated: 546
+  ActivityCreateStart: 710
+  ActivityCreateEnd: 1134
+  ActivityResumed: 1228
+  FirstFrame: 2247
+  FirstPageComposite: 4851
+  BrowserScreenComposeStart: 1552
+  Composed.AddressChrome: 2018
+  Composed.FirefoxExtensionChrome: 2018
+  Composed.ModalSurfaces: 4935
+  Composed.SettingsOverlay: 4934
+  Composed.TabOverview: 4934
+  Composed.TransientOverlays: 4935
+  Composed.Viewport: 2017
+  ContentComposeStart: 1407
+Durations (median, ms):
+  Compose.AddressChrome (main): 113
+  Compose.FirefoxExtensionChrome (main): 4
+  Compose.ModalSurfaces (main): 25
+  Compose.SettingsOverlay (main): 10
+  Compose.TabOverview (main): 10
+  Compose.TransientOverlays (main): 2
+  Compose.Viewport (main): 183
+  ControllerCreate (main): 242
+  GeckoRuntimeCreate (main): 44
+  LoadFavorites (main): 0
+  LoadFilterRules (main): 1
+  LoadHistory (main): 6
+  LoadProfiles (main): 1
+  LoadSnoozedTabs (main): 0
+  LoadTabs (main): 10
+  LoadUserScripts (main): 1
+  RestoreEssentials (main): 1
+  RestoreProtectionReport (main): 4
+  TrailRedactions (main): 0
+Slowest main-thread messages in the first 15 s (worst run, ms, top 8):
+  3325: Handler (android.view.Choreographer$FrameHandler)  android.view.Choreographer$FrameDisplayEventReceiver: 0
+  660: Handler (android.app.ActivityThread$H)  null: 159
+  73: Handler (android.os.Handler)  dev.sk2andy.materialbrowser.browser.BrowserController$$ExternalSyntheticLambda185: 0
+  59: Handler (android.os.Handler)  androidx.compose.ui.platform.AndroidUiDispatcher$dispatchCallback$1: 0
+  55: Handler (android.os.Handler)  org.mozilla.geckoview.GeckoResult$$ExternalSyntheticLambda8: 0
+  51: Handler (android.os.Handler)  org.mozilla.geckoview.GeckoResult$$ExternalSyntheticLambda7: 0
+screenshot 96-new-tab-ru.png
+screenshot 97-page-ru.png
+screenshot 98-page-scrolled-ru.png
+tap 'More options' at 985,2253
+not found: ('Compact mode', 'Компактный режим')
+not found: ('Compact mode', 'Компактный режим')
+not found: ('Compact mode', 'Компактный режим')
+not found: ('Compact mode', 'Компактный режим')
+not found: ('Compact mode', 'Компактный режим')
+not found: ('Compact mode', 'Компактный режим')
+not found: ('Compact mode', 'Компактный режим')
+saved ui-compact-menu-ru.xml
+tap 'More options' at 985,2253
+tap 'Find on page' at 392,1658
+screenshot 99-find-ru.png
+find counter ru: counting
+tap 'Open site information' at 95,2253
+screenshot 100-site-info-ru.png
+saved ui-site-info-ru.xml
+not found: ('Certificate', 'Сертификат')
+not found: ('Privacy X-Ray', 'Рентген приватности')
+saved ui-site-info-fixes-ru.xml
+saved ui-site-info-data-ru.xml
+screenshot 101-address-ru.png
+tap 'More options' at 985,2253
+not found: ('Open Reader Studio', 'Открыть режим чтения')
+not found: ('Open Reader Studio', 'Открыть режим чтения')
+not found: ('Open Reader Studio', 'Открыть режим чтения')
+not found: ('Open Reader Studio', 'Открыть режим чтения')
+not found: ('Open Reader Studio', 'Открыть режим чтения')
+not found: ('Open Reader Studio', 'Открыть режим чтения')
+not found: ('Open Reader Studio', 'Открыть режим чтения')
+saved ui-reader-menu-ru.xml
+screenshot 102-https-upgrade-ru.png
+saved ui-glance-page-ru.xml
+not found: link for glance
+not found: ('More options', 'Другие действия')
+not found: menu for split view
+https-only probe httpforever.com: 11-04 13:54:33.772 21006 21006 D VolaLoadError: onLoadError httpsOnly=true uri=https://httpforever.com/ category=3 code=163
+screenshot 103-https-only-ru.png
+screenshot 104-page-unknown-host-ru.png
+screenshot 105-page-insecure-ru.png
+screenshot 106-dangerous-site-ru.png
+not found: ('Back to safety', 'Вернуться в безопасное место')
+screenshot 107-page-offline-ru.png
+screenshot 108-page-back-online-ru.png
+screenshot 109-workspace-locked-ru.png
+tap 'Go to another workspace' at 540,1618
+screenshot 110-download-check-ru.png
+tap 'Don’t download' at 225,2090
+tap 'More options' at 985,2253
+tap 'History' at 159,2248
+screenshot 111-history-ru.png
+saved ui-history-ru.xml
+tap 'More options' at 985,2253
+tap 'Favorites' at 413,2248
+screenshot 112-favorites-ru.png
+saved ui-favorites-ru.xml
+tap 'More options' at 985,2253
+tap 'Downloads' at 289,1342
+screenshot 113-downloads-ru.png
+saved ui-downloads-ru.xml
+tap 'More options' at 985,2253
+not found: ('More', 'Ещё')
+not found: ('More', 'Ещё')
+not found: ('More', 'Ещё')
+not found: ('More', 'Ещё')
+not found: ('More', 'Ещё')
+not found: ('More', 'Ещё')
+not found: ('More', 'Ещё')
+saved ui-more-menu-ru.xml
+not found: ('Snoozed Tabs', 'Отложенные вкладки')
+not found: ('Snoozed Tabs', 'Отложенные вкладки')
+not found: ('Snoozed Tabs', 'Отложенные вкладки')
+not found: ('Snoozed Tabs', 'Отложенные вкладки')
+not found: ('Snoozed Tabs', 'Отложенные вкладки')
+not found: ('Snoozed Tabs', 'Отложенные вкладки')
+not found: ('Snoozed Tabs', 'Отложенные вкладки')
+saved ui-snoozed-menu-ru.xml
+screenshot 114-tab-overview-ru.png
+saved ui-tab-overview-ru.xml
+not found: workspace switcher entry
+not found: ('Add workspace', 'Добавить пространство')
+not found: add workspace
+not found: ('Add workspace', 'Добавить пространство')
+tap 'New tab' at 753,620
+screenshot 115-essentials-start-ru.png
+not found: ('Add a site', 'Добавить сайт')
+screenshot 116-essentials-ru.png
+not found: ('Edit', 'Изменить')
+screenshot 117-tab-overview-essentials-ru.png
+saved ui-tab-overview-essentials-ru.xml
+not found: ('Tab actions', 'Действия со вкладкой')
+not found: ('Search tabs', 'Найти вкладку')
+screenshot 118-protection-card-ru.png
+not found: ('this week', 'за неделю', 'Tracker protection is on', 'Защита от трекеров')
+saved ui-protection-card-ru.xml
+tap 'Search or enter an address' at 393,2253
+not found: ('Make blank tab incognito', 'Сделать пустую вкладку приватной')
+saved ui-private-toggle-ru.xml
+screenshot 119-private-locked-ru.png
+screenshot 120-permission-prompt-ru.png
+tap 'Don’t allow' at 794,2145
+tap 'Search or enter an address' at 504,2253
+saved ui-voice-editor-ru.xml
+voice search ru: the address editor did not open
+screenshot 121-voice-listening-ru.png
+screenshot 122-voice-explain-ru.png
+tap 'Not now' at 469,1487
+not found: ('More options', 'Другие действия')
+not found: ('More options', 'Другие действия')
+not found: ('More options', 'Другие действия')
+not found: menu for the Air layout
+tap 'Search or enter an address' at 504,1433
+open site air-wikipedia: 26 frames, 26 janky (100%), p50 150 ms, p90 300 ms, p99 500 ms
+not found: ('Search or enter an address', 'Поиск или адрес')
+open site air-local: 8 frames, 8 janky (100%), p50 200 ms, p90 450 ms, p99 450 ms
+touch air-top: no screenshot: unexpected screencap layout: 125296 bytes for 1080x2400
+touch air-scrolled: no probe bands on screen
+screenshot 123-touch-none-air-scrolled.png
+tap feedback air: no probe bands on screen
+keyboard air: form probe not found
+screenshot 124-keyboard-none-air.png
