@@ -1,0 +1,41 @@
+Cold start (am start -W, 5 runs): average 2916 ms, min 2242 ms, max 3192 ms
+Startup timeline (median of 5 runs, ms since process start):
+  ProviderCreated: 252
+  ActivityCreateStart: 374
+  ActivityCreateEnd: 773
+  ActivityResumed: 862
+  FirstFrame: 1716
+  FirstPageComposite: 3376
+  BrowserScreenComposeStart: 1163
+  Composed.AddressChrome: 1535
+  Composed.FirefoxExtensionChrome: 1535
+  Composed.ModalSurfaces: 3516
+  Composed.SettingsOverlay: 3516
+  Composed.TabOverview: 3516
+  Composed.TransientOverlays: 3516
+  Composed.Viewport: 1535
+  ContentComposeStart: 1075
+Durations (median, ms):
+  Compose.AddressChrome (main): 79
+  Compose.FirefoxExtensionChrome (main): 2
+  Compose.ModalSurfaces (main): 12
+  Compose.SettingsOverlay (main): 5
+  Compose.TabOverview (main): 8
+  Compose.TransientOverlays (main): 1
+  Compose.Viewport (main): 126
+  ControllerCreate (main): 163
+  GeckoRuntimeCreate (main): 31
+  LoadFavorites (main): 0
+  LoadFilterRules (main): 1
+  LoadHistory (main): 4
+  LoadProfiles (main): 1
+  LoadSnoozedTabs (main): 0
+  LoadTabs (main): 8
+  LoadUserScripts (main): 1
+  RestoreEssentials (main): 1
+  RestoreProtectionReport (main): 3
+  TrailRedactions (main): 0
+Slowest main-thread messages in the first 15 s (worst run, ms, top 8):
+  2265: Handler (android.view.Choreographer$FrameHandler)  android.view.Choreographer$FrameDisplayEventReceiver: 0
+  592: Handler (android.app.ActivityThread$H)  null: 159
+  53: Handler (android.app.ActivityThread$H)  android.app.LoadedApk$ReceiverDispatcher$Args$$ExternalSyntheticLambda0: 0
