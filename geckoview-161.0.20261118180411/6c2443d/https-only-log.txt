@@ -1,0 +1,23 @@
+11-24 16:43:48.590 21149 21174 I GeckoConsole: [JavaScript Error: "HTTPS-Only Mode: Not upgrading insecure request “http://firefox-portal-detection.com/success.txt?ipv6” because it is exempt."]
+11-24 16:43:48.598 21149 21174 I GeckoConsole: [JavaScript Error: "HTTPS-Only Mode: Not upgrading insecure request “http://firefox-portal-detection.com/success.txt?ipv4” because it is exempt."]
+11-24 16:47:07.845 21149 21174 W GeckoConsole: [JavaScript Warning: "HTTPS-Only Mode: Upgrading insecure request “http://example.com/” to use “https”." {file: "http://example.com/" line: 0}]
+11-24 16:48:01.068   552  1784 I ActivityTaskManager: START u0 {act=android.intent.action.VIEW dat=http://httpforever.com/... flg=0x10000000 pkg=io.github.mikespl187.vola.debug cmp=io.github.mikespl187.vola.debug/dev.sk2andy.materialbrowser.MainActivity} with LAUNCH_SINGLE_TASK from uid 2000 (BAL_ALLOW_PERMISSION) result code=3
+11-24 16:48:02.124 21149 21174 W GeckoConsole: [JavaScript Warning: "HTTPS-Only Mode: Upgrading insecure request “http://httpforever.com/” to use “https”." {file: "http://httpforever.com/" line: 0}]
+11-24 16:48:02.153 21149 21149 D GeckoSession: handleMessage GeckoView:PageStart uri=http://httpforever.com/
+11-24 16:48:03.704 21149 21174 E GeckoConsole: [JavaScript Error: "HTTPS-Only Mode: Upgrading insecure request “https://httpforever.com/” failed. (M21-C12286)" {file: "https://httpforever.com/" line: 0}]
+11-24 16:48:03.710 21149 21149 D GeckoSession: handleMessage GeckoView:OnLoadError uri=https://httpforever.com/
+11-24 16:48:03.711 21149 21149 D VolaLoadError: onLoadError httpsOnly=true uri=https://httpforever.com/ category=3 code=163
+11-24 16:48:03.714 21483 21498 W Web Content: [JavaScript Warning: "“httpforever.com” has been classified as a bounce tracker. If it does not receive user activation within the next 3,600 seconds it will have its state purged."]
+11-24 16:48:03.836 21149 21149 D GeckoSession: handleMessage GeckoView:LocationChange uri=https://httpforever.com/
+11-24 16:48:19.031 21149 21149 D GeckoSession: handleMessage GeckoView:OnLoadError uri=https://vola-tour.invalid/
+11-24 16:48:19.031 21149 21149 D VolaLoadError: onLoadError httpsOnly=false uri=https://vola-tour.invalid/ category=5 code=37
+11-24 16:48:31.224 21149 21149 D GeckoSession: handleMessage GeckoView:OnLoadError uri=https://expired.badssl.com/
+11-24 16:48:31.225 21149 21149 D VolaLoadError: onLoadError httpsOnly=false uri=https://expired.badssl.com/ category=2 code=50
+11-24 16:48:58.411 21149 21174 I GeckoConsole: [JavaScript Error: "HTTPS-Only Mode: Not upgrading insecure request “http://firefox-portal-detection.com/success.txt?ipv4” because it is exempt."]
+11-24 16:48:58.412 21149 21174 I GeckoConsole: [JavaScript Error: "HTTPS-Only Mode: Not upgrading insecure request “http://firefox-portal-detection.com/success.txt?ipv6” because it is exempt."]
+11-24 16:49:04.204 21149 21149 D GeckoSession: handleMessage GeckoView:OnLoadError uri=https://example.org/?vola-offline-ru
+11-24 16:49:04.205 21149 21149 D VolaLoadError: onLoadError httpsOnly=false uri=https://example.org/?vola-offline-ru category=5 code=37
+11-24 16:49:14.547 21149 21174 I GeckoConsole: [JavaScript Error: "HTTPS-Only Mode: Not upgrading insecure request “http://firefox-portal-detection.com/success.txt?ipv4” because it is exempt."]
+11-24 16:49:14.553 21149 21174 I GeckoConsole: [JavaScript Error: "HTTPS-Only Mode: Not upgrading insecure request “http://firefox-portal-detection.com/success.txt?ipv6” because it is exempt."]
+11-24 16:49:17.677 21149 21174 I GeckoConsole: [JavaScript Error: "HTTPS-Only Mode: Not upgrading insecure request “http://firefox-portal-detection.com/success.txt?ipv4” because it is exempt."]
+11-24 16:49:17.678 21149 21174 I GeckoConsole: [JavaScript Error: "HTTPS-Only Mode: Not upgrading insecure request “http://firefox-portal-detection.com/success.txt?ipv6” because it is exempt."]
