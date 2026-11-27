@@ -7,6 +7,7 @@ const EXEMPT_SITES_FILE = "financial_sites.txt";
 const policiesByToken = new Map();
 const latestPolicyRevisionByToken = new Map();
 const tokenByTab = new Map();
+const committedDocumentsByTab = new Map();
 const pendingEvents = new Map();
 const mainFrameRequestsById = new Map();
 const contentPolicyTimersByTab = new Map();
@@ -379,6 +380,11 @@ function hostFromUrl(rawUrl) {
   }
 }
 
+function isExtensionPageUrl(url) {
+  return typeof url === "string" && url.startsWith("moz-extension://") &&
+    !url.startsWith(browser.runtime.getURL("/"));
+}
+
 function isPaused(policy, pageHost) {
   return pageHost && policy.pausedHosts.some((host) => hostMatches(pageHost, host));
 }
@@ -671,27 +677,33 @@ function flushEvents() {
 }
 
 browser.webRequest.onBeforeRequest.addListener((details) => {
+  if (details.tabId < 0) return {};
+  const documentUrl = details.documentUrl || details.originUrl;
+  const committedDocument = committedDocumentsByTab.get(details.tabId);
+  if (details.type !== "main_frame" && (
+    committedDocument?.extensionPage ?
+      !documentUrl || isExtensionPageUrl(documentUrl) :
+      details.frameId === 0 && isExtensionPageUrl(details.documentUrl)
+  )) return {};
   const token = tokenByTab.get(details.tabId);
   const policy = token && policiesByToken.get(token);
   if (details.type === "main_frame") {
-    inlineVideosByTab.delete(details.tabId);
-    publishInlineVideoState(details.tabId);
-    if (policy) {
-      policy.pageHost = hostFromUrl(details.url);
-      if (typeof details.requestId === "string") {
-        mainFrameRequestsById.set(details.requestId, {
-          token,
-          revision: policy.revision,
-          navigationGeneration: policy.navigationGeneration,
-        });
-      }
-      scheduleContentPolicy(details.tabId);
+    // Gecko can start a prepared popup's first navigation before its privacy host binds.
+    // Kotlin gates the navigation and subresources below still require the bound policy.
+    if (!policy) return {};
+    if (typeof details.requestId === "string") {
+      mainFrameRequestsById.set(details.requestId, {
+        token,
+        revision: policy.revision,
+        navigationGeneration: policy.navigationGeneration,
+      });
     }
+    scheduleContentPolicy(details.tabId);
     return {};
   }
   if (!policy) return { cancel: true };
   const requestHost = hostFromUrl(details.url);
-  const pageHost = policy.pageHost;
+  const pageHost = hostFromUrl(documentUrl) || policy.pageHost;
   if (!requestHost) return {};
   const observesCompatibility = Array.isArray(policy.compatibilityRequestHosts) &&
     policy.compatibilityRequestHosts.some((host) => hostMatches(requestHost, host));
@@ -717,6 +729,16 @@ browser.webRequest.onBeforeRequest.addListener((details) => {
   if (policy.blockAds === true) return networkDecision(details, token, policy, pageHost);
   return {};
 }, { urls: ["http://*/*", "https://*/*"] }, ["blocking"]);
+
+browser.webNavigation.onCommitted.addListener(({ frameId, tabId, url }) => {
+  if (frameId !== 0 || tabId < 0) return;
+  const pageHost = hostFromUrl(url);
+  committedDocumentsByTab.set(tabId, { pageHost, extensionPage: isExtensionPageUrl(url) });
+  const policy = policiesByToken.get(tokenByTab.get(tabId));
+  if (policy) policy.pageHost = pageHost;
+  inlineVideosByTab.delete(tabId);
+  publishInlineVideoState(tabId);
+});
 
 browser.webRequest.onBeforeSendHeaders.addListener((details) => {
   const token = tokenByTab.get(details.tabId);
@@ -768,6 +790,8 @@ browser.runtime.onMessage.addListener((message, sender) => {
   if (message.type === "bind" && policiesByToken.has(message.token)) {
     tokenByTab.set(sender.tab.id, message.token);
     const policy = policiesByToken.get(message.token);
+    const committedDocument = committedDocumentsByTab.get(sender.tab.id);
+    if (committedDocument) policy.pageHost = committedDocument.pageHost;
     return Promise.resolve({ type: "bound", revision: policy.revision });
   }
   if (
@@ -918,6 +942,7 @@ browser.tabs.onRemoved.addListener((tabId) => {
   contentPolicyTimersByTab.delete(tabId);
   const token = tokenByTab.get(tabId);
   tokenByTab.delete(tabId);
+  committedDocumentsByTab.delete(tabId);
   inlineVideosByTab.delete(tabId);
   if (token) {
     policiesByToken.delete(token);
@@ -1288,13 +1313,16 @@ function connectNative() {
           acknowledgePolicy();
           return;
         }
+        const tabEntry = Array.from(tokenByTab.entries())
+          .find(([, token]) => token === message.token);
+        // Native policy revisions can arrive while a new top-level load is still pending.
+        const committedDocument = tabEntry && committedDocumentsByTab.get(tabEntry[0]);
+        if (committedDocument) readyPolicy.pageHost = committedDocument.pageHost;
         policiesByToken.set(message.token, readyPolicy);
         if (readyPolicy.blockAds === true) {
           ensureNetworkBlocker().catch(() => {});
           ensureAdCosmetics().catch(() => {});
         }
-        const tabEntry = Array.from(tokenByTab.entries())
-          .find(([, token]) => token === message.token);
         if (readyPolicy.inlineMediaPlayerEnabled !== true && tabEntry) {
           inlineVideosByTab.delete(tabEntry[0]);
           publishInlineVideoState(tabEntry[0]);
@@ -1324,6 +1352,7 @@ function connectNative() {
       for (const [tabId, token] of tokenByTab) {
         if (token === message.token) {
           tokenByTab.delete(tabId);
+          committedDocumentsByTab.delete(tabId);
           inlineVideosByTab.delete(tabId);
         }
       }

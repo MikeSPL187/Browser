@@ -233,6 +233,7 @@ test("WebRTC policies use fail-closed ordering and acknowledge verified settings
         sendMessage: () => Promise.resolve(),
         onRemoved: { addListener: () => {} },
       },
+      webNavigation: { onCommitted: { addListener: () => {} } },
       webRequest: {
         onBeforeRequest: { addListener: () => {} },
         onBeforeSendHeaders: { addListener: () => {} },
@@ -310,6 +311,124 @@ test("WebRTC policies use fail-closed ordering and acknowledge verified settings
   );
 });
 
+function requestHarness() {
+  let beforeRequest;
+  let committed;
+  let headersReceived;
+  let nativeMessage;
+  const backgroundContext = vm.createContext({
+    URL,
+    setTimeout: () => 0,
+    clearTimeout: () => {},
+    CandyPrivacyRules: rules,
+    CandyPrivacySignals: { registrationCode: () => "" },
+    browser: {
+      runtime: {
+        getURL: (path) => `moz-extension://privacy-host${path}`,
+        connectNative: () => ({
+          postMessage: () => {},
+          onMessage: { addListener: (listener) => { nativeMessage = listener; } },
+          onDisconnect: { addListener: () => {} },
+        }),
+        onMessage: { addListener: () => {} },
+      },
+      contentScripts: { register: async () => ({ unregister: async () => {} }) },
+      tabs: { onRemoved: { addListener: () => {} }, sendMessage: async () => {} },
+      webNavigation: { onCommitted: { addListener: (listener) => { committed = listener; } } },
+      webRequest: {
+        onBeforeRequest: { addListener: (listener) => { beforeRequest = listener; } },
+        onBeforeSendHeaders: { addListener: () => {} },
+        onHeadersReceived: { addListener: (listener) => { headersReceived = listener; } },
+        onErrorOccurred: { addListener: () => {} },
+      },
+    },
+  });
+  const evaluate = (script) => vm.runInContext(script, backgroundContext);
+  evaluate(fs.readFileSync(
+    new URL("../app/src/gecko/assets/candy_privacy/background.js", import.meta.url),
+    "utf8",
+  ));
+  return {
+    evaluate,
+    beforeRequest: (details) => ({ ...beforeRequest(details) }),
+    committed: (details) => committed?.(details),
+    headersReceived,
+    nativeMessage,
+  };
+}
+
+test("tabless requests and extension pages bypass the web tab bootstrap gate", () => {
+  const { beforeRequest, committed } = requestHarness();
+  const request = {
+    tabId: -1,
+    type: "xmlhttprequest",
+    url: "https://api.bitwarden.com/sync",
+    originUrl: "moz-extension://ext-id/bg.html",
+  };
+  assert.deepEqual(beforeRequest(request), {});
+  assert.deepEqual(beforeRequest({ ...request, originUrl: "https://site.example/sw.js" }), {});
+  assert.deepEqual(beforeRequest({
+    ...request, tabId: 8, frameId: 0, documentUrl: "moz-extension://ext-id/popup.html",
+  }), {});
+  committed({ tabId: 8, frameId: 0, url: "moz-extension://ext-id/options.html" });
+  assert.deepEqual(beforeRequest({ ...request, tabId: 8 }), {});
+  assert.deepEqual(beforeRequest({
+    ...request, tabId: 7, frameId: 0, documentUrl: "https://site.example/",
+  }), { cancel: true });
+  assert.deepEqual(beforeRequest({
+    ...request, tabId: 7, frameId: 4, documentUrl: "moz-extension://ext-id/frame.html",
+  }), { cancel: true });
+  assert.deepEqual(beforeRequest({
+    tabId: 7, type: "main_frame", url: "https://site.example/",
+  }), {});
+});
+
+test("downloads and subframe commits preserve the current host and inline video", async () => {
+  const { evaluate, beforeRequest, committed, headersReceived, nativeMessage } = requestHarness();
+  committed({ tabId: 7, frameId: 0, url: "https://site.example/" });
+  evaluate(`
+    tokenByTab.set(7, "tab-token");
+    policiesByToken.set("tab-token", { pageHost: "site.example", pausedHosts: ["site.example"], hideConsent: true });
+    inlineVideosByTab.set(7, new Map([[0, { active: true }]]));
+  `);
+  const download = {
+    tabId: 7, type: "main_frame", requestId: "download", url: "https://cdn.other.example/file.zip",
+  };
+  assert.deepEqual(beforeRequest(download), {});
+  headersReceived({
+    ...download, statusCode: 200,
+    responseHeaders: [{ name: "Content-Disposition", value: "attachment; filename=file.zip" }],
+  });
+  committed({ tabId: 7, frameId: 4, url: "https://iframe.example/" });
+  assert.equal(evaluate('policiesByToken.get("tab-token").pageHost'), "site.example");
+  assert.equal(evaluate("inlineVideosByTab.get(7).get(0).active"), true);
+
+  const resource = { tabId: 7, type: "script", url: "https://assets.example/file.js" };
+  assert.deepEqual(beforeRequest(resource), {});
+  assert.deepEqual(beforeRequest({ ...resource, documentUrl: "https://new.example/" }), { cancel: true });
+  assert.deepEqual(beforeRequest({ ...resource, originUrl: "https://new.example/" }), { cancel: true });
+  assert.equal(evaluate('policiesByToken.get("tab-token").pageHost'), "site.example");
+
+  nativeMessage({
+    type: "policy",
+    protocolVersion: 2,
+    token: "tab-token",
+    revision: 2,
+    privacySignalRevision: 1,
+    animationPolicyRevision: 1,
+    inlineMediaPlayerEnabled: true,
+    pageHost: "new.example",
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(evaluate('policiesByToken.get("tab-token").revision'), 2);
+  assert.equal(evaluate('policiesByToken.get("tab-token").pageHost'), "site.example");
+  assert.equal(evaluate("inlineVideosByTab.get(7).get(0).active"), true);
+
+  committed({ tabId: 7, frameId: 0, url: "https://new.example/" });
+  assert.equal(evaluate('policiesByToken.get("tab-token").pageHost'), "new.example");
+  assert.equal(evaluate("inlineVideosByTab.has(7)"), false);
+});
+
 test("newer privacy policy wins while older cookie rules are still loading", async () => {
   const cookieAssetResolvers = [];
   let nativeMessageListener;
@@ -374,6 +493,7 @@ test("newer privacy policy wins while older cookie rules are still loading", asy
         sendMessage: () => Promise.resolve(),
         onRemoved: { addListener: () => {} },
       },
+      webNavigation: { onCommitted: { addListener: () => {} } },
       contentScripts: {
         register: async (options) => {
           privacyOrdering.push(
@@ -1006,6 +1126,7 @@ test("ad cosmetics reach frames when consent banners are left alone", async () =
         onMessage: { addListener: (listener) => runtimeMessageListeners.push(listener) },
       },
       tabs: { sendMessage: () => Promise.resolve(), onRemoved: { addListener: () => {} } },
+      webNavigation: { onCommitted: { addListener: () => {} } },
       contentScripts: {
         register: async () => ({ unregister: async () => {} }),
       },

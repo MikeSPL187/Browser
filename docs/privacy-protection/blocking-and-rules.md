@@ -90,9 +90,14 @@ falls back to `extensionOwnedAdFilteringWithCandyCookieDefaults`: consent handli
   Candy rules and `strictBlocking` (Strict level). Off sends nothing to block; a paused site is
   skipped as before; Strict drops the lists' compatibility exceptions (allow pairs, owner families,
   uAssets allow rules), never the person's own rules or the first-party escape.
-- Main-frame requests are never blocked. Blocks report as built-in events, so the site panel
-  counts them. The first requests after start wait up to 5 s for the lists to load; a list that
-  fails to load lets requests through rather than holding the page.
+- The bootstrap gate requires a bound policy for web-tab subresources. Tabless requests and
+  subresource requests from extension pages bypass the gate. Gecko main-frame loads follow
+  Kotlin's navigation policy and bypass list filtering.
+  The committed top-level document supplies the fallback page host and resets inline video state.
+  Downloads and cancelled navigations preserve both. Subresources use the host of their document
+  when Gecko provides it. Blocks report as built-in events, so the site panel counts them.
+  The first requests after start wait up to 5 s for the lists to load. If a list fails to load,
+  the request proceeds.
 - Ad cosmetics: the EasyList and uAssets scoped hiding rules and the uAssets procedural rules
   (`app/src/blocking/assets/`, packed into the extension like the network lists) load with them.
   `CandyPrivacyRules.indexCosmetics` buckets them by host, so a frame checks its own hosts' rules
