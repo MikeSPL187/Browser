@@ -39,4 +39,22 @@ class AppDataTransferLockInstrumentedTest {
         AppDataTransferLock.release(context, requireNotNull(token))
         assertFalse(AppDataTransferLock.isActive(context))
     }
+
+    @Test
+    fun sameTransferProcessCanReclaimItsLockAfterRecreation() {
+        val originalProcess = ProcessBuilder("sh", "-c", "echo \$\$; exec sleep 30").start()
+        try {
+            val mainPid = originalProcess.inputStream.bufferedReader().use { it.readLine().toInt() }
+            val transferPid = Process.myPid()
+            val token = requireNotNull(AppDataTransferLock.activate(context, mainPid))
+            assertTrue(AppDataTransferLock.claim(context, token, mainPid, transferPid))
+
+            // On recreation, the intent still carries the original main-process PID.
+            assertTrue(AppDataTransferLock.claim(context, token, mainPid, transferPid))
+            assertFalse(AppDataTransferLock.claim(context, "different-token", mainPid, transferPid))
+            assertFalse(AppDataTransferLock.claim(context, token, mainPid, mainPid))
+        } finally {
+            originalProcess.destroy()
+        }
+    }
 }

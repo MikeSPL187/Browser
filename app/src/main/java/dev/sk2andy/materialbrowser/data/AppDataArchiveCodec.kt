@@ -189,9 +189,7 @@ internal object AppDataArchiveCodec {
                     ): FileVisitResult {
                         if (directory == dataDirectory) return FileVisitResult.CONTINUE
                         val relativePath = dataDirectory.relativize(directory)
-                        if (relativePath.nameCount == 1 &&
-                            !AppDataArchiveRules.shouldExportTopLevel(relativePath.toString())
-                        ) {
+                        if (!AppDataArchiveRules.shouldExportRelativePath(relativePath.toString())) {
                             return FileVisitResult.SKIP_SUBTREE
                         }
                         rejectSymbolicLink(directory, attributes)
@@ -210,11 +208,6 @@ internal object AppDataArchiveCodec {
                         attributes: BasicFileAttributes,
                     ): FileVisitResult {
                         val relativePath = dataDirectory.relativize(file)
-                        if (relativePath.nameCount == 1 &&
-                            !AppDataArchiveRules.shouldExportTopLevel(relativePath.toString())
-                        ) {
-                            return FileVisitResult.CONTINUE
-                        }
                         if (!AppDataArchiveRules.shouldExportRelativePath(relativePath.toString())) {
                             return FileVisitResult.CONTINUE
                         }

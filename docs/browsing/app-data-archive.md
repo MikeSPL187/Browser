@@ -18,10 +18,11 @@ Android SDK, WebView version, export time and typed `websiteState=candy-owned-on
 ZIP entry CRCs are verified while staging and again while extracting.
 
 The exporter walks the app data directory rather than maintaining a list of individual
-settings. New SharedPreferences, file stores, databases and WebView profile files therefore
+settings. New SharedPreferences, file stores and databases therefore
 join future exports automatically unless their owner adds an explicit archive-path exclusion.
 Top-level `cache`, `code_cache`, `lib` and `app_textures` are excluded. Import path validation
-and restore-root discovery enforce the same exclusions.
+and restore-root discovery enforce the same exclusions. Export skips Gecko and WebView storage
+subtrees before visiting their entries.
 
 ## Included data
 
@@ -69,14 +70,17 @@ local Recall index so old page text cannot coexist with imported History.
 
 ## Process boundary
 
-Returning from the document picker first lets `MainActivity` persist tab state and flush
-cookies. A dedicated `:dataTransfer` process then stops the main process before reading or
+Returning from the document picker first lets `MainActivity` persist tab state and wait for
+pending writers, including the protection report and favorite favicons. A dedicated
+`:dataTransfer` process then stops the main process before reading or
 replacing persistent roots. It relaunches `MainActivity` after export or import. `recreate()`
 must not replace this cold boundary because WebView, cookie, database and SharedPreferences
 caches are process-scoped.
 
 A token-bound process lock gates every app entry point that could open persistent state while
-the transfer process is active. If recovery cannot restore the previous roots, the transfer
+the transfer process is active. A recreated transfer activity can resume observing work owned
+by its process and token. Gecko Web Push reconnect retries while a transfer or an interrupted
+restore owns the data. If recovery cannot restore the previous roots, the transfer
 screen remains open and preserves its journal and backup instead of launching mixed data.
 
 ## Android Auto Backup

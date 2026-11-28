@@ -24,6 +24,47 @@ class AppDataArchiveCodecTest {
     val temporaryFolder = TemporaryFolder()
 
     @Test
+    fun `v2 export skips engine directories and their symlinks before walking them`() {
+        val source = temporaryFolder.newFolder("engine-source").toPath()
+        val engineFiles = listOf(
+            "files/mozilla/default/lock",
+            "app_webview/Default/Cookies",
+            "app_webview_profile/Default/Cookies",
+            "no_backup/gecko_session_states/tab1",
+            "no_backup/tab_webview_states/tab1",
+        )
+        for (relativePath in engineFiles) {
+            val path = source.resolve(relativePath)
+            Files.createDirectories(path.parent)
+            if (path.fileName.toString() == "lock") {
+                Files.createSymbolicLink(path, path.parent.resolve("missing-lock-target"))
+            } else {
+                Files.write(path, byteArrayOf(1))
+            }
+        }
+        val sessionPath = "shared_prefs/browser_session.xml"
+        val similarPath = "files/mozilla-settings"
+        Files.createDirectories(source.resolve("shared_prefs"))
+        Files.write(source.resolve(sessionPath), byteArrayOf(2))
+        Files.write(source.resolve(similarPath), byteArrayOf(3))
+
+        val output = ByteArrayOutputStream()
+        AppDataArchiveCodec.export(source, manifest(), output)
+        val archive = output.toByteArray()
+        val inspection = AppDataArchiveCodec.inspect(archive.inputStream())
+        assertEquals(AppDataArchiveWebsiteState.CandyOwnedOnly, inspection.websiteState)
+        assertEquals(
+            setOf("files", "no_backup", "shared_prefs", sessionPath, similarPath),
+            inspection.entries.map(AppDataArchiveEntry::relativePath).toSet(),
+        )
+
+        val target = temporaryFolder.newFolder("engine-target").toPath()
+        assertEquals(inspection.entries, AppDataArchiveCodec.extract(archive.inputStream(), target).entries)
+        assertArrayEquals(byteArrayOf(2), Files.readAllBytes(target.resolve(sessionPath)))
+        assertArrayEquals(byteArrayOf(3), Files.readAllBytes(target.resolve(similarPath)))
+    }
+
+    @Test
     fun `export writes manifest first and round trips persistent data`() {
         val dataDirectory = temporaryFolder.newFolder("source").toPath()
         Files.createDirectories(dataDirectory.resolve("shared_prefs"))

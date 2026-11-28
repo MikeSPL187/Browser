@@ -13,6 +13,7 @@ interface ProtectionReportPersistence {
     fun loadDays(): List<ProtectionDay>
     fun loadTrackers(): Map<Long, ProtectionDayTrackers>
     fun saveDays(days: List<ProtectionDay>)
+    fun flush(): Boolean
     fun loadCardVisible(): Boolean
     fun saveCardVisible(visible: Boolean)
 }
@@ -37,6 +38,8 @@ internal class ProtectionReportStore(context: Context) : ProtectionReportPersist
             .putString(KEY_TRACKERS, ProtectionReportCodec.encodeTrackers(days))
             .apply()
     }
+
+    override fun flush(): Boolean = preferences.edit().commit()
 
     override fun loadCardVisible(): Boolean = preferences.getBoolean(KEY_CARD_VISIBLE, true)
 

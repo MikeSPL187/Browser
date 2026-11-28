@@ -5,6 +5,7 @@ import dev.sk2andy.materialbrowser.data.ProtectionDayTrackers
 import dev.sk2andy.materialbrowser.data.ProtectionReportPersistence
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -225,6 +226,28 @@ class ProtectionReportControllerTest {
         assertEquals(1, store.saves)
     }
 
+    @Test
+    fun `transfer waits for tracker restoration and pending report writes`() {
+        val writer = ArrayDeque<() -> Unit>()
+        val store = FakeStore(
+            days = listOf(ProtectionDay(today, mapOf("example.com" to 2))),
+            trackers = mapOf(today to ProtectionDayTrackers(mapOf("ads.net" to 2), emptyMap())),
+        )
+        val controller = controller(store, background = writer::addLast)
+        controller.restore()
+        controller.record("https://example.com/", 1, mapOf("ads.net" to 1))
+
+        var ready: Boolean? = null
+        controller.flushForAppDataTransfer { ready = it }
+        assertNull(ready)
+        while (writer.isNotEmpty()) writer.removeFirst().invoke()
+
+        assertEquals(true, ready)
+        assertEquals(1, store.flushes)
+        assertEquals(mapOf("ads.net" to 3), store.flushedDays.single().blockedByTracker)
+        assertEquals(mapOf("example.com" to 3), store.flushedDays.single().blockedBySite)
+    }
+
     private fun controller(
         store: FakeStore,
         background: ((() -> Unit) -> Unit)? = null,
@@ -251,6 +274,8 @@ class ProtectionReportControllerTest {
         val trackers: Map<Long, ProtectionDayTrackers> = emptyMap(),
     ) : ProtectionReportPersistence {
         var saves = 0
+        var flushes = 0
+        var flushedDays = emptyList<ProtectionDay>()
 
         override fun loadDays(): List<ProtectionDay> = days
 
@@ -259,6 +284,12 @@ class ProtectionReportControllerTest {
         override fun saveDays(days: List<ProtectionDay>) {
             saves++
             this.days = days
+        }
+
+        override fun flush(): Boolean {
+            flushes++
+            flushedDays = days
+            return true
         }
 
         override fun loadCardVisible(): Boolean = cardVisible

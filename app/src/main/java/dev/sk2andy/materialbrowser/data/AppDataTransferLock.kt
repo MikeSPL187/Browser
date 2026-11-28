@@ -32,6 +32,7 @@ internal object AppDataTransferLock {
         val lock = lockFile(context)
         val owner = readOwner(lock) ?: return@withGuard false
         if (owner.token != token) return@withGuard false
+        if (owner.processId == processId && owner.isAlive(context)) return@withGuard true
         val mayClaim = owner.processId == expectedProcessId || !owner.isAlive(context)
         if (!mayClaim) return@withGuard false
         val claimed = owner.copy(
@@ -56,6 +57,8 @@ internal object AppDataTransferLock {
         }
     }
 
+    // FileChannel locks cannot overlap within a process, including background reconnect checks.
+    @Synchronized
     private fun <T> withGuard(context: Context, action: () -> T): T? = runCatching {
         FileChannel.open(
             guardFile(context).toPath(),

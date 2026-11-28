@@ -43,6 +43,11 @@ internal object AppDataTransferContract {
     const val RESTORE_MARKER_FILE_NAME = "app_data_restore_pending.json"
     const val LOCK_TOKEN_EXTRA = "app_data_transfer_lock_token"
 
+    fun restoreRecoveryMarker(context: Context): File = File(
+        File(context.applicationInfo.dataDir, AppDataArchiveRules.TRANSFER_STATE_DIRECTORY_NAME),
+        RESTORE_MARKER_FILE_NAME,
+    )
+
     fun exportIntent(
         context: Context,
         destination: Uri,
@@ -279,8 +284,7 @@ class AppDataTransferActivity : ComponentActivity() {
         }
     }
 
-    private fun restoreRecoveryMarker() =
-        File(transferStateDirectory(), AppDataTransferContract.RESTORE_MARKER_FILE_NAME)
+    private fun restoreRecoveryMarker() = AppDataTransferContract.restoreRecoveryMarker(this)
 
     private fun transferStateDirectory() =
         File(applicationInfo.dataDir, AppDataArchiveRules.TRANSFER_STATE_DIRECTORY_NAME)

@@ -163,6 +163,19 @@ class ProtectionReportController internal constructor(
         if (dirty) save()
     }
 
+    internal fun flushForAppDataTransfer(onReady: (Boolean) -> Unit) {
+        // The tracker restore posts to main from this same queue before the flush can run.
+        host.runInBackground {
+            host.post {
+                flush()
+                host.runInBackground {
+                    val ready = runCatching { store.flush() }.getOrDefault(false)
+                    host.post { onReady(ready) }
+                }
+            }
+        }
+    }
+
     /** Writes the days off the main thread; the list does not change once made, so it can be shared. */
     private fun save() {
         host.removeCallbacks(saveDays)

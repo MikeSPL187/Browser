@@ -61,7 +61,9 @@ internal object AppDataArchiveRules {
         name.isNotEmpty() && name !in excludedTopLevelNames
 
     fun shouldExportRelativePath(path: String): Boolean =
-        isAllowedArchiveRelativePath(path) && !isEngineSpecificWebsiteState(path)
+        shouldExportTopLevel(path.substringBefore('/')) &&
+            isAllowedArchiveRelativePath(path) &&
+            !isEngineSpecificWebsiteState(path)
 
     fun isAllowedArchiveRelativePath(path: String): Boolean =
         path != RECALL_DATABASE_RELATIVE_PATH &&

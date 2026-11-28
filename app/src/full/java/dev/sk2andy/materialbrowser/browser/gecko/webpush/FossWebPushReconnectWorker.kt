@@ -8,14 +8,18 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkerParameters
 import androidx.work.WorkManager
+import dev.sk2andy.materialbrowser.data.AppDataTransferLock
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 internal class FossWebPushReconnectWorker(
     context: Context,
     parameters: WorkerParameters,
 ) : CoroutineWorker(context, parameters) {
     override suspend fun doWork(): Result = if (
-        GeckoWebPushCoordinator.reconnectOnce(applicationContext)
+        !withContext(Dispatchers.IO) { AppDataTransferLock.isActive(applicationContext) } &&
+            GeckoWebPushCoordinator.reconnectOnce(applicationContext)
     ) {
         Result.success()
     } else {

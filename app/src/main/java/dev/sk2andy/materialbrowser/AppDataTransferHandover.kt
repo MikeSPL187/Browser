@@ -1,14 +1,36 @@
 package dev.sk2andy.materialbrowser
 
 import android.app.Activity
+import android.os.Handler
 import android.os.Process
 import dev.sk2andy.materialbrowser.browser.BrowserMediaPlaybackService
+import dev.sk2andy.materialbrowser.browser.ProtectionReportController
 import dev.sk2andy.materialbrowser.data.AppDataArchiveRestore
 import dev.sk2andy.materialbrowser.data.AppDataTransferLock
 import java.io.File
+import java.util.concurrent.ExecutorService
 
-/** What the browser does at start when an app data transfer owns the data (#500, item 5). */
+/** Coordinates browser startup and flushes persistent writers for app data transfer. */
 internal object AppDataTransferHandover {
+    fun flushWriters(
+        protectionReport: ProtectionReportController,
+        executor: ExecutorService,
+        mainHandler: Handler,
+        vararg writers: () -> Boolean,
+        onReady: (Boolean) -> Unit,
+    ) {
+        protectionReport.flushForAppDataTransfer { reportReady ->
+            if (!reportReady || executor.isShutdown) {
+                onReady(false)
+                return@flushForAppDataTransfer
+            }
+            executor.execute {
+                val ready = runCatching { writers.map { it() }.all { it } }.getOrDefault(false)
+                mainHandler.post { onReady(ready) }
+            }
+        }
+    }
+
     /**
      * A restore the last run left half done, or a data transfer running in its own process, owns
      * the app data: the browser hands over (resuming the restore) instead of opening on top of it.

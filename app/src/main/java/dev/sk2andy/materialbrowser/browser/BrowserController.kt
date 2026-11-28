@@ -36,6 +36,7 @@ import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnAttach
+import dev.sk2andy.materialbrowser.AppDataTransferHandover
 import dev.sk2andy.materialbrowser.BuildConfig
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.blocking.BlockerSettings
@@ -9051,30 +9052,27 @@ class BrowserController(
             externalLinkPreviewRuntime?.geckoBinding?.session?.setActive(false)
             browserEngineSessions.forEach(::persistBrowserEngineSessionState)
             persist()
-            val persistentWritersReady = listOf(
-                previewRepository.flush(),
-                faviconRepository.flush(),
-                candyTrailRepository.flush(),
-                candyRuleRepository.flush(),
-                userScriptRepository.flush(),
-                store.flush(),
-                permissionStore.flush(),
-                webViewStateRepository.flush(),
-            ).all { ready -> ready }
-            if (!persistentWritersReady) resumeEngineSessionsAfterTransferPreparationFailure()
-            onReady(persistentWritersReady)
+            AppDataTransferHandover.flushWriters(
+                protectionReport, favoriteMutationExecutor, mainHandler,
+                previewRepository::flush,
+                faviconRepository::flush,
+                favoriteFaviconRepository::flush,
+                candyTrailRepository::flush,
+                candyRuleRepository::flush,
+                userScriptRepository::flush,
+                store::flush,
+                permissionStore::flush,
+                webViewStateRepository::flush,
+                historyRepository::flush,
+            ) { ready ->
+                if (!ready && !destroyed && isActivityResumed) {
+                    if (externalLinkPreviewState == null) browserEngineSessions[selectedTabId]?.setActive(true)
+                    externalLinkPreviewRuntime?.geckoBinding
+                        ?.takeIf { it.view.isAttachedToWindow }?.session?.setActive(true)
+                }
+                onReady(!destroyed && ready)
+            }
         }
-    }
-
-    private fun resumeEngineSessionsAfterTransferPreparationFailure() {
-        if (externalLinkPreviewState == null) {
-
-            if (isActivityResumed) browserEngineSessions[selectedTabId]?.setActive(true)
-        }
-        externalLinkPreviewRuntime?.geckoBinding
-            ?.takeIf { binding -> isActivityResumed && binding.view.isAttachedToWindow }
-            ?.session
-            ?.setActive(true)
     }
 
     fun onResume() {

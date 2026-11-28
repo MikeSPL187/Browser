@@ -2,9 +2,12 @@ package dev.sk2andy.materialbrowser.browser.gecko.webpush
 
 import android.content.Context
 import androidx.annotation.UiThread
+import dev.sk2andy.materialbrowser.AppDataTransferContract
 import dev.sk2andy.materialbrowser.BuildConfig
 import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineKind
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoRuntimeOwner
+import dev.sk2andy.materialbrowser.data.AppDataArchiveRestore
+import dev.sk2andy.materialbrowser.data.AppDataTransferLock
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CoroutineScope
@@ -50,11 +53,19 @@ internal object GeckoWebPushCoordinator : EngineWebPush {
         }
     }
 
-    suspend fun reconnectOnce(context: Context): Boolean {
-        if (BuildConfig.SYSTEM_WEBVIEW_ONLY) return true
+    suspend fun reconnectOnce(context: Context): Boolean = withContext(Dispatchers.IO) {
+        if (BuildConfig.SYSTEM_WEBVIEW_ONLY) return@withContext true
         val appContext = context.applicationContext
+        if (
+            AppDataTransferLock.isActive(appContext) ||
+            AppDataArchiveRestore.hasInterruptedRestore(
+                AppDataTransferContract.restoreRecoveryMarker(appContext),
+            )
+        ) return@withContext false
         val settings = BrowserSessionStore(appContext)
-        if (settings.loadAndroidBrowserEngineKind() != AndroidBrowserEngineKind.GeckoView) return true
+        if (settings.loadAndroidBrowserEngineKind() != AndroidBrowserEngineKind.GeckoView) {
+            return@withContext true
+        }
         workerStartingRuntime.set(true)
         try {
             withContext(Dispatchers.Main) {
@@ -63,7 +74,7 @@ internal object GeckoWebPushCoordinator : EngineWebPush {
         } finally {
             workerStartingRuntime.set(false)
         }
-        return transport(appContext).reconnectOnce()
+        transport(appContext).reconnectOnce()
     }
 
     override fun onBrowserEngineChanged(context: Context, kind: AndroidBrowserEngineKind) {

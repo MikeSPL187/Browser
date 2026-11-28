@@ -1275,7 +1275,7 @@ class MainActivity : AppCompatActivity() {
         }
         val preparing = runCatching {
             browserController.prepareForAppDataTransfer { ready ->
-                val canStartNow = ready && dev.sk2andy.materialbrowser.data.BrowsingHistoryRepository.get(this).flush() && canStart()
+                val canStartNow = ready && canStart()
                 val started = canStartNow && runCatching {
                     startActivity(intent(lockToken))
                 }.isSuccess
@@ -1363,11 +1363,7 @@ class MainActivity : AppCompatActivity() {
     private fun defaultAppDataArchiveFileName(): String =
         "candy-browser-${LocalDate.now().format(DateTimeFormatter.ISO_DATE)}.zip"
 
-    private fun appDataRestoreRecoveryMarker() =
-        File(
-            appDataTransferStateDirectory(),
-            AppDataTransferContract.RESTORE_MARKER_FILE_NAME,
-        )
+    private fun appDataRestoreRecoveryMarker() = AppDataTransferContract.restoreRecoveryMarker(this)
 
     private fun appDataTransferStateDirectory() =
         File(applicationInfo.dataDir, AppDataArchiveRules.TRANSFER_STATE_DIRECTORY_NAME)
